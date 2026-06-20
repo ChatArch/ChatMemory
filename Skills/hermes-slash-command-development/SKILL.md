@@ -64,12 +64,12 @@ Example:
 ```python
 CommandDef(
     "template",
-    "Use, create, or update a thread template",
+    "Use, create, update, or list thread templates",
     "Tools & Skills",
     aliases=("tpl",),
     gateway_only=True,
-    args_hint="<name|create|update|use> [instruction...]",
-    subcommands=("create", "update", "use"),
+    args_hint="<name|list|create|update|use> [instruction...]",
+    subcommands=("list", "create", "update", "use"),
 )
 ```
 
@@ -106,6 +106,7 @@ For `/template`, keep private templates separate from official Hermes skills:
 - Reuse SKILL.md shape: YAML frontmatter plus instruction body.
 - Do not store these under `~/.hermes/skills/`, because Hermes auto-scans that tree and exposes `/<skill-name>` dynamic commands.
 - `/template <name> ...` defaults to use.
+- `/template list` lists available private templates without starting a thread or agent turn.
 - `/template use <name> ...` explicitly uses a template.
 - `/template create <name> ...` starts a thread with instructions to create the private template.
 - `/template update <name> ...` starts a thread with instructions to update the private template.
@@ -114,6 +115,7 @@ Recommended syntax:
 
 ```text
 /template <name> [instruction...]
+/template list
 /template use <name> [instruction...]
 /template create <name> [instruction...]
 /template update <name> [instruction...]
@@ -143,6 +145,8 @@ git diff --check
 ```
 
 ## Project record updates
+
+For this user's current QLP/Ambient-Hermes setup, source pushes may go directly over the SSH remote when explicitly authorized; do not force a GitHub PR/MR path unless the user asks for one. ChatMemory-backed skill updates can use the default Chat Emb configuration and should be committed to the ChatMemory Git repo when they change shared workflow knowledge.
 
 After each substantive step, update the active project `progress.md` with:
 
