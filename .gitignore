@@ -1,6 +1,16 @@
-__pycache__/
-.pytest_cache/
-.venv/
+# macOS / editor noise
+.DS_Store
+*.swp
+*.swo
+
+# Local-only scratch/cache
+.cache/
+.tmp/
+.local/
+
+# Keep generated archives and package artifacts out of this pure Git knowledge repo
 build/
 dist/
 *.egg-info/
+*.whl
+*.tar.gz

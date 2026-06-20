@@ -1,17 +1,25 @@
 # ChatMemory
 
-ChatMemory is a private ChatArch workspace memory plugin for keeping important knowledge, collaboration conventions, and reusable workspace skills in a shared Git repository.
+ChatMemory is a private ChatArch knowledge-memory repository.
 
-It is **not** intended to claim or publish the existing `chatmemory` name on PyPI. Treat it as a normal private source package and workspace plugin.
+It must remain private by default because it may contain personal workspace conventions, collaboration context, and important knowledge-memory assets.
+
+It is intentionally a **pure Git repository**, not a Python package and not a PyPI distribution. The repository exists to keep important workspace knowledge, reusable skills, and collaboration conventions synchronized across multiple machines.
 
 ## Purpose
 
-Use this repository to maintain knowledge-memory assets that should be shared across multiple machines, including:
+Use this repository to maintain durable knowledge-memory assets, including:
 
 - workspace-level skills
 - collaboration-document conventions
 - workspace maintenance rules
-- important durable notes that should move with the private ChatArch workspace setup
+- important notes and conventions that should move with the private ChatArch workspace setup
+
+## Non-goals
+
+- Do not publish this repository to PyPI.
+- Do not add Python package scaffolding unless the project direction changes explicitly.
+- Do not use `setup.py`, `pyproject.toml`, `src/`, `tests/`, wheel, or sdist artifacts as part of the default repository shape.
 
 ## Workspace plugin model
 
@@ -35,15 +43,20 @@ Candidate behavior:
 
 5. Do not copy `SKILL.zh.md` variants into the candidate set. Each candidate skill should expose one standard `SKILL.md`.
 
-## Current skills
+## Current layout
 
 ```text
-Skills/
-├── feishu-collaboration-documents/
-│   └── SKILL.md
-└── workspace-maintenance/
-    └── SKILL.md
+ChatMemory/
+├── README.md
+├── LICENSE
+└── Skills/
+    ├── feishu-collaboration-documents/
+    │   └── SKILL.md
+    └── workspace-maintenance/
+        └── SKILL.md
 ```
+
+## Current skills
 
 ### `feishu-collaboration-documents`
 
@@ -53,10 +66,11 @@ Feishu collaboration-document convention and human-AI main document navigation.
 
 Outer workspace maintenance conventions: project/archive structure, root protocol files, and `.trash` cleanup flow.
 
-## Local development
+## Local workspace link convention
 
-```bash
-python3 -m pytest -q
-uvx --from build pyproject-build
-chatpypi check --project-dir .
+A workspace that enables ChatMemory should link skills from this repository instead of copying them:
+
+```text
+<workspace>/skills/feishu-collaboration-documents -> <workspace>/core/ChatMemory/Skills/feishu-collaboration-documents
+<workspace>/skills/workspace-maintenance -> <workspace>/core/ChatMemory/Skills/workspace-maintenance
 ```
