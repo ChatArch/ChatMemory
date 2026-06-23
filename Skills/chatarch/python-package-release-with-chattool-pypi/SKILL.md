@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.1
+version: 0.1.2
 tags:
   - ChatArch
   - Python
@@ -41,6 +41,18 @@ tags:
 ### 版本连续性硬门槛
 
 对已有 PyPI 项目，版本必须从当前已发布版本连续推进：默认只允许 next patch，例如 `7.0.3 -> 7.0.4`。除非用户明确批准 minor/major bump，否则禁止跳到 `7.1.0`、`7.2.0` 或更高版本。
+
+发版准备必须先通过一个 release PR/MR 更新版本号和 changelog，而不是在 feature PR 合并后直接 tag。标准顺序是：
+
+1. 合并功能 PR/MR 后，同步本地默认分支。
+2. 查询 PyPI latest、recent releases、本地 tag、远端 tag，计算连续 next patch 版本。
+3. 从最新默认分支创建 release branch。
+4. 在 release branch 中更新包内版本号、版本测试和 `CHANGELOG.md`，并构建 / `twine check` 验证。
+5. 开 release PR/MR，等待 review/CI，并只在该 PR/MR 中携带版本号变更。
+6. 合并 release PR/MR 后，再同步默认分支。
+7. 只在合并后的默认分支 commit 上创建并推送 `vX.Y.Z` tag，触发 publish workflow。
+
+如果用户说“可以发版”，这授权的是进入 release PR/MR + tag 发布流程；仍然不能跳过 release PR/MR 直接在 feature branch 或未更新版本的默认分支上打 tag。
 
 发布准备或正式发版前必须同时检查三层状态：
 
