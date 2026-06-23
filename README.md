@@ -72,6 +72,9 @@ ChatMemory/
 ├── LICENSE
 └── Skills/
     ├── chatarch/
+    │   ├── chatarch-org-pr-status/
+    │   │   ├── SKILL.md
+    │   │   └── scripts/
     │   ├── chatgh-pr-and-ci-workflow/
     │   │   ├── SKILL.md
     │   │   └── scripts/
@@ -107,6 +110,10 @@ Hermes slash-command development and update handoff conventions that should be a
 ### `common/workspace-maintenance`
 
 Workspace maintenance, development-process, update, and handoff conventions shared across enabled workspaces.
+
+### `chatarch/chatarch-org-pr-status`
+
+Quick ChatGH-based organization status workflow for finding which ChatArch repositories currently have open pull requests. Includes a reusable script that scans `chatgh repo list` and expands repositories with `open_prs > 0` using `chatgh pr list`.
 
 ### `chatarch/chatgh-pr-and-ci-workflow`
 
