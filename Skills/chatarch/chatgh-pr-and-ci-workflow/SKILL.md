@@ -214,30 +214,6 @@ chatgh pr merge NUMBER --repo owner/repo --method squash --check --json-output
 `pr merge` is a real mutation, not a dry run. For mergeability/readiness summaries, keep using `pr view` and `pr checks`.
 
 
-## ChatMemory local long-running branch loop
-
-For this local Playground machine/workspace, use `rex/chatmini` as the fixed long-running ChatMemory accumulation branch. This is a local-level convention, not a global branch name: different machines may use different long-running accumulation branches.
-
-Default loop for local ChatMemory / shared Skills updates:
-
-1. Accumulate iterative skill and workflow edits on the machine's local long-running branch, currently `rex/chatmini` here.
-2. Open PR/MR from the local long-running branch to the default branch when the batch is ready.
-3. Merge only after explicit approval and final gates.
-4. After merge, fetch and fast-forward the default branch (`main` for ChatMemory; `master` for repositories that use it).
-5. Reset/overwrite `rex/chatmini` from the updated default branch so the next batch starts from the merged state:
-
-```bash
-git fetch --prune origin
-git checkout main
-git pull --ff-only origin main
-git checkout rex/chatmini
-git reset --hard main
-git push --force-with-lease origin rex/chatmini
-```
-
-For a `master`-based repository, replace `main` with `master`. This keeps one stable branch name for ongoing workspace knowledge edits while avoiding stale post-merge history.
-
-
 ## Backlog candidates for ChatGH CLI
 
 These operations are still candidates for future promotion:
