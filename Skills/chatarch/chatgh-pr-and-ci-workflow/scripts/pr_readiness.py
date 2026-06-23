@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 import subprocess
 import sys
 from typing import Any
@@ -18,7 +19,7 @@ from typing import Any
 def _chatgh_command() -> list[str]:
     override = os.environ.get("CHATGH_COMMAND")
     if override:
-        return override.split()
+        return shlex.split(override)
     python = os.environ.get("CHATGH_PYTHON", sys.executable)
     return [python, "-m", "chatgh.cli"]
 
@@ -44,9 +45,13 @@ def build_summary(repo: str, number: int) -> dict[str, Any]:
 
     check_runs = checks.get("check_runs") or []
     workflows = checks.get("workflow_runs") or []
+    combined_status = checks.get("combined_status") or {}
     pending = []
     failed = []
     passed = []
+    status_pending = []
+    status_failed = []
+    api_errors = []
 
     for item in check_runs:
         status = item.get("status")
@@ -70,6 +75,31 @@ def build_summary(repo: str, number: int) -> dict[str, Any]:
         if item.get("status") == "completed" and not _check_conclusion_ok(item.get("conclusion"))
     ]
 
+    for item in combined_status.get("statuses") or []:
+        name = item.get("context") or item.get("description") or "<status>"
+        state = item.get("state")
+        if state in {"success", "skipped", "neutral"}:
+            passed.append(name)
+        elif state in {"pending", "expected"}:
+            status_pending.append(name)
+        else:
+            status_failed.append({"name": name, "state": state})
+
+    combined_state = combined_status.get("state")
+    combined_total = int(combined_status.get("total_count") or 0)
+    if combined_total > 0 and combined_state not in {"success", "skipped", "neutral"}:
+        if combined_state in {"pending", "expected"}:
+            if not status_pending:
+                status_pending.append("combined_status")
+        else:
+            if not status_failed:
+                status_failed.append({"name": "combined_status", "state": combined_state})
+
+    for key in ("combined_status_error", "check_runs_error", "workflow_runs_error"):
+        value = checks.get(key)
+        if value:
+            api_errors.append(f"{key}: {value}")
+
     mergeable = view.get("mergeable")
     mergeable_state = view.get("mergeable_state")
     ready = bool(
@@ -78,8 +108,11 @@ def build_summary(repo: str, number: int) -> dict[str, Any]:
         and mergeable_state == "clean"
         and not pending
         and not failed
+        and not status_pending
+        and not status_failed
         and not workflow_pending
         and not workflow_failed
+        and not api_errors
     )
 
     blockers: list[str] = []
@@ -95,6 +128,12 @@ def build_summary(repo: str, number: int) -> dict[str, Any]:
         blockers.append("pending workflows: " + ", ".join(workflow_pending))
     if workflow_failed:
         blockers.append("failed workflows: " + ", ".join(f"{x['name']}={x['conclusion']}" for x in workflow_failed))
+    if status_pending:
+        blockers.append("pending commit statuses: " + ", ".join(status_pending))
+    if status_failed:
+        blockers.append("failed commit statuses: " + ", ".join(f"{x['name']}={x['state']}" for x in status_failed))
+    if api_errors:
+        blockers.append("check API errors: " + "; ".join(api_errors))
 
     return {
         "repo": repo,
@@ -114,6 +153,9 @@ def build_summary(repo: str, number: int) -> dict[str, Any]:
         "failed_check_runs": failed,
         "pending_workflows": workflow_pending,
         "failed_workflows": workflow_failed,
+        "pending_commit_statuses": status_pending,
+        "failed_commit_statuses": status_failed,
+        "check_api_errors": api_errors,
     }
 
 
