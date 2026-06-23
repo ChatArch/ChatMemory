@@ -29,14 +29,18 @@ ChatMemory may contain multiple skill groups, but `ChatTool setup workspace` sho
 Default shared groups:
 
 ```text
+Skills/agents
 Skills/common
 Skills/chatarch
 ```
 
 Group semantics:
 
-- `common/`: stable skills intended to be available on every enabled workspace/machine.
 - `chatarch/`: stable ChatArch-specific repository, release, governance, and package workflows.
+- `common/`: stable skills intended to be available on every enabled workspace/machine, but not specific to ChatArch.
+- `agents/`: shared agent-created or agent-learned skills that emerge while agents work through PRD, project, archive, and review processes. This group is intentionally lightweight until usage patterns stabilize.
+
+Local workspace-only skills belong under `<workspace>/skills/local`. They are machine-specific or private to the current workspace and are not tracked by ChatMemory or linked from ChatMemory.
 
 Do not place machine-specific, account-specific, or sensitive local-only skills in default-linked groups. Keep those in a non-default group or in the source project until a sharing policy is clear.
 
@@ -57,9 +61,12 @@ Candidate behavior:
 4. Link only the default shared groups into the workspace:
 
    ```text
+   <workspace>/skills/agents   -> <workspace>/core/ChatMemory/Skills/agents
    <workspace>/skills/common   -> <workspace>/core/ChatMemory/Skills/common
    <workspace>/skills/chatarch -> <workspace>/core/ChatMemory/Skills/chatarch
    ```
+
+   Also create `<workspace>/skills/local/` as a local non-shared directory when missing. Do not link it.
 
 5. Do not copy `SKILL.zh.md` variants into the candidate set. Each candidate skill should expose one standard `SKILL.md`.
 6. Do not link all of `ChatMemory/Skills` by default.
@@ -71,6 +78,8 @@ ChatMemory/
 ├── README.md
 ├── LICENSE
 └── Skills/
+    ├── agents/
+    │   └── README.md
     ├── chatarch/
     │   ├── chatarch-org-pr-status/
     │   │   ├── SKILL.md
@@ -111,6 +120,10 @@ Hermes slash-command development and update handoff conventions that should be a
 
 Workspace maintenance, development-process, update, and handoff conventions shared across enabled workspaces.
 
+### `agents/`
+
+Shared agent-created or agent-learned skills formed during PRD/project/archive/review work. This group is intentionally light on policy for now.
+
 ### `chatarch/chatarch-org-pr-status`
 
 Quick ChatGH-based organization status workflow for finding which ChatArch repositories currently have open pull requests. Includes a reusable script that scans `chatgh repo list` and expands repositories with `open_prs > 0` using `chatgh pr list`.
@@ -134,6 +147,13 @@ A workspace that enables ChatMemory should link shared groups from this reposito
 ```text
 <workspace>/skills/common   -> <workspace>/core/ChatMemory/Skills/common
 <workspace>/skills/chatarch -> <workspace>/core/ChatMemory/Skills/chatarch
+<workspace>/skills/agents   -> <workspace>/core/ChatMemory/Skills/agents
+```
+
+The workspace may also have a local non-shared directory:
+
+```text
+<workspace>/skills/local
 ```
 
 Existing standalone local links may be migrated to the grouped layout when convenient.
