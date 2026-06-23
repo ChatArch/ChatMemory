@@ -72,6 +72,9 @@ ChatMemory/
 ├── LICENSE
 └── Skills/
     ├── chatarch/
+    │   ├── chatgh-pr-and-ci-workflow/
+    │   │   ├── SKILL.md
+    │   │   └── scripts/
     │   ├── public-repo-and-default-branch-protection/
     │   │   └── SKILL.md
     │   └── python-package-release-with-chattool-pypi/
@@ -104,6 +107,10 @@ Hermes slash-command development and update handoff conventions that should be a
 ### `common/workspace-maintenance`
 
 Workspace maintenance, development-process, update, and handoff conventions shared across enabled workspaces.
+
+### `chatarch/chatgh-pr-and-ci-workflow`
+
+ChatGH-based PR readiness, CI triage, repository inventory, protection readback, and token-capability workflows for ChatArch repositories. Includes reusable scripts for PR readiness and repository inventory/protection snapshots.
 
 ### `chatarch/public-repo-and-default-branch-protection`
 
