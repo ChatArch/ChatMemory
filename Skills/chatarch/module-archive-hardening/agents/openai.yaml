@@ -1,0 +1,4 @@
+interface:
+  display_name: "Module Archive Hardening"
+  short_description: "Harden archived modules into packages."
+  default_prompt: "Use this skill to review archived project modules, harden the canonical package CLI/docs/tests, decide what should become a skill, and record archive follow-ups."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "ChatEnv Provider Workflow"
+  short_description: "Validate ChatEnv provider integration."
+  default_prompt: "Use this skill to add or review a ChatEnv config provider, verify entry point discovery, implement chatenv test support, and document provider install/use behavior."
