@@ -14,3 +14,6 @@ dist/
 *.egg-info/
 *.whl
 *.tar.gz
+
+__pycache__/
+*.py[cod]
