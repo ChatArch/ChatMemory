@@ -76,13 +76,15 @@ ChatMemory/
     │   │   └── SKILL.md
     │   └── python-package-release-with-chattool-pypi/
     │       └── SKILL.md
-    ├── common/
-    │   └── feishu-collaboration-documents/
-    │       └── SKILL.md
-    ├── hermes-slash-command-development/
-    │   └── SKILL.md
-    └── workspace-maintenance/
-        └── SKILL.md
+    └── common/
+        ├── feishu-collaboration-documents/
+        │   └── SKILL.md
+        ├── hermes-environment-notes/
+        │   └── SKILL.md
+        ├── hermes-slash-command-development/
+        │   └── SKILL.md
+        └── workspace-maintenance/
+            └── SKILL.md
 ```
 
 ## Current shared skills
@@ -90,6 +92,18 @@ ChatMemory/
 ### `common/feishu-collaboration-documents`
 
 Feishu collaboration-document convention and human-AI main document navigation.
+
+### `common/hermes-environment-notes`
+
+Hermes tool-session environment notes for interpreter, virtualenv, CLI config namespace, and package upload pitfalls.
+
+### `common/hermes-slash-command-development`
+
+Hermes slash-command development and update handoff conventions that should be available in enabled workspaces.
+
+### `common/workspace-maintenance`
+
+Workspace maintenance, development-process, update, and handoff conventions shared across enabled workspaces.
 
 ### `chatarch/public-repo-and-default-branch-protection`
 
