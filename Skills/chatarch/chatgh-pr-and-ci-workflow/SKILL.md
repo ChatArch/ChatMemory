@@ -1,7 +1,7 @@
 ---
 name: chatgh-pr-and-ci-workflow
-description: ChatArch repositories use ChatGH to inspect PR readiness, CI checks, Actions logs, repository inventory, protection status, and credential capabilities.
-version: 0.1.0
+description: ChatArch repositories use ChatGH to inspect PR readiness, manage PR write operations, CI checks, Actions logs, repository inventory, protection status, and credential capabilities.
+version: 0.1.2
 tags:
   - ChatArch
   - ChatGH
@@ -18,6 +18,8 @@ tags:
 Use this skill for ChatArch-series GitHub operations that should run through `chatgh`:
 
 - PR list/view/check readiness;
+- PR create/comment/edit workflow through `chatgh>=0.2.6`;
+- guarded PR merge only after explicit user authorization;
 - CI check and Actions run/job triage;
 - repository inventory and prioritization;
 - default-branch protection readback;
@@ -186,16 +188,63 @@ Token resolution order is:
 2. repo-local `.git/config` HTTPS auth header;
 3. ChatEnv typed env `GITHUB_ACCESS_TOKEN`.
 
-## Backlog candidates for ChatGH CLI
+## PR write workflow
 
-These operations are common enough to promote after the workflow stabilizes:
+Available since `chatgh>=0.2.6`. Use these commands instead of ad-hoc GitHub REST snippets when creating or updating PRs:
 
 ```bash
-chatgh pr create --repo owner/repo --base main --head branch --title TITLE --body-file BODY.md
-chatgh pr comment NUMBER --repo owner/repo --body-file COMMENT.md
-chatgh pr edit NUMBER --repo owner/repo --title TITLE --body-file BODY.md --base main
+chatgh pr create --repo owner/repo --base main --head branch --title "TITLE" --body-file BODY.md --json-output
+chatgh pr comment NUMBER --repo owner/repo --body-file COMMENT.md --json-output
+chatgh pr edit NUMBER --repo owner/repo --title "TITLE" --body-file BODY.md --json-output
+```
+
+Before any write operation, confirm permissions without exposing the token:
+
+```bash
+chatgh repo-perms --repo owner/repo --json-output
+```
+
+Use `chatgh pr merge` only after the user explicitly authorizes merging that exact PR and checks are green:
+
+```bash
+chatgh pr checks NUMBER --repo owner/repo --json-output
+chatgh pr merge NUMBER --repo owner/repo --method squash --check --json-output
+```
+
+`pr merge` is a real mutation, not a dry run. For mergeability/readiness summaries, keep using `pr view` and `pr checks`.
+
+
+## ChatMemory local long-running branch loop
+
+For this local Playground machine/workspace, use `rex/chatmini` as the fixed long-running ChatMemory accumulation branch. This is a local-level convention, not a global branch name: different machines may use different long-running accumulation branches.
+
+Default loop for local ChatMemory / shared Skills updates:
+
+1. Accumulate iterative skill and workflow edits on the machine's local long-running branch, currently `rex/chatmini` here.
+2. Open PR/MR from the local long-running branch to the default branch when the batch is ready.
+3. Merge only after explicit approval and final gates.
+4. After merge, fetch and fast-forward the default branch (`main` for ChatMemory; `master` for repositories that use it).
+5. Reset/overwrite `rex/chatmini` from the updated default branch so the next batch starts from the merged state:
+
+```bash
+git fetch --prune origin
+git checkout main
+git pull --ff-only origin main
+git checkout rex/chatmini
+git reset --hard main
+git push --force-with-lease origin rex/chatmini
+```
+
+For a `master`-based repository, replace `main` with `master`. This keeps one stable branch name for ongoing workspace knowledge edits while avoiding stale post-merge history.
+
+
+## Backlog candidates for ChatGH CLI
+
+These operations are still candidates for future promotion:
+
+```bash
 chatgh pr close NUMBER --repo owner/repo --comment-file COMMENT.md
 chatgh pr ready NUMBER --repo owner/repo --json-output
 ```
 
-A future `chatgh pr ready` should stay read-only. A future `chatgh pr merge` must remain a separate explicit command and must not be used as a dry run.
+A future `chatgh pr ready` should stay read-only. Merge readiness must remain separate from merge execution.
