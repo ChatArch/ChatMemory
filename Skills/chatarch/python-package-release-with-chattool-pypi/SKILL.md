@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.0
+version: 0.1.1
 tags:
   - ChatArch
   - Python
@@ -37,6 +37,31 @@ tags:
 - GitHub 目标仓库，例如 `ChatArch/ChatNPM`。
 - GitHub visibility：默认 `private`；只有用户明确点名批准 public 时才改 public。
 - 发布目标：PyPI production 还是 TestPyPI。
+
+### 版本连续性硬门槛
+
+对已有 PyPI 项目，版本必须从当前已发布版本连续推进：默认只允许 next patch，例如 `7.0.3 -> 7.0.4`。除非用户明确批准 minor/major bump，否则禁止跳到 `7.1.0`、`7.2.0` 或更高版本。
+
+发布准备或正式发版前必须同时检查三层状态：
+
+```bash
+python3 - <<'PY'
+import json, urllib.error, urllib.request
+name = '<ProjectName>'
+try:
+    with urllib.request.urlopen(f'https://pypi.org/pypi/{name}/json', timeout=20) as r:
+        data = json.load(r)
+    print('pypi_latest', data['info']['version'])
+    print('pypi_releases', sorted(data.get('releases', {}))[-10:])
+except urllib.error.HTTPError as exc:
+    print('pypi_http', exc.code)
+PY
+git fetch --tags origin
+git tag --list 'v*' --sort=-v:refname | head -20
+git ls-remote --tags origin 'v*' | tail -20
+```
+
+如果 `[project].version` / `src/<module>/__init__.py` / `tests/test_version.py` 已经写成非连续版本，必须先停止发版，开修正 PR/MR 把版本改回连续目标版本；不得继续 tag 或 upload。
 
 如发现错误包名已经发布，先停止写操作；不要尝试其他相似名绕过。先检查 PyPI JSON、项目页、版本、normalized name，再继续。
 
@@ -312,6 +337,22 @@ uv pip install '<ProjectName>==<version>'
 - PyPI：`ChatNPM==0.1.0` 上传成功，项目页 `https://pypi.org/project/ChatNPM/0.1.0/`。
 - 隔离安装验证：`uv pip install 'ChatNPM==0.1.0'` 后 `chatnpm --help` 正常。
 - 后续只有在用户明确批准后，才将 `ChatArch/ChatNPM` 改为 public 并设置默认分支保护；这不是 Python/PyPI 发布流程的默认步骤。
+
+## 结束同步硬门槛
+
+不论是 PR/MR 合并、版本准备 PR 合并，还是正式发版完成，结束前都必须把本地分支同步到远端最终状态，不能停在旧 feature/release 分支或未同步的本地 head。
+
+最小收尾命令：
+
+```bash
+git fetch --prune --tags origin
+git checkout main 2>/dev/null || git checkout master
+git pull --ff-only origin $(git branch --show-current)
+git status --short --branch
+git log -1 --oneline --decorate
+```
+
+如果当前工作还涉及仍然 open 的后续 PR/MR，必须明确说明本地当前停在哪个分支、该分支是否已推送、base 是否已更新、CI 是否到终态；不能把“远端已合并/已发布”和“本地已同步”混为一谈。
 
 ## 常见坑
 
