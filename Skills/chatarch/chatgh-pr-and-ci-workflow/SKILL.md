@@ -1,7 +1,7 @@
 ---
 name: chatgh-pr-and-ci-workflow
 description: ChatArch repositories use ChatGH to inspect PR readiness, manage PR write operations, CI checks, Actions logs, repository inventory, protection status, and credential capabilities.
-version: 0.1.2
+version: 0.1.3
 tags:
   - ChatArch
   - ChatGH
@@ -34,6 +34,8 @@ This belongs under `Skills/chatarch/`, not `Skills/common/`, because the command
 - Do not print raw tokens, `.git/config` `extraHeader` values, Authorization headers, or decoded credentials.
 - Do not write tokenized Git remote URLs.
 - Repository visibility and branch-protection mutation are separate approval gates. This skill covers readback and triage by default.
+- Official GitHub CLI `gh` may be used as an interface/manual reference only. Do not make it the runtime dependency, CI/ops fallback, or real operation path for ChatArch GitHub work.
+- When a needed GitHub capability is missing from ChatGH, add the reusable ChatGH/Arch capability first instead of hiding the action in an ad-hoc script.
 - For ChatTool/ChatArch work, use the ChatArch venv when possible:
 
 ```bash
@@ -64,6 +66,47 @@ projects/<task>/reports/chatgh-pr-readiness.md
 projects/<task>/playground/chatgh-pr-checks-<repo>-<number>.json
 projects/<task>/playground/chatgh-repo-inventory-<owner>.json
 ```
+
+## Adding or aligning ChatGH capabilities
+
+Use this when the user asks for a new GitHub operation or when a real workflow reveals a missing ChatGH command.
+
+1. Check the current ChatGH surface first:
+
+   ```bash
+   chatgh --help
+   chatgh repo --help
+   chatgh pr --help
+   chatgh run --help
+   ```
+
+2. If the command is missing or incomplete, inspect the official GitHub CLI shape as reference only:
+
+   ```bash
+   gh <group> --help
+   gh <group> <command> --help
+   ```
+
+3. If official `gh` already has the capability, borrow the command name, positionals, common aliases, and user-facing help shape where they do not conflict with ChatGH safety semantics. Keep ChatGH extensions such as `--json-output`, `--token`, repo-local auth / ChatEnv token resolution, `--if-exists use`, and merge safety gates.
+4. If official `gh` does not have the capability, design a ChatGH-native surface with explicit rationale, stable JSON, and clear mutation boundaries.
+5. Implement CLI and Python API together:
+   - CLI parsing and rendering in `src/chatgh/github/cli.py` or `src/chatgh/commands/pr.py`.
+   - Reusable workflow functions in `src/chatgh/github/commands.py` or an equivalent service module.
+   - GitHub API payload details in `src/chatgh/github/requests.py` / `api.py`.
+   - Human-readable rendering helpers in `src/chatgh/github/render.py`.
+6. Follow TDD: write failing CLI/API tests first, then implement the minimal code and update docs.
+
+For repository fork alignment, prefer both forms:
+
+```bash
+# gh-like
+chatgh repo fork owner/repo --org ChatArch --fork-name repo-copy
+
+# ChatGH explicit / idempotent
+chatgh repo fork --source owner/repo --owner ChatArch --name repo-copy --if-exists use --json-output
+```
+
+For the current design source, see ChatGH's `docs/gh-interface-alignment.md`.
 
 ## PR readiness workflow
 
