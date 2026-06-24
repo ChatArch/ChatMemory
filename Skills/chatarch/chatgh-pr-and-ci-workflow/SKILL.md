@@ -1,7 +1,7 @@
 ---
 name: chatgh-pr-and-ci-workflow
 description: ChatArch repositories use ChatGH to inspect PR readiness, manage PR write operations, CI checks, Actions logs, repository inventory, protection status, and credential capabilities.
-version: 0.1.3
+version: 0.1.4
 tags:
   - ChatArch
   - ChatGH
@@ -105,6 +105,34 @@ chatgh repo fork owner/repo --org ChatArch --fork-name repo-copy
 # ChatGH explicit / idempotent
 chatgh repo fork --source owner/repo --owner ChatArch --name repo-copy --if-exists use --json-output
 ```
+
+The current common-interface batch also includes these first-class commands. Prefer them over ad-hoc REST snippets or official `gh` runtime fallback:
+
+```bash
+# Repo
+chatgh repo view owner/repo --json-output
+chatgh repo clone owner/repo ./repo-copy
+chatgh repo sync --repo owner/repo --branch main --remote origin --json-output
+chatgh repo edit owner/repo --description "New description" --json-output
+
+# PR lifecycle / review
+chatgh pr status --repo owner/repo --json-output
+chatgh pr diff 123 --repo owner/repo
+chatgh pr close 123 --repo owner/repo --comment "Superseded" --json-output
+chatgh pr reopen 123 --repo owner/repo --json-output
+chatgh pr review 123 --repo owner/repo --approve --body-file review.md --json-output
+chatgh pr ready 123 --repo owner/repo --json-output
+chatgh pr update-branch 123 --repo owner/repo --expected-head-sha SHA --json-output
+
+# Actions run
+chatgh run list --repo owner/repo --limit 20 --json-output
+chatgh run watch 123456789 --repo owner/repo --timeout 600 --json-output
+chatgh run rerun 123456789 --repo owner/repo --json-output
+chatgh run cancel 123456789 --repo owner/repo --json-output
+chatgh run download 123456789 --repo owner/repo --dir ./artifacts --json-output
+```
+
+Local-git side-effect commands stay conservative: `repo clone` refuses to overwrite a non-empty target directory, and `repo sync` defaults to fast-forward-only pull. High-risk commands such as repository delete/archive/rename and PR checkout still require a separate design and explicit safety gate.
 
 For the current design source, see ChatGH's `docs/gh-interface-alignment.md`.
 
