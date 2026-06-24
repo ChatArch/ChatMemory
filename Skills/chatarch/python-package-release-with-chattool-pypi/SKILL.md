@@ -143,6 +143,25 @@ PYTHONPATH=src python -m chatgh.cli repo create \
 
 默认创建 private 仓库；只有用户明确要求 public 时才传 `--public` 或后续修改 visibility。
 
+创建/确认仓库后，必须立即为当前本地仓库配置 repo-local HTTPS token。ChatArch / Chat-series 仓库不应为了绕过 HTTPS 鉴权问题改用 SSH clone/push；`chatgh set-token` 是仓库创建的伴生动作。详细流程使用 ChatArch skill `chatgh-repo-token-setup`。
+
+最小形状：
+
+```bash
+cd ~/Playground/core/<ProjectName>
+git remote add origin https://github.com/ChatArch/<ProjectName>.git 2>/dev/null || \
+  git remote set-url origin https://github.com/ChatArch/<ProjectName>.git
+git remote set-url --push origin https://github.com/ChatArch/<ProjectName>.git
+
+# If ChatEnv already has the GitHub token, use ChatGH's config/token path without printing it.
+# If the user supplies a PAT, pass it through --token without logging it.
+chatgh set-token --token <PAT>
+chatgh repo-perms --repo ChatArch/<ProjectName> --json-output
+git push --dry-run origin main
+```
+
+Never print the token, `.git/config` extraHeader, or decoded Authorization value. Verify by `repo-perms` capability output and HTTPS push dry-run only.
+
 新建仓库后，尽量立即尝试给默认分支预置 branch protection。默认保护规则只做安全底线，不默认要求 code review：
 
 - require pull request before merging / 禁止直接 push 到默认分支；
@@ -342,8 +361,8 @@ uv pip install '<ProjectName>==<version>'
 - 使用命令：`chattool pypi init ChatNPM -t chatarch --project-dir ~/Playground/core/ChatNPM ...`。
 - 生成结果：`project.name = "ChatNPM"`，module 为 `chatnpm`，CLI 为 `chatnpm`。
 - GitHub 仓库通过 ChatGH 源码版创建：`ChatArch/ChatNPM`，初始为 private。
-- 本地 commit：`a6434a7 Initial ChatNPM package scaffold`。
-- remote：`git@main.github.com:ChatArch/ChatNPM.git`。
+- local commit：`a6434a7 Initial ChatNPM package scaffold`。
+- remote：`https://github.com/ChatArch/ChatNPM.git`，并通过 `chatgh set-token` 配置 repo-local HTTPS token。
 - PyPI：`ChatNPM==0.1.0` 上传成功，项目页 `https://pypi.org/project/ChatNPM/0.1.0/`。
 - 隔离安装验证：`uv pip install 'ChatNPM==0.1.0'` 后 `chatnpm --help` 正常。
 - 后续只有在用户明确批准后，才将 `ChatArch/ChatNPM` 改为 public 并设置默认分支保护；这不是 Python/PyPI 发布流程的默认步骤。
@@ -372,6 +391,8 @@ git log -1 --oneline --decorate
 - 如果全局 `chatgh` 没有某个子命令，先检查 `~/Playground/core/ChatGH` 的源码版，不要绕过 ChatGH 流程。
 - `.pypirc`、GitHub token、ChatEnv token 都不能输出内容；日志只记录凭据是否存在和使用的工具路径。
 - 新建 ChatArch 仓库后，默认把 local `origin` 设为 HTTPS，并在该仓库自己的 `.git/config` 写入 repo-specific `http.https://github.com/ChatArch/<ProjectName>.git.extraHeader = Authorization: Basic <base64(x-access-token:TOKEN)>`。不要把 token 放进 remote URL；不要打印 raw extraHeader。写完后必须用 `git ls-remote --heads origin main` 和 `git push --dry-run origin main` 验证。
+- Trusted Publishing 的 `environment` 必须与 PyPI Publisher 配置完全一致。不要在 publish workflow 中默认写 `environment: pypi`；只有确认 PyPI Trusted Publisher 的 claim 包含 `environment:pypi` 时才加。若 PyPI 配置是无 environment 的 publisher，workflow 必须移除 `environment`，否则会失败为 `invalid-publisher`，claim 类似 `repo:OWNER/REPO:environment:pypi`。
+- 正式发版必须走标准链路：PR 绿灯 -> merge 到默认分支 -> 在默认分支 merge commit 上打 `vX.Y.Z` tag -> GitHub Actions publish -> PyPI JSON/simple index -> clean install。不要为了省事用本地 Twine key 代替 tag workflow；本地 Twine 只能作为已明确记录的异常救援，并且之后必须修复标准 workflow。
 - build/pytest 会产生 `.venv`、`dist`、`.pytest_cache`、`*.egg-info` 等中间产物；commit 前确认 `.gitignore` 生效，必要时清理或保持未跟踪文件不入库。
 
 ## 完成汇报模板

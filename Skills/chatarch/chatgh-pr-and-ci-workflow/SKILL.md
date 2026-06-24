@@ -225,11 +225,13 @@ Check for:
 - `can_merge_pr` for merges;
 - `can_view_checks` and `can_view_actions` for CI triage.
 
-Token resolution order is:
+Token resolution order for API operations is:
 
 1. explicit `--token`;
 2. repo-local `.git/config` HTTPS auth header;
 3. ChatEnv typed env `GITHUB_ACCESS_TOKEN`.
+
+For repository creation / first checkout / HTTPS git push setup, use the separate ChatArch skill `chatgh-repo-token-setup`. `chatgh set-token` belongs to repository transport auth setup, not PR readiness itself.
 
 ## PR write workflow
 
