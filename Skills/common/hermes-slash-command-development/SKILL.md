@@ -146,7 +146,7 @@ git diff --check
 
 ## Project record updates
 
-For this user's current QLP/Ambient-Hermes setup, source pushes may go directly over the SSH remote when explicitly authorized; do not force a GitHub PR/MR path unless the user asks for one. ChatMemory-backed skill updates can use the default Chat Emb configuration and should be committed to the ChatMemory Git repo when they change shared workflow knowledge.
+For this user's current QLP/Ambient-Hermes setup, do not assume SSH remotes for ChatArch / Chat-series repositories. Those repos should use HTTPS remotes plus repo-local token auth via the ChatArch `chatgh-repo-token-setup` workflow. For non-ChatArch repositories, follow the repository's own documented auth path and only use SSH when the user explicitly authorizes it. ChatMemory-backed skill updates can use the default ChatMemory Git configuration and should be committed to the ChatMemory Git repo when they change shared workflow knowledge.
 
 After each substantive step, update the active project `progress.md` with:
 
