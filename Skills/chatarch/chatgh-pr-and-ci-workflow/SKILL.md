@@ -106,7 +106,7 @@ chatgh repo fork owner/repo --org ChatArch --fork-name repo-copy
 chatgh repo fork --source owner/repo --owner ChatArch --name repo-copy --if-exists use --json-output
 ```
 
-The current common-interface batch also includes these first-class commands. Prefer them over ad-hoc REST snippets or official `gh` runtime fallback:
+Available since `chatgh>=0.2.7`, the common-interface batch also includes these first-class commands. Prefer them over ad-hoc REST snippets or official `gh` runtime fallback:
 
 ```bash
 # Repo
@@ -114,6 +114,7 @@ chatgh repo view owner/repo --json-output
 chatgh repo clone owner/repo ./repo-copy
 chatgh repo sync --repo owner/repo --branch main --remote origin --json-output
 chatgh repo edit owner/repo --description "New description" --json-output
+chatgh repo edit owner/repo --visibility private --accept-visibility-change-consequences --json-output
 
 # PR lifecycle / review
 chatgh pr status --repo owner/repo --json-output
