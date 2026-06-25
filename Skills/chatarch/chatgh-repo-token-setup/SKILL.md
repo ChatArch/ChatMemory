@@ -48,11 +48,11 @@ git remote add origin https://github.com/ChatArch/<RepoName>.git 2>/dev/null || 
   git remote set-url origin https://github.com/ChatArch/<RepoName>.git
 git remote set-url --push origin https://github.com/ChatArch/<RepoName>.git
 
-# Use a PAT only if provided by the user; otherwise retrieve it through the ChatGH/ChatEnv path without printing it.
-chatgh set-token --token <PAT>
+# Prefer the password-style interactive prompt; avoid putting a real PAT in shell history or process listings.
+chatgh set-token
 ```
 
-If using the existing ChatGH/ChatEnv token path programmatically, never print the token. Pass it directly to `chatgh set-token` and redact command output if needed.
+If using the existing ChatGH/ChatEnv token path programmatically, never print the token. Pipe/pass it directly to `chatgh set-token` only through a non-logging helper and redact command output if needed; do not show the raw command with the token value.
 
 ## Verification
 
@@ -88,7 +88,7 @@ If a repo currently has SSH remotes from older work, convert them:
 ```bash
 git remote set-url origin https://github.com/ChatArch/<RepoName>.git
 git remote set-url --push origin https://github.com/ChatArch/<RepoName>.git
-chatgh set-token --token <PAT>
+chatgh set-token
 ```
 
 Then verify with `repo-perms` and HTTPS dry-run push.

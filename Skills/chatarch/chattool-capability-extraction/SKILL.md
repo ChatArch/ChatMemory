@@ -2,6 +2,11 @@
 name: chattool-capability-extraction
 description: ChatArch workflow for extracting useful ChatTool interfaces into standalone Python packages such as ChatPyPI.
 version: 0.1.0
+tags:
+  - ChatArch
+  - ChatTool
+  - extraction
+  - packaging
 status: draft
 owner: ChatArch
 source_project: ChatTool

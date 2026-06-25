@@ -288,13 +288,4 @@ chatgh pr merge NUMBER --repo owner/repo --method squash --check --json-output
 `pr merge` is a real mutation, not a dry run. For mergeability/readiness summaries, keep using `pr view` and `pr checks`.
 
 
-## Backlog candidates for ChatGH CLI
-
-These operations are still candidates for future promotion:
-
-```bash
-chatgh pr close NUMBER --repo owner/repo --comment-file COMMENT.md
-chatgh pr ready NUMBER --repo owner/repo --json-output
-```
-
-A future `chatgh pr ready` should stay read-only. Merge readiness must remain separate from merge execution.
+`pr close` and `pr ready` are real remote mutations in `chatgh>=0.2.7`; use them only when the user intends that exact state change. Merge readiness remains separate from merge execution.

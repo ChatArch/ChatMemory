@@ -159,9 +159,8 @@ git remote add origin https://github.com/ChatArch/<ProjectName>.git 2>/dev/null 
   git remote set-url origin https://github.com/ChatArch/<ProjectName>.git
 git remote set-url --push origin https://github.com/ChatArch/<ProjectName>.git
 
-# If ChatEnv already has the GitHub token, use ChatGH's config/token path without printing it.
-# If the user supplies a PAT, pass it through --token without logging it.
-chatgh set-token --token <PAT>
+# Prefer the password-style interactive prompt; avoid putting a real PAT in shell history or process listings.
+chatgh set-token
 chatgh repo-perms --repo ChatArch/<ProjectName> --json-output
 git push --dry-run origin main
 ```
@@ -178,40 +177,7 @@ Never print the token, `.git/config` extraHeader, or decoded Authorization value
 
 如果 private 仓库因为 GitHub plan/visibility 限制无法设置 protection，只记录 blocker，不要自动改 public。只有用户明确批准某个仓库 public 时，才切到 `public-repo-and-default-branch-protection` skill 去执行 public + protection。
 
-如果有 GitHub CLI，可用 `gh api` 直接设置，例如：
-
-```bash
-OWNER=ChatArch
-REPO=<ProjectName>
-BRANCH=main
-
-gh api \
-  --method PUT \
-  -H "Accept: application/vnd.github+json" \
-  -H "X-GitHub-Api-Version: 2022-11-28" \
-  "/repos/$OWNER/$REPO/branches/$BRANCH/protection" \
-  --input - <<'JSON'
-{
-  "required_status_checks": null,
-  "enforce_admins": true,
-  "required_pull_request_reviews": {
-    "dismiss_stale_reviews": false,
-    "require_code_owner_reviews": false,
-    "required_approving_review_count": 0,
-    "require_last_push_approval": false,
-    "bypass_pull_request_allowances": {"users": [], "teams": [], "apps": []}
-  },
-  "restrictions": null,
-  "required_linear_history": false,
-  "allow_force_pushes": false,
-  "allow_deletions": false,
-  "block_creations": false,
-  "required_conversation_resolution": false,
-  "lock_branch": false,
-  "allow_fork_syncing": true
-}
-JSON
-```
+如果当前 ChatGH 尚未提供可复用的 branch-protection apply 命令，不要把官方 `gh api` 当作 ChatArch 运行/ops fallback。应先使用 `public-repo-and-default-branch-protection` skill 检查现有 ChatGH 能力；若确实缺少 apply capability，先补 ChatGH 可复用命令或把该步骤记录为 blocker。官方 `gh` 只能作为接口/manual reference。
 
 如果 GitHub 对 private 仓库返回以下限制，则记录 blocker，等仓库 public 或账号/组织 plan 支持 private branch protection 后再补：
 
@@ -305,24 +271,11 @@ git add .
 git commit -m 'Initial <ProjectName> package scaffold'
 git remote add origin https://github.com/ChatArch/<ProjectName>.git
 
-# Repo-local HTTPS token config: write the auth header into this repository's
-# .git/config, not into the remote URL. Do not print the token or the base64 value.
-TOKEN=$(cd ~/Playground/core/ChatGH && . .venv/bin/activate && PYTHONPATH=src python - <<'PY'
-from chatgh.github.api import resolve_token_with_source
-r = resolve_token_with_source(None)
-t = r.get('token') if isinstance(r, dict) else None
-if not t:
-    raise SystemExit('missing GitHub token')
-print(t)
-PY
-)
-BASIC=$(TOKEN="$TOKEN" python3 - <<'PY'
-import base64, os
-print(base64.b64encode(("x-access-token:" + os.environ["TOKEN"]).encode()).decode())
-PY
-)
-git config --local "http.https://github.com/ChatArch/<ProjectName>.git.extraHeader" "Authorization: Basic $BASIC"
-unset TOKEN BASIC
+# Repo-local HTTPS token config: use ChatGH's safe setup path.
+# `chatgh set-token` uses password-style interactive input when needed;
+# do not place real PATs in shell history or write auth headers by hand.
+chatgh set-token
+chatgh repo-perms --repo ChatArch/<ProjectName> --json-output
 
 git ls-remote --heads origin main || true
 git push --dry-run -u origin main
@@ -330,7 +283,7 @@ git push -u origin main
 git ls-remote --heads origin main
 ```
 
-Use the HTTPS remote plus repo-local `.git/config` auth header by default. Avoid embedding tokens in `remote.origin.url`. The token will be stored in `.git/config` as an `http.<url>.extraHeader`; this is repository-local and not committed, but it is still sensitive, so never print raw `git config --get-regexp http.*extraHeader` output.
+Use the HTTPS remote plus `chatgh set-token` repo-local credential setup by default. Avoid embedding tokens in `remote.origin.url`, avoid command-line PAT arguments, and never print raw `.git/config` auth header values.
 
 ### 6. Tag-driven PyPI 发布与回读验证
 
@@ -411,7 +364,7 @@ git log -1 --oneline --decorate
 - 删除错误 PyPI 项目不能靠 `twine`；`twine` 只有 `check/register/upload`。删除通常需要 PyPI Web UI，且不保证立即释放相似名限制。
 - 如果全局 `chatgh` 没有某个子命令，先检查 `~/Playground/core/ChatGH` 的源码版，不要绕过 ChatGH 流程。
 - `.pypirc`、GitHub token、ChatEnv token 都不能输出内容；日志只记录凭据是否存在和使用的工具路径。
-- 新建 ChatArch 仓库后，默认把 local `origin` 设为 HTTPS，并在该仓库自己的 `.git/config` 写入 repo-specific `http.https://github.com/ChatArch/<ProjectName>.git.extraHeader = Authorization: Basic <base64(x-access-token:TOKEN)>`。不要把 token 放进 remote URL；不要打印 raw extraHeader。写完后必须用 `git ls-remote --heads origin main` 和 `git push --dry-run origin main` 验证。
+- 新建 ChatArch 仓库后，默认把 local `origin` 设为 HTTPS，并通过 `chatgh set-token` 配置 repo-local git transport credential。不要手写或展示 raw auth header；不要把 token 放进 remote URL；写完后必须用 `chatgh repo-perms`、`git ls-remote --heads origin main` 和 `git push --dry-run origin main` 验证。
 - Trusted Publishing 的 `environment` 必须与 PyPI Publisher 配置完全一致。不要在 publish workflow 中默认写 `environment: pypi`；只有确认 PyPI Trusted Publisher 的 claim 包含 `environment:pypi` 时才加。若 PyPI 配置是无 environment 的 publisher，workflow 必须移除 `environment`，否则会失败为 `invalid-publisher`，claim 类似 `repo:OWNER/REPO:environment:pypi`。
 - 正式发版必须走标准链路：PR 绿灯 -> merge 到默认分支 -> 在默认分支 merge commit 上打 `vX.Y.Z` tag -> GitHub Actions publish -> PyPI JSON/simple index -> clean install。不要为了省事用本地 Twine key 代替 tag workflow；本地 Twine 只能作为已明确记录的异常救援，并且之后必须修复标准 workflow。
 - build/pytest 会产生 `.venv`、`dist`、`.pytest_cache`、`*.egg-info` 等中间产物；commit 前确认 `.gitignore` 生效，必要时清理或保持未跟踪文件不入库。
