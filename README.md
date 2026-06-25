@@ -39,10 +39,11 @@ Group semantics:
 - `chatarch/`: stable ChatArch-specific repository, release, governance, and package workflows.
 - `common/`: stable skills intended to be available on every enabled workspace/machine, but not specific to ChatArch.
 - `agents/`: shared agent-created or agent-learned skills that emerge while agents work through PRD, project, archive, and review processes. This group is intentionally lightweight until usage patterns stabilize.
+- `local/`: optional machine-local skill templates. This group is tracked only so a new machine can copy and adapt a local workflow quickly; it is **not** default-linked and should not be treated as portable shared policy.
 
-Local workspace-only skills belong under `<workspace>/skills/local`. They are machine-specific or private to the current workspace and are not tracked by ChatMemory or linked from ChatMemory.
+Local workspace-only active skills belong under `<workspace>/skills/local`. They are machine-specific or private to the current workspace and are not linked from ChatMemory by default. If a local workflow is useful as a future-machine template, it may be tracked under `Skills/local/` with clear copy-and-adapt boundaries.
 
-Do not place machine-specific, account-specific, or sensitive local-only skills in default-linked groups. Keep those in a non-default group or in the source project until a sharing policy is clear.
+Do not place machine-specific, account-specific, or sensitive local-only skills in default-linked groups. Keep those in `Skills/local/`, a non-default group, or the source project until a sharing policy is clear.
 
 ## Workspace plugin model
 
@@ -78,28 +79,28 @@ ChatMemory/
 ├── README.md
 ├── LICENSE
 └── Skills/
-    ├── agents/
-    │   └── README.md
-    ├── chatarch/
-    │   ├── chatarch-org-pr-status/
-    │   │   ├── SKILL.md
-    │   │   └── scripts/
-    │   ├── chatgh-pr-and-ci-workflow/
-    │   │   ├── SKILL.md
-    │   │   └── scripts/
-    │   ├── public-repo-and-default-branch-protection/
-    │   │   └── SKILL.md
-    │   └── python-package-release-with-chattool-pypi/
-    │       └── SKILL.md
-    └── common/
-        ├── feishu-collaboration-documents/
-        │   └── SKILL.md
-        ├── hermes-environment-notes/
-        │   └── SKILL.md
-        ├── hermes-slash-command-development/
-        │   └── SKILL.md
-        └── workspace-maintenance/
-            └── SKILL.md
+│   ├── agents/
+│   │   └── README.md
+│   ├── chatarch/
+│   │   ├── chatarch-org-pr-status/
+│   │   ├── chatenv-provider-workflow/
+│   │   ├── chatgh-pr-and-ci-workflow/
+│   │   ├── chatgh-repo-token-setup/
+│   │   ├── chatnet-ecnu-default-visitor/
+│   │   ├── chattool-capability-extraction/
+│   │   ├── module-archive-hardening/
+│   │   ├── public-repo-and-default-branch-protection/
+│   │   └── python-package-release-with-chattool-pypi/
+│   ├── common/
+│   │   ├── feishu-collaboration-documents/
+│   │   ├── hermes-environment-notes/
+│   │   ├── hermes-lark-cli-binding/
+│   │   ├── hermes-slash-command-development/
+│   │   └── workspace-maintenance/
+│   └── local/
+│       ├── README.md
+│       └── chatmemory-local-branch-loop/
+│           └── SKILL.md
 ```
 
 ## Current shared skills
@@ -111,6 +112,10 @@ Feishu collaboration-document convention and human-AI main document navigation.
 ### `common/hermes-environment-notes`
 
 Hermes tool-session environment notes for interpreter, virtualenv, CLI config namespace, and package upload pitfalls.
+
+### `common/hermes-lark-cli-binding`
+
+Install Lark CLI and bind it to the same Feishu/Lark app used by Hermes Agent on a machine.
 
 ### `common/hermes-slash-command-development`
 
@@ -132,6 +137,14 @@ Quick ChatGH-based organization status workflow for finding which ChatArch repos
 
 ChatGH-based PR readiness, CI triage, repository inventory, protection readback, and token-capability workflows for ChatArch repositories. Includes reusable scripts for PR readiness and repository inventory/protection snapshots.
 
+### `chatarch/chatnet-ecnu-default-visitor`
+
+Set or refresh ECNU default visitor accounts through ChatNet safely, including login fallback and secret redaction.
+
+### `chatarch/chattool-capability-extraction`
+
+Split a useful ChatTool interface into a standalone ChatArch package with explicit ownership, safety, parent-reconnection, and release boundaries.
+
 ### `chatarch/public-repo-and-default-branch-protection`
 
 ChatArch repository visibility and default-branch protection workflow.
@@ -139,6 +152,12 @@ ChatArch repository visibility and default-branch protection workflow.
 ### `chatarch/python-package-release-with-chattool-pypi`
 
 ChatArch Python package creation, release, and PyPI verification workflow.
+
+## Current local templates
+
+### `local/chatmemory-local-branch-loop`
+
+Machine-local ChatMemory PR/merge/reset loop template. It is tracked so a new machine can copy and adapt the local branch/path policy, but it is not a default linked shared skill.
 
 ## Local workspace link convention
 
