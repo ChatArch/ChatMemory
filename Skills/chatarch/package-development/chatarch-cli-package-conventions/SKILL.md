@@ -1,6 +1,6 @@
 ---
 name: chatarch-cli-package-conventions
-description: "ChatArch Python CLI package conventions: ChatEnv ownership, ChatStyle interactive UX, dependency bounds, and package-template checks."
+description: "ChatArch Python CLI package conventions: ChatEnv integration, ChatStyle interactive UX, dependency bounds, and package-template checks."
 version: 0.1.0
 ---
 
@@ -17,13 +17,9 @@ Use this skill when creating, modifying, reviewing, or releasing a ChatArch Pyth
 
 Load this skill before writing package code, reviewing package diffs, or finalizing a PR that touches ChatEnv/ChatStyle integration.
 
-For broader ChatArch package-development routing, use the ChatMemory theme index `Skills/chatarch/package-development/README.md` when available. It routes new-package, PR/CI, PyPI publisher, release, and extraction tasks to the appropriate focused skills instead of treating any one giant skill as the only entry point.
-
 ## Core Principle
 
-Do not reimplement shared ChatArch substrate behavior inside a leaf package.
-
-A leaf package should register with and call ChatEnv/ChatStyle. It should not fork their storage, parsing, interactive, masking, or profile semantics unless the user explicitly asks to change the substrate itself.
+A leaf package should register with and call ChatEnv/ChatStyle for shared config, profile, masking, and interactive behavior. General behavior belongs in the substrate package; package-local code should stay focused on the package domain.
 
 If a desired behavior is missing from ChatEnv or ChatStyle, stop and classify it:
 
@@ -33,24 +29,24 @@ If a desired behavior is missing from ChatEnv or ChatStyle, stop and classify it
 
 ## Template expectations
 
-ChatArch package templates should generate a real package skeleton, not leave `hello` / `Hello, ChatArch!` as the default user-facing command or release-readiness proof. A template may use a tiny placeholder during scaffolding development, but a package task is not done until the demo command/test/docs are replaced with the package's real CLI surface or explicitly removed.
+ChatArch package templates should generate a usable package skeleton with the expected command surface, tests, README, and release workflow hooks.
 
 Generated ChatArch CLI packages should include:
 
 - top-level `--version`
 - help text for the actual package command surface
 - tests for the real command skeleton and version output
-- ChatEnv/ChatStyle wiring when the package owns config or interactive input
+- ChatEnv/ChatStyle wiring when the package defines config or interactive input
 - build/check/publish workflow files that match the intended release path
 
-When the user corrects scaffold behavior, update the actual template source and generated-template tests first when possible; do not only patch workflow docs. Keep release skills focused on release gates and route template-internal rules back here.
+When scaffold behavior changes, update the template source, generated-template tests, and workflow docs together.
 
 
 ## ChatEnv Rules
 
 ### Register, do not bypass
 
-For a package that owns env/config fields:
+For a package that provides env/config fields:
 
 1. Provide `src/<module>/config.py` with a `BaseEnvConfig` subclass.
 2. Register it in `pyproject.toml`:
@@ -129,7 +125,7 @@ Package CLIs should expose:
 
 ## Dependency Bounds
 
-For ChatArch-owned packages, internal dependencies need upper bounds.
+For ChatArch packages, internal dependencies need upper bounds.
 
 For pre-1.0 internal packages, use the next minor as the compatibility boundary:
 

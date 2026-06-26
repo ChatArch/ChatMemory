@@ -23,7 +23,7 @@ package-development/
 
 ### `chatarch-cli-package-conventions`
 
-用途：ChatArch Python CLI 包开发阶段的通用规范：ChatEnv ownership、ChatStyle 交互、依赖边界、模板骨架和 generated package 检查。
+用途：ChatArch Python CLI 包开发阶段的通用规范：ChatEnv 集成、ChatStyle 交互、依赖边界、模板骨架和 generated package 检查。
 
 覆盖流程：
 
