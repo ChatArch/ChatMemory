@@ -106,6 +106,40 @@ If a package offers `-e/--env-profile NAME`, define semantics clearly:
 - CLI output should show key names, profile names, paths, counts, and booleans only.
 - Avoid adding parallel `*_FILE` storage fields when the intended system-of-record is ChatEnv.
 
+## Reusable Python API Behind CLI Commands
+
+A ChatArch CLI command should be a thin command-line adapter around a reusable Python function or service object. Put domain logic, IO orchestration, parsing helpers, and result shaping in importable functions/modules first; keep the Click/Typer command body focused on argument resolution, interaction, formatting, and exit-code handling.
+
+This is required even for CLI-first tools because the same capability should be callable from:
+
+- Python code in another ChatArch package without shelling out to the CLI
+- future MCP tools or gateway/platform integrations
+- tests that verify behavior without going through terminal argv parsing
+- automation that wants structured Python return values instead of subprocess stdout
+
+Preferred shape:
+
+```python
+# src/<module>/operations.py
+def perform_action(input_value: str, *, profile: str | None = None) -> ActionResult:
+    """Reusable business/API function."""
+    ...
+
+# src/<module>/cli.py
+@click.command()
+def action(...):
+    result = perform_action(...)
+    render_result(result)
+```
+
+When implementing or reviewing a CLI command, verify that:
+
+- the command's core behavior is importable and documented enough for Python callers
+- tests cover the reusable function/API directly, plus a smaller CLI smoke layer
+- the Python API accepts typed parameters rather than pre-parsed argv strings
+- result objects/data are structured enough for MCP or other adapters to reuse
+- the CLI does not become the only stable integration surface for package-local capabilities
+
 ## ChatStyle / Interactive Rules
 
 Use ChatStyle for user-facing interactive behavior instead of hand-rolled prompts:
@@ -151,15 +185,17 @@ Before finalizing a ChatArch CLI package PR:
 2. ChatEnv schema includes every supported field and marks sensitive fields.
 3. No package-local reimplementation of ChatEnv file writing/parsing unless explicitly justified.
 4. `-e/--env-profile` behavior, if present, is tested for selected-profile isolation.
-5. ChatStyle is used for interactive prompts and non-interactive failure paths.
-6. Top-level `--version` works and has tests.
-7. Runtime dependencies include bounded ChatArch internals.
-8. Full gates pass: unit tests, version smoke, build, package check, docs if present.
-9. Security scan confirms no hardcoded secrets or raw token/cookie output.
-10. Real smoke uses a task-local home or clearly documented existing profile and prints only non-sensitive summaries.
+5. CLI commands are thin adapters over reusable importable Python functions/APIs, with direct function tests plus CLI smoke tests.
+6. ChatStyle is used for interactive prompts and non-interactive failure paths.
+7. Top-level `--version` works and has tests.
+8. Runtime dependencies include bounded ChatArch internals.
+9. Full gates pass: unit tests, version smoke, build, package check, docs if present.
+10. Security scan confirms no hardcoded secrets or raw token/cookie output.
+11. Real smoke uses a task-local home or clearly documented existing profile and prints only non-sensitive summaries.
 
 ## Common Pitfalls
 
+- Letting CLI command bodies become the only place where business logic exists; this blocks Python callers, MCP adapters, gateway integrations, and direct function tests.
 - Rewriting `.env` files in the leaf package because a single key needs updating.
 - Adding `chmod 0600`, custom dotenv rendering, interpolation rules, or profile sanitization in one package instead of fixing ChatEnv globally.
 - Treating independent reviewer suggestions as automatically correct without checking the substrate's existing implementation.
