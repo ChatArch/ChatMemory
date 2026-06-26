@@ -9,10 +9,7 @@ tags:
   - repository-visibility
   - ChatGH
 reference:
-  - package-development: "主题索引；定位 ChatArch package/repo workflow 相关流程"
-  - chatgh-pr-and-ci-workflow: "repo/protection readback 与 PR-only workflow 检查"
-  - chatgh-repo-token-setup: "需要本地 git push/fetch 时配置 repo-local HTTPS auth"
-
+  - chatgh-repo-token-setup: "ChatGH repo-scoped credential；repo edit/protection 读取同一仓库配置"
 ---
 
 # ChatArch 仓库 public + 默认分支保护流程
@@ -53,6 +50,8 @@ sed -n '1,180p' projects/README.md
 ## 预检查：列出当前 visibility
 
 优先用 ChatGH。若全局 `chatgh` 版本较旧，使用源码版：
+
+> PYTHONPATH=src python -m chatgh.cli 这个统一用 chatgh
 
 ```bash
 cd ~/Playground/core/ChatGH

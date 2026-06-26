@@ -2,26 +2,37 @@
 
 这个目录收纳 ChatArch 常规包 / Python 包 / package release 相关 skills：新仓库、包模板、ChatArch style、PR/MR、CI、PyPI 发布、Trusted Publisher、从旧仓库抽包。
 
-本目录作为 `package-development` 主题节点，其中 `reference:` 字段声明该 skill 与其他 skill 节点的关系。
+本目录只是 package development 分类入口；`reference:` 是 `Skills/README.md` 定义的全局 skill graph 字段，不在主题 README 中单独定义。
 
 ## 当前主题节点
 
 ```text
 package-development/
   README.md
+  chatarch-cli-package-conventions/
   python-package-release-with-chattool-pypi/
   chatgh-pr-and-ci-workflow/
   chatgh-repo-token-setup/
+  chatpypi-publisher-management/
   public-repo-and-default-branch-protection/
   chattool-capability-extraction/
   chatarch-org-pr-status/
 ```
 
-相关但独立的外层节点：
-
-- `../chatenv-provider-workflow/` — ChatEnv provider discovery / `chatenv test` / provider schema 排查；在 package development 涉及 ChatEnv provider 时通过 `reference:` 关联。
-
 ## 每个 skill 是什么
+
+### `chatarch-cli-package-conventions`
+
+用途：ChatArch Python CLI 包开发阶段的通用规范：ChatEnv ownership、ChatStyle 交互、依赖边界、模板骨架和 generated package 检查。
+
+覆盖流程：
+
+1. 确认包是否应该注册 ChatEnv provider、使用 ChatStyle、暴露 `--version`。
+2. 检查模板不要保留默认 `hello` demo 作为最终命令面。
+3. 规范 dependency bounds、profile 选择、secret handling、package-local vs substrate 责任边界。
+4. 在开发/PR 阶段决定应该修 leaf package 还是修 ChatEnv / ChatStyle / ChatUp / ChatPyPI 这类基础设施。
+
+什么时候用：创建或修改 ChatArch Python CLI 包、模板、CLI 骨架、ChatEnv/ChatStyle 集成时。
 
 ### `python-package-release-with-chattool-pypi`
 
@@ -35,7 +46,8 @@ package-development/
 4. 检查 ChatStyle / ChatEnv 依赖、CLI 入口、README、测试和 workflow。
 5. 初始化 git、设置 HTTPS remote、配置 repo-local token、push。
 6. 跑本地测试、`chatpypi build`、`chatpypi check`。
-7. 在明确授权后走 tag-driven PyPI publish，并回读 GitHub Actions / PyPI / clean install。
+7. 首次发布前配置/核对 PyPI Trusted Publisher。
+8. 在明确授权后走 tag-driven PyPI publish，并回读 GitHub Actions / PyPI / clean install。
 
 什么时候用：从零创建 ChatArch Python 包，或一个 feature PR 明确包含版本准备 / 发版准备。
 
@@ -64,6 +76,19 @@ package-development/
 3. 验证 `chatgh repo-perms`、`git push --dry-run`、`git remote -v`。
 
 什么时候用：新仓库创建后、首次本地初始化后、HTTPS `git push/fetch` 失败时。
+
+### `chatpypi-publisher-management`
+
+用途：查看、添加、更新或验证 PyPI Trusted Publisher / publisher list / pending publisher 状态。
+
+覆盖流程：
+
+1. 用 ChatPyPI 登录后的账号状态读取 `whoami`、project list、publisher list、pending-list。
+2. 确认 ChatArch 包的 PyPI project、GitHub owner/repo、workflow filename、environment claim。
+3. 首次发布前在 PyPI 侧配置或核对 Trusted Publisher。
+4. 写操作后回读 active/pending publisher 状态和项目级 publisher details。
+
+什么时候用：创建新包进入首次发布链路、修 PyPI publish 配置、查看 publisher/pending publisher 状态。
 
 ### `public-repo-and-default-branch-protection`
 
@@ -104,7 +129,6 @@ package-development/
 
 什么时候用：用户问 “ChatArch 现在有哪些 PR/MR 没处理”、“当前组织状态如何”。
 
-## 后续待整理
+## 相关主题
 
-- Hermes 本地 skills 暂不主动改动；ChatMemory 共享 graph 只记录 ChatMemory 内可同步节点。
-- ChatPyPI `chatarch` 模板源码已先移除默认 `hello` demo；后续按 ChatPyPI 正常 PR/release 流程处理。
+- `../package-review/`：package 开发完成之后的 review / readiness / provider 规范检查。

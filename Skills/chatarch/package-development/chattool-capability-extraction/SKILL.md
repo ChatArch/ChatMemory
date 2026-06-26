@@ -8,13 +8,9 @@ tags:
   - extraction
   - packaging
 status: draft
-owner: ChatArch
-source_project: ChatTool
 reference:
-  - package-development: "主题索引；定位 ChatArch package development 相关流程"
   - python-package-release-with-chattool-pypi: "新 standalone Python package bootstrap/release 流程"
   - chatgh-pr-and-ci-workflow: "standalone/parent PR、CI 与 review flow"
-
 ---
 
 # ChatTool Capability Extraction

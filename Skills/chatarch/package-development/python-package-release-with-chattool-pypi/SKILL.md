@@ -10,10 +10,10 @@ tags:
   - ChatStyle
   - ChatGH
 reference:
-  - package-development: "主题索引；定位 ChatArch package development 相关流程"
+  - chatarch-cli-package-conventions: "ChatArch CLI/package 模板、ChatEnv/ChatStyle 与 dependency 规范"
   - chatgh-repo-token-setup: "新仓库或首次 checkout 后配置 HTTPS repo-local git token"
+  - chatpypi-publisher-management: "首次发布前配置/核对 PyPI Trusted Publisher"
   - chatgh-pr-and-ci-workflow: "PR、CI、Actions 与 review/merge 前状态检查"
-
 ---
 
 # ChatArch Python 包创建与发版流程
@@ -41,7 +41,6 @@ reference:
 - 版本号，例如 `0.1.0`。
 - GitHub 目标仓库，例如 `ChatArch/ChatNPM`。
 - GitHub visibility：默认 `private`；只有用户明确点名批准 public 时才改 public。
-- 发布目标：PyPI production 还是 TestPyPI。
 
 ### 版本连续性硬门槛
 
@@ -66,7 +65,7 @@ git tag --list 'v*' --sort=-v:refname | head -20
 git ls-remote --tags origin 'v*' | tail -20
 ```
 
-如必须列出 recent releases，暂时保留脚本：
+如必须列出 recent releases，暂时保留脚本：(这个应该用 chatpypi 命令)
 
 ```bash
 python3 - <<'PY'
@@ -112,7 +111,7 @@ core/<ProjectName>/
 
 ### 2. 预检查远程和包名
 
-检查 PyPI 名称状态：
+检查 PyPI 名称状态：(这个应该用 chatpypi 命令)
 
 ```bash
 python3 - <<'PY'
@@ -132,20 +131,6 @@ PY
 ```bash
 chatgh repo list --owner ChatArch --limit 20
 chatgh repo create \
-  --owner ChatArch \
-  --name <ProjectName> \
-  --description '<description>' \
-  --if-exists use
-```
-
-如果当前安装的 `chatgh` 没有 `repo` 子命令，但 `~/Playground/core/ChatGH` 源码包含新版命令，可用源码版执行：
-
-```bash
-cd ~/Playground/core/ChatGH
-. .venv/bin/activate 2>/dev/null || uv venv .venv && . .venv/bin/activate
-uv pip install -e .
-PYTHONPATH=src python -m chatgh.cli repo list --owner ChatArch --limit 20
-PYTHONPATH=src python -m chatgh.cli repo create \
   --owner ChatArch \
   --name <ProjectName> \
   --description '<description>' \
@@ -310,7 +295,7 @@ git tag -a v<X.Y.Z> -m 'Release <ProjectName> <X.Y.Z>'
 git push origin v<X.Y.Z>
 ```
 
-发布后回读：
+发布后回读：(这个应该用 chatpypi 命令)
 
 ```bash
 chatpypi probe <ProjectName> || true
@@ -333,20 +318,6 @@ uv venv ~/Playground/projects/<task>/playground/install-check
 uv pip install '<ProjectName>==<version>'
 <cli-command> --help
 ```
-
-## ChatNPM 案例记录
-
-本流程已用 `ChatNPM` 跑通过一次：
-
-- 旧错误本地目录已移到 `~/Playground/.trash/ChatNPM-old-20260622-012703`。
-- 使用命令：`chatpypi init ChatNPM -t chatarch --project-dir ~/Playground/core/ChatNPM ...`。
-- 生成结果：`project.name = "ChatNPM"`，module 为 `chatnpm`，CLI 为 `chatnpm`。
-- GitHub 仓库通过 ChatGH 源码版创建：`ChatArch/ChatNPM`，初始为 private。
-- local commit：`a6434a7 Initial ChatNPM package scaffold`。
-- remote：`https://github.com/ChatArch/ChatNPM.git`，并通过 `chatgh set-token` 配置 repo-local HTTPS token。
-- PyPI：`ChatNPM==0.1.0` 上传成功，项目页 `https://pypi.org/project/ChatNPM/0.1.0/`。
-- 隔离安装验证：`uv pip install 'ChatNPM==0.1.0'` 后 `chatnpm --help` 正常。
-- 后续只有在用户明确批准后，才将 `ChatArch/ChatNPM` 改为 public 并设置默认分支保护；这不是 Python/PyPI 发布流程的默认步骤。
 
 ## 结束同步硬门槛
 
