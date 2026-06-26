@@ -23,10 +23,10 @@ reference:
 当需要创建一个新的 ChatArch 风格 Python CLI 包，并完整跑通以下流程时使用：
 
 1. 在 GitHub `ChatArch` 组织下创建远程仓库。
-2. 用独立 `chatpypi init ... -t chatarch` 初始化包模板。
+2. 用独立 `chatpypi pkg init ... -t chatarch` 初始化包模板；root `chatpypi init` 仅作兼容 shortcut。
 3. 确认 ChatStyle / ChatEnv 依赖、CLI 入口、README、测试、workflow。
 4. 初始化 git、commit、设置 remote、push。
-5. 本地测试、`chatpypi build`、`chatpypi check`、tag-driven publish。
+5. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、tag-driven publish。
 6. 回读 GitHub 与 PyPI，确认真实可用。
 
 ## 硬性安全门槛
@@ -56,16 +56,16 @@ reference:
 
 只有当 feature PR/MR 原本没有发版意图、合并后才临时决定要发版时，才允许补一个 release-only PR/MR 来更新版本号和 `CHANGELOG.md`；这不是常规路径。
 
-发布准备或正式发版前必须同时检查三层状态。当前 `chatpypi probe` 可以替代手写 PyPI JSON 脚本做 first-pass 包名/latest metadata 检查；recent releases 列表仍需要 PyPI JSON 脚本或未来的 `chatpypi versions/status` 命令：
+发布准备或正式发版前必须同时检查三层状态。当前 `chatpypi pkg probe` 可以替代手写 PyPI JSON 脚本做 first-pass 包名/latest metadata 检查；recent releases 列表仍需要 PyPI JSON 脚本或未来的 `chatpypi pkg versions/status` 命令：
 
 ```bash
-chatpypi probe <ProjectName> || true
+chatpypi pkg probe <ProjectName> || true
 git fetch --tags origin
 git tag --list 'v*' --sort=-v:refname | head -20
 git ls-remote --tags origin 'v*' | tail -20
 ```
 
-如必须列出 recent releases，暂时保留脚本：(这个应该用 chatpypi 命令)
+如必须列出 recent releases，暂时保留 PyPI JSON 脚本；这只补 `pkg probe` 当前还没有覆盖的 release-list 维度：
 
 ```bash
 python3 - <<'PY'
@@ -111,20 +111,15 @@ core/<ProjectName>/
 
 ### 2. 预检查远程和包名
 
-检查 PyPI 名称状态：(这个应该用 chatpypi 命令)
+检查 PyPI 名称状态。先用 ChatPyPI 0.2.3+ 的 package probe；需要 exact/normalized 多候选时逐个 probe：
 
 ```bash
-python3 - <<'PY'
-import json, urllib.error, urllib.request
-for name in ['ChatNPM', 'chatnpm', 'chat-npm']:
-    try:
-        with urllib.request.urlopen(f'https://pypi.org/pypi/{name}/json', timeout=20) as r:
-            data=json.load(r)
-        print(name, 'EXISTS', data['info']['name'], data['info'].get('version'), data['info'].get('project_url'))
-    except urllib.error.HTTPError as e:
-        print(name, 'HTTP', e.code)
-PY
+for name in ChatNPM chatnpm chat-npm; do
+  chatpypi pkg probe "$name" || true
+done
 ```
+
+`probe` 返回非零通常表示名字已存在或不可用；不要只看 exit code，记录输出中的 project/latest metadata。若需要 recent release 列表，再临时补 PyPI JSON 脚本。
 
 检查或创建 GitHub 仓库。优先用 ChatGH：
 
@@ -181,7 +176,7 @@ Upgrade to GitHub Pro or make this repository public to enable this feature.
 
 ```bash
 cd ~/Playground
-chatpypi init <ProjectName> \
+chatpypi pkg init <ProjectName> \
   -t chatarch \
   --project-dir ~/Playground/core/<ProjectName> \
   --description '<ProjectName>: <short description>' \
@@ -193,7 +188,7 @@ chatpypi init <ProjectName> \
   -I
 ```
 
-Shortcut form is also available when the first argument is not a known subcommand:
+Legacy shortcut form may still work when the first argument is not a known subcommand, but shared docs should prefer the explicit `pkg init` tree:
 
 ```bash
 chatpypi <ProjectName> -t chatarch --project-dir ~/Playground/core/<ProjectName> -I
@@ -240,18 +235,18 @@ uv venv .venv
 uv pip install -e '.[dev]'
 python -m pytest -q
 rm -rf dist build *.egg-info src/*.egg-info
-chatpypi build --project-dir .
-chatpypi check --project-dir .
+chatpypi pkg build --project-dir .
+chatpypi pkg check --project-dir .
 <cli-command> --help
 ```
 
-`chatpypi build/check` wrap `python -m build` and `twine check`; the active venv still needs those tools installed, usually through `.[dev]`.
+`chatpypi pkg build/check` wrap `python -m build` and `twine check`; the active venv still needs those tools installed, usually through `.[dev]`.
 
 期望：
 
 - pytest 全部通过。
-- `chatpypi build` 生成 sdist 和 wheel。
-- `chatpypi check` 对所有 dist 文件 `PASSED`。
+- `chatpypi pkg build` 生成 sdist 和 wheel。
+- `chatpypi pkg check` 对所有 dist 文件 `PASSED`。
 - CLI help 正常显示。
 
 ### 5. 初始化 git、commit、push
@@ -277,7 +272,29 @@ git ls-remote --heads origin main
 
 Use the HTTPS remote plus `chatgh set-token` repo-local credential setup by default. Avoid embedding tokens in `remote.origin.url`, avoid command-line PAT arguments, and never print raw `.git/config` auth header values.
 
-### 6. Tag-driven PyPI 发布与回读验证
+### 6. 首次发布前 PyPI project / Publisher 检查
+
+对新 ChatArch 包，默认不是 pending Publisher 路径：
+
+1. 若 PyPI project 不存在，先用 controlled account 发布 `0.0.1` placeholder，让项目真实存在。
+2. 用 active Publisher 命令配置/核对项目级 Trusted Publisher。
+3. 只有 `publisher detail` 读到 active Publisher 且 `pending_count=0` 后，才进入正式 tag-driven 发布。
+
+```bash
+chatpypi publisher detail <ProjectName> -e RexWzh --format json
+chatpypi publisher add-github <ProjectName> \
+  --owner ChatArch \
+  --repo <ProjectName> \
+  --workflow publish.yml \
+  --environment "" \
+  -e RexWzh \
+  --format json
+chatpypi publisher pending-list -e RexWzh --format json
+```
+
+只在明确使用 PyPI 官方 pre-registration pending feature 或清理 stale pending 时，才使用 `publisher pending-add` / `publisher pending-remove`。
+
+### 7. Tag-driven PyPI 发布与回读验证
 
 发布前再次打印安全 metadata，但不要打印凭据。常规发布必须走 PR -> merge -> 默认分支 tag -> GitHub Actions publish；不要用本地 Twine 当正常发版路径：
 
@@ -286,8 +303,8 @@ cd ~/Playground/core/<ProjectName>
 . .venv/bin/activate
 python -m pytest -q
 rm -rf dist build *.egg-info src/*.egg-info
-chatpypi build --project-dir .
-chatpypi check --project-dir .
+chatpypi pkg build --project-dir .
+chatpypi pkg check --project-dir .
 
 git checkout main
 git pull --ff-only origin main
@@ -295,10 +312,10 @@ git tag -a v<X.Y.Z> -m 'Release <ProjectName> <X.Y.Z>'
 git push origin v<X.Y.Z>
 ```
 
-发布后回读：(这个应该用 chatpypi 命令)
+发布后回读：
 
 ```bash
-chatpypi probe <ProjectName> || true
+chatpypi pkg probe <ProjectName> || true
 python3 - <<'PY'
 import json, urllib.request
 for name in ['<ProjectName>', '<normalized-name>']:
@@ -309,7 +326,7 @@ for name in ['<ProjectName>', '<normalized-name>']:
 PY
 ```
 
-`chatpypi probe` gives a fast latest-version/project metadata check. Keep the JSON snippet only when you need recent release lists until ChatPyPI grows a dedicated `versions/status` command.
+`chatpypi pkg probe` gives a fast latest-version/project metadata check. Keep the JSON snippet only when you need recent release lists until ChatPyPI grows a dedicated `pkg versions/status` command.
 再做隔离安装验证：
 
 ```bash
@@ -356,7 +373,7 @@ git log -1 --oneline --decorate
 - PyPI: https://pypi.org/project/<ProjectName>/<version>/
 - Local source: ~/Playground/core/<ProjectName>
 - Tests: python -m pytest -q -> ... passed
-- Build: `chatpypi build --project-dir .` -> wheel + sdist
-- Check: `chatpypi check --project-dir .` -> PASSED
+- Build: `chatpypi pkg build --project-dir .` -> wheel + sdist
+- Check: `chatpypi pkg check --project-dir .` -> PASSED
 - Install check: uv pip install '<ProjectName>==<version>' + <cli-command> --help OK
 ```

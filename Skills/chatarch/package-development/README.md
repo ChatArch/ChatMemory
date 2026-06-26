@@ -4,6 +4,10 @@
 
 `reference:` 规范见 `Skills/README.md`。本 README 只负责 package-development 主题导航。
 
+## 任务优先与收尾回写习惯
+
+当 package-development 相关 skill 边界有交集或当前流程还不清楚时，先按具体任务开 PRD/进展记录并执行，不要在任务开始前大幅改写 skill。PRD 的完成标准应包含一项收尾复盘：根据实际执行结果判断是否需要更新本 README、某个 focused skill，或新增参考文件。对会大改仓库边界的拆包/迁移任务，优先在当前 project 的 `playground/` 下 clone/copy 工作副本，记录 source remote、base branch 和 HEAD，再把验证过的 delta 回灌到 canonical `core/` 仓库。
+
 ## 当前主题节点
 
 ```text
@@ -42,11 +46,11 @@ package-development/
 
 1. 确认包名、仓库名、module 名、CLI 名、版本号和发布目标。
 2. 在 `ChatArch` 组织下创建/确认 GitHub repo。
-3. 用 `chatpypi init <ProjectName> -t chatarch` 初始化包模板。
+3. 用 `chatpypi pkg init <ProjectName> -t chatarch` 初始化包模板；旧 root shortcut `chatpypi init` 只作兼容入口。
 4. 检查 ChatStyle / ChatEnv 依赖、CLI 入口、README、测试和 workflow。
 5. 初始化 git、设置 HTTPS remote、配置 repo-local token、push。
-6. 跑本地测试、`chatpypi build`、`chatpypi check`。
-7. 首次发布前配置/核对 PyPI Trusted Publisher。
+6. 跑本地测试、`chatpypi pkg build`、`chatpypi pkg check`。
+7. 首次发布前用 `chatpypi publisher detail/add-github/pending-list` 配置/核对 PyPI Trusted Publisher。
 8. 在明确授权后走 tag-driven PyPI publish，并回读 GitHub Actions / PyPI / clean install。
 
 什么时候用：从零创建 ChatArch Python 包，或一个 feature PR 明确包含版本准备 / 发版准备。
@@ -85,8 +89,9 @@ package-development/
 
 1. 用 ChatPyPI 登录后的账号状态读取 `whoami`、project list、publisher list、pending-list。
 2. 确认 ChatArch 包的 PyPI project、GitHub owner/repo、workflow filename、environment claim。
-3. 首次发布前在 PyPI 侧配置或核对 Trusted Publisher。
-4. 写操作后回读 active/pending publisher 状态和项目级 publisher details。
+3. 已存在 PyPI project 的 Publisher 写操作直接用 `publisher detail` / `publisher add-github`，不走 pending。
+4. pending 只用于 PyPI pre-registration / 不存在项目例外或 stale pending 清理。
+5. 写操作后回读 active/pending publisher 状态和项目级 publisher details。
 
 什么时候用：创建新包进入首次发布链路、修 PyPI publish 配置、查看 publisher/pending publisher 状态。
 
