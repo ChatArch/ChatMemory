@@ -9,6 +9,9 @@ tags:
   - pull-requests
   - CI
   - repository-governance
+reference:
+  - chatarch-org-pr-status: "组织级 open PR 快速概览"
+  - chatgh-repo-token-setup: "repo-local HTTPS git transport auth"
 ---
 
 # ChatGH PR / CI / Repository Workflow
@@ -25,7 +28,7 @@ Use this skill for ChatArch-series GitHub operations that should run through `ch
 - default-branch protection readback;
 - token capability checks and repo-local auth verification.
 
-This belongs under `Skills/chatarch/`, not `Skills/common/`, because the commands, defaults, and governance assumptions are ChatArch-specific.
+This belongs under `Skills/chatarch/package-development/`, not `Skills/common/`, because the commands, defaults, and governance assumptions are ChatArch-specific package/repo workflow.
 
 ## Hard boundaries
 
@@ -36,17 +39,20 @@ This belongs under `Skills/chatarch/`, not `Skills/common/`, because the command
 - Repository visibility and branch-protection mutation are separate approval gates. This skill covers readback and triage by default.
 - Official GitHub CLI `gh` may be used as an interface/manual reference only. Do not make it the runtime dependency, CI/ops fallback, or real operation path for ChatArch GitHub work.
 - When a needed GitHub capability is missing from ChatGH, add the reusable ChatGH/Arch capability first instead of hiding the action in an ad-hoc script.
-- For ChatTool/ChatArch work, use the ChatArch venv when possible:
+- For ChatTool/ChatArch work, use the installed `chatgh` command by default:
 
 ```bash
-/Users/rexwzh/.chatarch/venv/bin/python -m chatgh.cli ...
+chatgh ...
 ```
 
-If the installed command is stale, use the local source checkout:
+Keep the installed `chatgh` command current. Use the environment that owns `chatgh`, then upgrade the package or install from the source checkout:
 
 ```bash
-cd ~/Playground/core/ChatGH
-PYTHONPATH=src /Users/rexwzh/.chatarch/venv/bin/python -m chatgh.cli ...
+python -m pip install -U ChatGH
+# or, when using the local checkout:
+python -m pip install -U ~/Playground/core/ChatGH
+
+chatgh ...
 ```
 
 ## Workspace record
@@ -156,7 +162,7 @@ Classify:
 Helper script:
 
 ```bash
-python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
+python Skills/chatarch/package-development/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
   --repo cubenlp/ChatTool \
   --number 207
 ```
@@ -164,7 +170,7 @@ python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
 Optional JSON output:
 
 ```bash
-python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
+python Skills/chatarch/package-development/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
   --repo cubenlp/ChatTool \
   --number 207 \
   --json-output > reports/pr-207-readiness.json
@@ -214,7 +220,7 @@ chatgh repo list --owner ChatArch --limit 100 --sort updated --direction desc --
 Helper script:
 
 ```bash
-python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/repo_inventory_snapshot.py \
+python Skills/chatarch/package-development/chatgh-pr-and-ci-workflow/scripts/repo_inventory_snapshot.py \
   --owner ChatArch \
   --limit 100 \
   --output reports/chatarch-repo-inventory.json

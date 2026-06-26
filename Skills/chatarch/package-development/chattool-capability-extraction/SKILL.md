@@ -8,8 +8,9 @@ tags:
   - extraction
   - packaging
 status: draft
-owner: ChatArch
-source_project: ChatTool
+reference:
+  - python-package-release-with-chattool-pypi: "新 standalone Python package bootstrap/release 流程"
+  - chatgh-pr-and-ci-workflow: "standalone/parent PR、CI 与 review flow"
 ---
 
 # ChatTool Capability Extraction
@@ -21,14 +22,6 @@ Use this skill when splitting a useful ChatTool command/interface into an indepe
 Initial target: extract `chattool pypi` / `chatpypi` into a standalone ChatPyPI package.
 
 This skill is intentionally created early as a draft. Fill in concrete details as the ChatPyPI extraction is practiced and verified.
-
-## Related skills to load
-
-- `workspace-task-kickoff` — establish `~/Playground` and create the task record first.
-- `chattool-capability-extraction` in Hermes local skills, if available — local procedure draft and candidate rubric.
-- `extracting-capabilities-to-packages` — general multi-phase extraction workflow.
-- `python-package-release-with-chattool-pypi` — current ChatArch package scaffold/release workflow.
-- `chatgh-pr-and-ci-workflow` — ChatArch PR/CI/repository workflow through ChatGH.
 
 ## Current known extractions
 

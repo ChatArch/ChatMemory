@@ -8,6 +8,8 @@ tags:
   - branch-protection
   - repository-visibility
   - ChatGH
+reference:
+  - chatgh-repo-token-setup: "ChatGH repo-scoped credential；repo edit/protection 读取同一仓库配置"
 ---
 
 # ChatArch 仓库 public + 默认分支保护流程
@@ -47,17 +49,24 @@ sed -n '1,180p' projects/README.md
 
 ## 预检查：列出当前 visibility
 
-优先用 ChatGH。若全局 `chatgh` 版本较旧，使用源码版：
+优先用已安装的 ChatGH 命令。需要更新时，在运行 `chatgh` 的环境里升级包，或从本地源码 checkout 安装：
 
 ```bash
-cd ~/Playground/core/ChatGH
-PYTHONPATH=src python -m chatgh.cli repo list \
+python -m pip install -U ChatGH
+# or, when using the local checkout:
+python -m pip install -U ~/Playground/core/ChatGH
+```
+
+然后继续使用 `chatgh`：
+
+```bash
+chatgh repo list \
   --owner ChatArch \
   --limit 100 \
   --json-output > <project>/playground/chatarch-repo-list-current.json
 ```
 
-从 JSON 中筛选 private 仓库，先反馈给用户审核。不要只凭记忆或历史报告。
+从 JSON 中筛选 private 仓库，基于当前回读结果反馈给用户审核。
 
 ## 设置流程
 
@@ -110,8 +119,7 @@ PYTHONPATH=src python -m chatgh.cli repo list \
 单仓库查看：
 
 ```bash
-cd ~/Playground/core/ChatGH
-PYTHONPATH=src python -m chatgh.cli repo protection \
+chatgh repo protection \
   --repo ChatArch/<RepoName> \
   --json-output
 ```
@@ -119,7 +127,7 @@ PYTHONPATH=src python -m chatgh.cli repo protection \
 全量回捞：
 
 ```bash
-PYTHONPATH=src python -m chatgh.cli repo protection \
+chatgh repo protection \
   --owner ChatArch \
   --limit 100 \
   --jobs 8 \
@@ -142,7 +150,7 @@ branch_protection.allow_deletions = false
 执行结束后必须重新列出当前 private 仓库，并明确标注“未获用户批准前不处理”：
 
 ```bash
-PYTHONPATH=src python -m chatgh.cli repo list \
+chatgh repo list \
   --owner ChatArch \
   --limit 100 \
   --json-output > <project>/playground/chatarch-repo-list-current.json

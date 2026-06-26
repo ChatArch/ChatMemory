@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Summarize ChatGH PR readiness without mutating GitHub state.
 
-This script shells out to `python -m chatgh.cli` so it uses the same token
-resolution and output semantics as the public ChatGH CLI. It never prints raw
-credentials.
+This script shells out to the installed `chatgh` command by default so it uses
+the public ChatGH CLI surface. Set CHATGH_COMMAND explicitly for a local source
+checkout fallback. It never prints raw credentials.
 """
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ import json
 import os
 import shlex
 import subprocess
-import sys
 from typing import Any
 
 
@@ -20,8 +19,7 @@ def _chatgh_command() -> list[str]:
     override = os.environ.get("CHATGH_COMMAND")
     if override:
         return shlex.split(override)
-    python = os.environ.get("CHATGH_PYTHON", sys.executable)
-    return [python, "-m", "chatgh.cli"]
+    return ["chatgh"]
 
 
 def _run_json(args: list[str]) -> Any:

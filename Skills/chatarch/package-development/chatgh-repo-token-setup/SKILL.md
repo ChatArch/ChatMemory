@@ -1,6 +1,6 @@
 ---
 name: chatgh-repo-token-setup
-description: Configure repo-local HTTPS token auth for ChatArch repositories immediately after repo creation or first checkout so git fetch/push works without SSH.
+description: Configure repo-scoped GitHub credentials for ChatArch repositories immediately after repo creation or first checkout so ChatGH repo/PR/API commands and HTTPS git fetch/push use the intended repository-local authority.
 version: 0.1.0
 tags:
   - ChatArch
@@ -14,9 +14,9 @@ tags:
 
 ## Purpose
 
-Use this skill when a ChatArch / Chat-series repository is newly created, first checked out, or newly initialized locally and needs to push/fetch over HTTPS.
+Use this skill when a ChatArch / Chat-series repository is newly created, first checked out, or newly initialized locally and needs repo-scoped GitHub credentials.
 
-This is not a PR/CI skill. `chatgh pr`, `chatgh repo-perms`, and other GitHub API commands can use a token from ChatEnv directly. `chatgh set-token` exists for a different reason: **configure the local git repository so HTTPS `git push` / `git fetch` can authenticate without SSH and without putting a token in the remote URL.**
+This is not a PR/CI readiness skill. `chatgh pr`, `chatgh repo ...`, `chatgh run ...`, and `chatgh repo-perms` are GitHub API surfaces, while `git push` / `git fetch` are git transport surfaces. `chatgh set-token` is still relevant to both in ChatArch workflows because the repo-local credential it writes is part of ChatGH's token resolution and also lets HTTPS git transport authenticate without SSH and without putting a token in the remote URL.
 
 ## Core rule
 
@@ -36,6 +36,7 @@ Run this immediately after any of these:
 2. A local package/repo scaffold is initialized and `origin` is set for the first time.
 3. A repo is cloned/checked out on a new machine and needs HTTPS push.
 4. `git push` / `git fetch` over HTTPS fails with an auth error even though ChatGH API commands work.
+5. ChatGH repo/PR/API commands should use the repository-specific credential instead of falling back to a broad active ChatEnv token.
 
 ## Standard setup
 
@@ -77,6 +78,7 @@ ChatGH API commands and git transport auth are different surfaces:
 
 - `chatgh pr ...`, `chatgh repo ...`, `chatgh run ...`, and `chatgh repo-perms ...` use GitHub API tokens.
 - `git push` and `git fetch` over HTTPS use git's repo-local credential config.
+- ChatGH API token resolution may read the repo-scoped credential written by `chatgh set-token` before falling back to a broader ChatEnv token.
 - A valid ChatEnv token can make `chatgh repo-perms` pass while HTTPS `git push` still fails until `chatgh set-token` writes the repo-local git config.
 
 ## Do not use SSH for ChatArch repo workflow
@@ -96,4 +98,4 @@ Then verify with `repo-perms` and HTTPS dry-run push.
 ## Related workflows
 
 - Use this skill from package/repo creation workflows such as `python-package-release-with-chattool-pypi`.
-- PR/CI workflows may reference this skill when git transport auth is missing, but `set-token` itself belongs to repository setup, not PR readiness.
+- PR/CI, repo visibility, and branch protection workflows may reference this skill when they should run with repo-scoped ChatGH credentials or when git transport auth is missing; the setup action itself still belongs to repository setup, not PR readiness.
