@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.3
+version: 0.1.4
 tags:
   - ChatArch
   - Python
@@ -236,6 +236,8 @@ ChatArch 模板应包含：
 - `.github/workflows/*`
 - 依赖 `chatstyle>=0.1.0,<0.2.0` 与 `chatenv>=0.2.0,<0.3.0`
 - 默认 publish workflow 不应包含 `environment: pypi`，除非 PyPI Trusted Publisher 明确配置了同名 environment。
+
+ChatArch 模板的 CLI skeleton 细节归 `chatarch-cli-package-conventions` 管；这里不重复展开模板内部命令形态。初始化后按 conventions 检查真实 package command skeleton、ChatEnv/ChatStyle wiring、tests、build/check、publish workflow，不把示例/demo 命令当作发布验收点。
 
 ### 4. 本地验证
 
