@@ -10,11 +10,10 @@ tags:
   - CI
   - repository-governance
 reference:
-  - package-development: "主题索引；用于定位 ChatArch package/repo workflow 相关 skill"
+  - package-development: "主题索引；定位 ChatArch package/repo workflow 相关流程"
   - chatarch-org-pr-status: "组织级 open PR 快速概览"
   - chatgh-repo-token-setup: "repo-local HTTPS git transport auth"
   - public-repo-and-default-branch-protection: "用户批准后的 repo public 与默认分支保护设置"
-  - requesting-code-review: "提交/推送前 review、安全扫描与质量 gates"
 
 ---
 

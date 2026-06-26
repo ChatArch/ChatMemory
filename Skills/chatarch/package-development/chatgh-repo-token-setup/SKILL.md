@@ -9,8 +9,8 @@ tags:
   - repository
   - credentials
 reference:
-  - package-development: "主题索引；用于定位 ChatArch package/repo workflow 相关 skill"
-  - python-package-release-with-chattool-pypi: "新建 ChatArch Python 包时会调用本 repo auth 流程"
+  - package-development: "主题索引；定位 ChatArch package/repo workflow 相关流程"
+  - python-package-release-with-chattool-pypi: "新建 ChatArch Python 包时调用本 repo auth 流程"
   - chatgh-pr-and-ci-workflow: "PR/CI 检查中区分 GitHub API auth 与 git transport auth"
 
 ---

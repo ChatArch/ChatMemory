@@ -10,12 +10,9 @@ tags:
   - ChatStyle
   - ChatGH
 reference:
-  - package-development: "主题索引；用于定位 ChatArch package development 相关 skill"
-  - chatarch-cli-package-conventions: "ChatArch CLI/package 模板、ChatEnv、ChatStyle、dependency bounds 等约定"
+  - package-development: "主题索引；定位 ChatArch package development 相关流程"
   - chatgh-repo-token-setup: "新仓库或首次 checkout 后配置 HTTPS repo-local git token"
   - chatgh-pr-and-ci-workflow: "PR、CI、Actions 与 review/merge 前状态检查"
-  - python-package-publishing: "PyPI release gates、Trusted Publishing、version continuity 与 post-publish verification"
-  - chatpypi-publisher-management: "PyPI project/publisher list 与 Trusted Publisher 配置/验证"
 
 ---
 
@@ -245,7 +242,7 @@ ChatArch 模板应包含：
 - 依赖 `chatstyle>=0.1.0,<0.2.0` 与 `chatenv>=0.2.0,<0.3.0`
 - 默认 publish workflow 不应包含 `environment: pypi`，除非 PyPI Trusted Publisher 明确配置了同名 environment。
 
-ChatArch 模板的 CLI skeleton 细节归 `chatarch-cli-package-conventions` 管；这里不重复展开模板内部命令形态。初始化后按 conventions 检查真实 package command skeleton、ChatEnv/ChatStyle wiring、tests、build/check、publish workflow，不把示例/demo 命令当作发布验收点。
+ChatArch 模板的 CLI skeleton 细节按 ChatArch CLI/package conventions 检查；这里不重复展开模板内部命令形态。初始化后检查真实 package command skeleton、ChatEnv/ChatStyle wiring、tests、build/check、publish workflow，不把示例/demo 命令当作发布验收点。
 
 ### 4. 本地验证
 

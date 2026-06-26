@@ -9,7 +9,7 @@ tags:
   - pull-requests
   - organization-status
 reference:
-  - package-development: "主题索引；用于定位 ChatArch package/repo workflow 相关 skill"
+  - package-development: "主题索引；定位 ChatArch package/repo workflow 相关流程"
   - chatgh-pr-and-ci-workflow: "单个 PR 的详情、checks、readiness 与后续处理"
 
 ---
