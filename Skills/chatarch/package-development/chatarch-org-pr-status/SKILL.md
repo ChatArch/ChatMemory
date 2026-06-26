@@ -64,18 +64,11 @@ python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr
   --output projects/<task>/playground/chatarch-open-prs.json
 ```
 
-If the installed `chatgh` command is stale or not on PATH, use the ChatArch venv:
+If `chatgh` is not on PATH, install or refresh it first. If the installed command is stale, use the local ChatGH source checkout:
 
 ```bash
-CHATGH_PYTHON=/Users/rexwzh/.chatarch/venv/bin/python \
-python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
-```
-
-For local ChatGH source testing:
-
-```bash
-CHATGH_COMMAND='python -m chatgh.cli' \
 PYTHONPATH=core/ChatGH/src \
+CHATGH_COMMAND='python -m chatgh.cli' \
 python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
 ```
 

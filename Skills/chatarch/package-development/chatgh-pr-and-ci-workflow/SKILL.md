@@ -39,17 +39,17 @@ This belongs under `Skills/chatarch/package-development/`, not `Skills/common/`,
 - Repository visibility and branch-protection mutation are separate approval gates. This skill covers readback and triage by default.
 - Official GitHub CLI `gh` may be used as an interface/manual reference only. Do not make it the runtime dependency, CI/ops fallback, or real operation path for ChatArch GitHub work.
 - When a needed GitHub capability is missing from ChatGH, add the reusable ChatGH/Arch capability first instead of hiding the action in an ad-hoc script.
-- For ChatTool/ChatArch work, use the ChatArch venv when possible:
+- For ChatTool/ChatArch work, use the installed `chatgh` command by default:
 
 ```bash
-/Users/rexwzh/.chatarch/venv/bin/python -m chatgh.cli ...
+chatgh ...
 ```
 
-If the installed command is stale, use the local source checkout:
+If `chatgh` is not installed, install or refresh it first. If the installed command is stale but a local source checkout is available, use that checkout explicitly:
 
 ```bash
 cd ~/Playground/core/ChatGH
-PYTHONPATH=src /Users/rexwzh/.chatarch/venv/bin/python -m chatgh.cli ...
+PYTHONPATH=src python -m chatgh.cli ...
 ```
 
 ## Workspace record

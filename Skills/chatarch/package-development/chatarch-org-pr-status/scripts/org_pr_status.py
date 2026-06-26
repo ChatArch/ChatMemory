@@ -13,7 +13,6 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
-import sys
 from typing import Any
 
 
@@ -21,8 +20,7 @@ def _chatgh_command() -> list[str]:
     override = os.environ.get("CHATGH_COMMAND")
     if override:
         return shlex.split(override)
-    python = os.environ.get("CHATGH_PYTHON", sys.executable)
-    return [python, "-m", "chatgh.cli"]
+    return ["chatgh"]
 
 
 def _run_json(args: list[str], *, required: bool = True) -> Any:

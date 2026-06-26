@@ -49,9 +49,16 @@ sed -n '1,180p' projects/README.md
 
 ## 预检查：列出当前 visibility
 
-优先用 ChatGH。若全局 `chatgh` 版本较旧，使用源码版：
+优先用 ChatGH 已安装命令。若 `chatgh` 不存在，先安装或刷新；若已安装命令较旧，再切到本地源码 checkout：
 
-> PYTHONPATH=src python -m chatgh.cli 这个统一用 chatgh
+```bash
+chatgh repo list \
+  --owner ChatArch \
+  --limit 100 \
+  --json-output > <project>/playground/chatarch-repo-list-current.json
+```
+
+源码 checkout fallback：
 
 ```bash
 cd ~/Playground/core/ChatGH
@@ -114,8 +121,7 @@ PYTHONPATH=src python -m chatgh.cli repo list \
 单仓库查看：
 
 ```bash
-cd ~/Playground/core/ChatGH
-PYTHONPATH=src python -m chatgh.cli repo protection \
+chatgh repo protection \
   --repo ChatArch/<RepoName> \
   --json-output
 ```
@@ -123,7 +129,7 @@ PYTHONPATH=src python -m chatgh.cli repo protection \
 全量回捞：
 
 ```bash
-PYTHONPATH=src python -m chatgh.cli repo protection \
+chatgh repo protection \
   --owner ChatArch \
   --limit 100 \
   --jobs 8 \
@@ -146,7 +152,7 @@ branch_protection.allow_deletions = false
 执行结束后必须重新列出当前 private 仓库，并明确标注“未获用户批准前不处理”：
 
 ```bash
-PYTHONPATH=src python -m chatgh.cli repo list \
+chatgh repo list \
   --owner ChatArch \
   --limit 100 \
   --json-output > <project>/playground/chatarch-repo-list-current.json
