@@ -1,6 +1,6 @@
 ---
 name: chatmemory-local-branch-loop
-description: Local machine workflow for ChatMemory PR/MR sync and returning to the machine's long-running branch.
+description: Local machine workflow for ChatMemory PR/MR sync and maintaining this machine's long-running branch.
 version: 0.1.0
 tags:
   - local
@@ -14,38 +14,39 @@ This is a local-only skill for this Playground machine. Do not move it into shar
 
 ## Local convention
 
-- Repo: `/Users/rexwzh/Playground/core/ChatMemory`
+- Repo: `/home/cubebot/Playground/core/ChatMemory`
 - Default branch: `main`
-- This machine's long-running branch: `rex/chatmini`
+- This machine's long-running branch: `rex/cubelab`
+- Keep this branch current by fetching and merging/fast-forwarding from `origin/main`; do not use `git reset --hard` unless the user explicitly approves it.
 - Other machines may use different local long-running branch names.
 
 ## Complete loop
 
 Treat a ChatMemory sync as one lightweight complete action:
 
-1. Work on `rex/chatmini`.
+1. Work on `rex/cubelab`.
 2. Self-review the diff lightly.
-3. Open or update a PR from `rex/chatmini` to `main`.
+3. Open or update a PR from `rex/cubelab` to `main`.
 4. Merge the PR/MR when ready.
 5. Sync `main`.
-6. Reset/overwrite `rex/chatmini` from the updated `main`.
-7. Force-push `rex/chatmini` with lease.
+6. Bring `rex/cubelab` forward from the updated `main` by merge or fast-forward.
+7. Push `rex/cubelab` normally; use force-with-lease only after explicit confirmation that branch history was intentionally rewritten.
 
 ## Commands
 
 ```bash
-cd /Users/rexwzh/Playground/core/ChatMemory
+cd /home/cubebot/Playground/core/ChatMemory
 
 git diff --check
-chatgh pr create --repo ChatArch/ChatMemory --base main --head rex/chatmini --title "TITLE" --body-file BODY.md --json-output
+chatgh pr create --repo ChatArch/ChatMemory --base main --head rex/cubelab --title "TITLE" --body-file BODY.md --json-output
 chatgh pr merge NUMBER --repo ChatArch/ChatMemory --method squash --check --json-output
 
 git fetch --prune origin
 git checkout main
 git pull --ff-only origin main
-git checkout rex/chatmini
-git reset --hard main
-git push --force-with-lease origin rex/chatmini
+git checkout rex/cubelab
+git merge --ff-only main || git merge main
+git push origin rex/cubelab
 ```
 
 ## Boundary
