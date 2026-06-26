@@ -9,6 +9,14 @@ tags:
   - ChatTool
   - ChatStyle
   - ChatGH
+reference:
+  - package-development: "主题索引；用于定位 ChatArch package development 相关 skill"
+  - chatarch-cli-package-conventions: "ChatArch CLI/package 模板、ChatEnv、ChatStyle、dependency bounds 等约定"
+  - chatgh-repo-token-setup: "新仓库或首次 checkout 后配置 HTTPS repo-local git token"
+  - chatgh-pr-and-ci-workflow: "PR、CI、Actions 与 review/merge 前状态检查"
+  - python-package-publishing: "PyPI release gates、Trusted Publishing、version continuity 与 post-publish verification"
+  - chatpypi-publisher-management: "PyPI project/publisher list 与 Trusted Publisher 配置/验证"
+
 ---
 
 # ChatArch Python 包创建与发版流程

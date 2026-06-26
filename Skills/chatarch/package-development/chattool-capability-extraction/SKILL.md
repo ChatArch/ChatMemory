@@ -10,6 +10,13 @@ tags:
 status: draft
 owner: ChatArch
 source_project: ChatTool
+reference:
+  - package-development: "主题索引；用于定位 ChatArch package development 相关 skill"
+  - extracting-capabilities-to-packages: "通用 capability-to-package extraction 方法论"
+  - python-package-release-with-chattool-pypi: "新 standalone Python package bootstrap/release 流程"
+  - chatgh-pr-and-ci-workflow: "standalone/parent PR、CI 与 review flow"
+  - python-package-publishing: "PyPI release gates 与发布验证"
+
 ---
 
 # ChatTool Capability Extraction

@@ -8,6 +8,11 @@ tags:
   - branch-protection
   - repository-visibility
   - ChatGH
+reference:
+  - package-development: "主题索引；用于定位 ChatArch package/repo workflow 相关 skill"
+  - chatgh-pr-and-ci-workflow: "repo/protection readback 与 PR-only workflow 检查"
+  - chatgh-repo-token-setup: "需要本地 git push/fetch 时配置 repo-local HTTPS auth"
+
 ---
 
 # ChatArch 仓库 public + 默认分支保护流程

@@ -9,6 +9,13 @@ tags:
   - pull-requests
   - CI
   - repository-governance
+reference:
+  - package-development: "主题索引；用于定位 ChatArch package/repo workflow 相关 skill"
+  - chatarch-org-pr-status: "组织级 open PR 快速概览"
+  - chatgh-repo-token-setup: "repo-local HTTPS git transport auth"
+  - public-repo-and-default-branch-protection: "用户批准后的 repo public 与默认分支保护设置"
+  - requesting-code-review: "提交/推送前 review、安全扫描与质量 gates"
+
 ---
 
 # ChatGH PR / CI / Repository Workflow
@@ -25,7 +32,7 @@ Use this skill for ChatArch-series GitHub operations that should run through `ch
 - default-branch protection readback;
 - token capability checks and repo-local auth verification.
 
-This belongs under `Skills/chatarch/`, not `Skills/common/`, because the commands, defaults, and governance assumptions are ChatArch-specific.
+This belongs under `Skills/chatarch/package-development/`, not `Skills/common/`, because the commands, defaults, and governance assumptions are ChatArch-specific package/repo workflow.
 
 ## Hard boundaries
 
@@ -156,7 +163,7 @@ Classify:
 Helper script:
 
 ```bash
-python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
+python Skills/chatarch/package-development/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
   --repo cubenlp/ChatTool \
   --number 207
 ```
@@ -164,7 +171,7 @@ python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
 Optional JSON output:
 
 ```bash
-python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
+python Skills/chatarch/package-development/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
   --repo cubenlp/ChatTool \
   --number 207 \
   --json-output > reports/pr-207-readiness.json
@@ -214,7 +221,7 @@ chatgh repo list --owner ChatArch --limit 100 --sort updated --direction desc --
 Helper script:
 
 ```bash
-python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/repo_inventory_snapshot.py \
+python Skills/chatarch/package-development/chatgh-pr-and-ci-workflow/scripts/repo_inventory_snapshot.py \
   --owner ChatArch \
   --limit 100 \
   --output reports/chatarch-repo-inventory.json

@@ -1,10 +1,32 @@
 # ChatArch Package Development Skills
 
-这个主题用于 ChatArch 常规包 / Python 包 / package release 工作：新仓库、包模板、ChatArch style、PR/MR、CI、PyPI/npm 发布、Trusted Publisher、从旧仓库抽包。
+这个目录收纳 ChatArch 常规包 / Python 包 / package release 相关 skills：新仓库、包模板、ChatArch style、PR/MR、CI、PyPI/npm 发布、Trusted Publisher、从旧仓库抽包。
 
-这是分类归档与导航页。先看下面每个 skill 的职责和流程，再根据任务场景组合加载。
+使用方式：先看每个 skill 的职责和流程；需要理解关联关系时，看各 `SKILL.md` header/frontmatter 里的 `reference:` 字段。
 
-## 当前收纳的主题内 skills
+## Reference 字段约定
+
+这个目录下的 `SKILL.md` 可以在 frontmatter/header 里声明可选 `reference:` 字段，用来表达 skill 图结构里的关联边。
+
+格式保持简洁：每一项是一个 skill 或主题节点，加一句说明它在当前 skill 里的作用。
+
+规则：
+
+- `reference` 的 key 必须使用目标节点的规范名。
+- 对普通 skill，规范名应等于目标 skill 的 frontmatter `name`，通常也等于文件夹名。
+- 对主题节点，可以使用主题目录名，例如 `package-development`。
+- description 只写这个目标在当前 skill 中发挥的作用，不写长流程。
+
+```yaml
+reference:
+  - other-skill: "这个 skill 在当前 skill 中发挥的作用"
+```
+
+这个字段用于构建/阅读 skill graph；正文只保留必要流程，不重复展开所有关联说明。
+
+## 当前主题节点
+
+### 主题内 skills
 
 ```text
 package-development/
@@ -13,16 +35,34 @@ package-development/
   chatgh-pr-and-ci-workflow/
   chatgh-repo-token-setup/
   public-repo-and-default-branch-protection/
-  chatenv-provider-workflow/
   chattool-capability-extraction/
   chatarch-org-pr-status/
 ```
+
+### 外部常用 references
+
+- `workspace-task-kickoff` — 建立 `~/Playground` task、PRD/progress/report。
+- `chatarch-cli-package-conventions` — ChatArch Python CLI package conventions：ChatEnv、ChatStyle、模板、dependency bounds、CLI 行为。
+- `python-package-publishing` — PyPI / Trusted Publishing / version continuity / release gates / post-publish verification。
+- `chatpypi-publisher-management` — PyPI project list / publisher list / Trusted Publisher add/verify。
+- `requesting-code-review` — PR 前 review、安全扫描、质量 gates。
+- `extracting-capabilities-to-packages` — 通用抽包方法论。
+- `npm-package-publishing` — npm package identity、scope、publish gate 和 CI automation。
+- `chatenv-provider-workflow` — ChatEnv provider discovery / `chatenv test` / provider schema 排查；这个流程相对独立，保留在 `Skills/chatarch/` 外层。
 
 ## 每个 skill 是什么
 
 ### `python-package-release-with-chattool-pypi`
 
 用途：新建或发布一个 ChatArch 风格 Python CLI 包。
+
+Reference：
+
+- 代码/模板约定：`chatarch-cli-package-conventions`
+- Git transport auth：`chatgh-repo-token-setup`
+- PyPI release gate：`python-package-publishing`
+- PyPI Trusted Publisher：`chatpypi-publisher-management`
+- PR/CI：`chatgh-pr-and-ci-workflow`
 
 覆盖流程：
 
@@ -40,21 +80,31 @@ package-development/
 
 用途：ChatArch 仓库的 PR/MR、CI、Actions 和 repo 状态工作流。
 
+Reference：
+
+- 快速组织 PR 概览：`chatarch-org-pr-status`
+- Repo-local HTTPS auth：`chatgh-repo-token-setup`
+- Public / branch protection mutation：`public-repo-and-default-branch-protection`
+- Pre-commit / pre-push review：`requesting-code-review`
+
 覆盖流程：
 
 1. 用 ChatGH 查看 repo 权限、PR 列表、PR 详情和 checks。
 2. 创建/更新/评论 PR。
 3. 拉取并检查 CI / Actions run / job 日志。
 4. 区分 PR 引入的问题、已有 CI 问题、权限/governance gate、infra flake。
-5. 只在用户明确授权后执行 merge。
+5. 在用户明确授权后执行 merge。
 
 什么时候用：用户问 PR 状态、CI 为什么红、要更新 PR、要 review 或准备 merge。
-
-不要用它做：直接发布包；merge 不是 release。
 
 ### `chatgh-repo-token-setup`
 
 用途：给 ChatArch repo 配置本地 HTTPS git transport auth。
+
+Reference：
+
+- 新建 Python 包时通常由 `python-package-release-with-chattool-pypi` 调用。
+- PR/CI 能力检查可与 `chatgh-pr-and-ci-workflow` 组合。
 
 覆盖流程：
 
@@ -68,34 +118,30 @@ package-development/
 
 用途：在用户明确批准的仓库上执行 visibility / branch protection mutation。
 
+Reference：
+
+- Repo/PR readback：`chatgh-pr-and-ci-workflow`
+- Repo-local HTTPS auth：`chatgh-repo-token-setup`
+
 覆盖流程：
 
 1. 列出当前 repo visibility 和默认分支。
-2. 只对用户点名批准的仓库改 public。
+2. 对用户点名批准的仓库改 public。
 3. 设置默认分支 PR-only baseline protection。
 4. 回读 protection 字段并保存 JSON 证据。
 
 什么时候用：用户明确说某些 ChatArch 仓库可以公开，并要求设置默认分支保护。
 
-不要用它做：为了绕过 GitHub private repo protection 限制而擅自 public 仓库。
-
-### `chatenv-provider-workflow`
-
-用途：新增、审查或 debug ChatEnv typed-config provider。
-
-覆盖流程：
-
-1. 检查 package 是否注册 `[project.entry-points."chatenv.configs"]`。
-2. 检查 config class 的 title、aliases、storage dir、required/sensitive fields。
-3. 验证安装后的 provider discovery。
-4. 让 `chatenv test -t <alias>` 成为安全、可解释的 schema/provider check。
-5. 区分本地 schema validation 和真实服务连通性检查。
-
-什么时候用：包需要接入 ChatEnv，或 `chatenv list/cat/test/use/new` 行为缺失、混乱、不可发现。
-
 ### `chattool-capability-extraction`
 
 用途：把 ChatTool 中已经成形的能力拆成独立 ChatArch Python package。
+
+Reference：
+
+- 通用抽包流程：`extracting-capabilities-to-packages`
+- 新 standalone package bootstrap/release：`python-package-release-with-chattool-pypi`
+- Parent / standalone PR/CI：`chatgh-pr-and-ci-workflow`
+- Release gates：`python-package-publishing`
 
 覆盖流程：
 
@@ -111,89 +157,19 @@ package-development/
 
 用途：快速查看 ChatArch organization 里哪些 repo 有 open PR。
 
+Reference：
+
+- 单个 PR 详情 / CI / readiness：`chatgh-pr-and-ci-workflow`
+
 覆盖流程：
 
 1. 用 `chatgh repo list --owner ChatArch --json-output` 做组织级过滤。
-2. 只对 `open_prs > 0` 的 repo 进一步拉 PR 列表。
+2. 对有 open PR 的 repo 进一步拉 PR 列表。
 3. 输出 compact 表格或 JSON，作为后续 PR/CI 工作的入口。
 
 什么时候用：用户问 “ChatArch 现在有哪些 PR/MR 没处理”、“当前组织状态如何”。
 
-不要用它做：merge、close、comment、retarget；这是 read-only status skill。
+## 后续待整理
 
-## 外部关联 skills
-
-这些不在本目录，但 package development 经常要一起加载：
-
-- `workspace-task-kickoff` — 任何真实任务先建 workspace task，写 PRD/progress/report。
-- `chatarch-cli-package-conventions` — ChatArch Python CLI package 的通用约定：ChatEnv、ChatStyle、模板、dependency bounds、CLI 行为。
-- `python-package-publishing` — PyPI / Trusted Publishing / version continuity / release gates / post-publish verification。
-- `chatpypi-publisher-management` — PyPI Trusted Publisher 的 project list / publisher list / add / verify。
-- `github-workflows` — 通用 GitHub 总 playbook。
-- `requesting-code-review` — PR 前 review、安全扫描、质量 gates。
-- `extracting-capabilities-to-packages` — 通用抽包方法论。
-- `npm-package-publishing` — npm package identity、scope、publish gate 和 CI automation。
-
-## 常见组合
-
-### 新建 ChatArch Python 包
-
-加载：
-
-1. `workspace-task-kickoff`
-2. `python-package-release-with-chattool-pypi`
-3. `chatarch-cli-package-conventions`
-4. `chatgh-repo-token-setup`
-5. `python-package-publishing`
-6. 需要配置 publisher 时再加载 `chatpypi-publisher-management`
-
-### 更新已有包并开 PR
-
-加载：
-
-1. `workspace-task-kickoff`
-2. `chatarch-cli-package-conventions`
-3. `chatgh-pr-and-ci-workflow`
-4. `requesting-code-review`
-5. 若涉及发版准备，再加载 `python-package-publishing`
-
-### 只看 PR / CI / 组织状态
-
-加载：
-
-- 快速组织概览：`chatarch-org-pr-status`
-- 单 PR / CI 追踪：`chatgh-pr-and-ci-workflow`
-
-### 只配置 PyPI Trusted Publisher
-
-加载：
-
-1. `chatpypi-publisher-management`
-2. 如 workflow/repo 也要改，再加载 `chatgh-pr-and-ci-workflow` 或 `github-workflows`
-
-ChatArch 默认 publisher 形态：
-
-```text
-PyPI project: <ProjectName>
-GitHub repository: ChatArch/<RepoName>
-Workflow: publish.yml
-Environment: blank / (Any), unless explicitly configured otherwise
-```
-
-不要把 PyPI profile 名、个人仓库前缀或 `RexWzh/askchat` 这类例外推断成 ChatArch 默认 owner/repo。
-
-### 从 ChatTool 抽独立包
-
-加载：
-
-1. `workspace-task-kickoff`
-2. `chattool-capability-extraction`
-3. `extracting-capabilities-to-packages`
-4. `python-package-release-with-chattool-pypi`
-5. `chatgh-pr-and-ci-workflow`
-6. `python-package-publishing`
-
-## 当前待整理项
-
-- Hermes 本地 skills 与 ChatMemory shared skills 中重复的 `chatgh-repo-token-setup`、`chattool-capability-extraction`，后续逐步看 canonical / 同步策略。
-- 修 ChatPyPI `chatarch` 模板源码，移除默认 `hello` demo command/test/docs。
+- Hermes 本地 skills 暂不主动改动；后续逐步看 `chatgh-repo-token-setup`、`chattool-capability-extraction` 的 canonical / 同步策略。
+- ChatPyPI `chatarch` 模板源码已先移除默认 `hello` demo；后续按 ChatPyPI 正常 PR/release 流程处理。
