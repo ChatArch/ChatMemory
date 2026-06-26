@@ -2,7 +2,7 @@
 
 这个目录收纳 ChatArch 常规包 / Python 包 / package release 相关 skills：新仓库、包模板、ChatArch style、PR/MR、CI、PyPI 发布、Trusted Publisher、从旧仓库抽包。
 
-本目录只是 package development 分类入口；`reference:` 是 `Skills/README.md` 定义的全局 skill graph 字段，不在主题 README 中单独定义。
+`reference:` 规范见 `Skills/README.md`。本 README 只负责 package-development 主题导航。
 
 ## 当前主题节点
 
@@ -28,7 +28,7 @@ package-development/
 覆盖流程：
 
 1. 确认包是否应该注册 ChatEnv provider、使用 ChatStyle、暴露 `--version`。
-2. 检查模板不要保留默认 `hello` demo 作为最终命令面。
+2. 确认模板生成真实 CLI 骨架、`--help` / `--version`、README 和基础测试。
 3. 规范 dependency bounds、profile 选择、secret handling、package-local vs substrate 责任边界。
 4. 在开发/PR 阶段决定应该修 leaf package 还是修 ChatEnv / ChatStyle / ChatUp / ChatPyPI 这类基础设施。
 
@@ -131,4 +131,4 @@ package-development/
 
 ## 相关主题
 
-- `../package-review/`：package 开发完成之后的 review / readiness / provider 规范检查。
+- `../package-review/`：package 开发完成之后的后处理审查、provider 复查和规范回看。

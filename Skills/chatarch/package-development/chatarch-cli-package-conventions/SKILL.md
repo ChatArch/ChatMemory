@@ -45,11 +45,6 @@ Generated ChatArch CLI packages should include:
 
 When the user corrects scaffold behavior, update the actual template source and generated-template tests first when possible; do not only patch workflow docs. Keep release skills focused on release gates and route template-internal rules back here.
 
-## Package-development skill organization
-
-When organizing ChatArch shared skills for package/repo/release workflows, use a topic README as a router and true classification home, not a duplicated flat list. The README should first explain each contained skill's purpose, workflow steps, and boundaries, then provide composition recipes. If skills are moved into a topic such as `Skills/chatarch/package-development/`, do not leave old-path symlinks unless the user explicitly asks for compatibility.
-
-See `references/package-development-skill-organization.md` for the session-derived layout and README style guidance.
 
 ## ChatEnv Rules
 

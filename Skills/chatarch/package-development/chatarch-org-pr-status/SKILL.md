@@ -64,11 +64,13 @@ python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr
   --output projects/<task>/playground/chatarch-open-prs.json
 ```
 
-If `chatgh` is not on PATH, install or refresh it first. If the installed command is stale, use the local ChatGH source checkout:
+Keep the installed `chatgh` command current. If the command is missing or stale, upgrade it in the environment that runs the script, then run the script normally:
 
 ```bash
-PYTHONPATH=core/ChatGH/src \
-CHATGH_COMMAND='python -m chatgh.cli' \
+python -m pip install -U ChatGH
+# or, when using the local checkout:
+python -m pip install -U ~/Playground/core/ChatGH
+
 python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
 ```
 

@@ -45,11 +45,14 @@ This belongs under `Skills/chatarch/package-development/`, not `Skills/common/`,
 chatgh ...
 ```
 
-If `chatgh` is not installed, install or refresh it first. If the installed command is stale but a local source checkout is available, use that checkout explicitly:
+Keep the installed `chatgh` command current. Use the environment that owns `chatgh`, then upgrade the package or install from the source checkout:
 
 ```bash
-cd ~/Playground/core/ChatGH
-PYTHONPATH=src python -m chatgh.cli ...
+python -m pip install -U ChatGH
+# or, when using the local checkout:
+python -m pip install -U ~/Playground/core/ChatGH
+
+chatgh ...
 ```
 
 ## Workspace record

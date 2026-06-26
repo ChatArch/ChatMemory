@@ -23,13 +23,6 @@ Initial target: extract `chattool pypi` / `chatpypi` into a standalone ChatPyPI 
 
 This skill is intentionally created early as a draft. Fill in concrete details as the ChatPyPI extraction is practiced and verified.
 
-## Related package-development skills
-
-This skill uses the `reference:` field in the header for graph-level links. In practice, extraction work usually flows into:
-
-- `python-package-release-with-chattool-pypi` — bootstrap/release the standalone package.
-- `chatgh-pr-and-ci-workflow` — handle standalone and parent PR/CI review.
-
 ## Current known extractions
 
 - GitHub helper surface: ChatTool GitHub functionality has been extracted to `ChatGH` / `chatgh`.

@@ -49,7 +49,15 @@ sed -n '1,180p' projects/README.md
 
 ## 预检查：列出当前 visibility
 
-优先用 ChatGH 已安装命令。若 `chatgh` 不存在，先安装或刷新；若已安装命令较旧，再切到本地源码 checkout：
+优先用已安装的 ChatGH 命令。需要更新时，在运行 `chatgh` 的环境里升级包，或从本地源码 checkout 安装：
+
+```bash
+python -m pip install -U ChatGH
+# or, when using the local checkout:
+python -m pip install -U ~/Playground/core/ChatGH
+```
+
+然后继续使用 `chatgh`：
 
 ```bash
 chatgh repo list \
@@ -58,17 +66,7 @@ chatgh repo list \
   --json-output > <project>/playground/chatarch-repo-list-current.json
 ```
 
-源码 checkout fallback：
-
-```bash
-cd ~/Playground/core/ChatGH
-PYTHONPATH=src python -m chatgh.cli repo list \
-  --owner ChatArch \
-  --limit 100 \
-  --json-output > <project>/playground/chatarch-repo-list-current.json
-```
-
-从 JSON 中筛选 private 仓库，先反馈给用户审核。不要只凭记忆或历史报告。
+从 JSON 中筛选 private 仓库，基于当前回读结果反馈给用户审核。
 
 ## 设置流程
 
