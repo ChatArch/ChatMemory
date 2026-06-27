@@ -4,6 +4,10 @@
 
 `reference:` 规范见 `Skills/README.md`。本 README 只负责 package-development 主题导航。
 
+## 任务优先与收尾回写习惯
+
+当 package-development 相关 skill 边界有交集或当前流程还不清楚时，先按具体任务开 PRD/进展记录并执行，不要在任务开始前大幅改写 skill。PRD 的完成标准应包含一项收尾复盘：根据实际执行结果判断是否需要更新本 README、某个 focused skill，或新增参考文件。对会大改仓库边界的拆包/迁移任务，优先在当前 project 的 `playground/` 下 clone/copy 工作副本，记录 source remote、base branch 和 HEAD，再把验证过的 delta 回灌到 canonical `core/` 仓库。
+
 ## 当前主题节点
 
 ```text
@@ -38,16 +42,22 @@ package-development/
 
 用途：新建或发布一个 ChatArch 风格 Python CLI 包。
 
-覆盖流程：
+覆盖流程分两类：
 
+**已有 PyPI project / 已发过版的包**：
 1. 确认包名、仓库名、module 名、CLI 名、版本号和发布目标。
-2. 在 `ChatArch` 组织下创建/确认 GitHub repo。
-3. 用 `chatpypi init <ProjectName> -t chatarch` 初始化包模板。
-4. 检查 ChatStyle / ChatEnv 依赖、CLI 入口、README、测试和 workflow。
-5. 初始化 git、设置 HTTPS remote、配置 repo-local token、push。
-6. 跑本地测试、`chatpypi build`、`chatpypi check`。
-7. 首次发布前配置/核对 PyPI Trusted Publisher。
-8. 在明确授权后走 tag-driven PyPI publish，并回读 GitHub Actions / PyPI / clean install。
+2. 查询 PyPI latest / tags / CI，保持版本连续。
+3. 在现有仓库里准备版本、CHANGELOG、测试、build/check。
+4. 走 PR/MR、merge 后在默认分支 tag-driven publish，并回读 GitHub Actions / PyPI / clean install。
+
+**全新 PyPI project / “如果不在就注册”的新包**：
+1. 确认 exact PyPI project name、normalized name、module、CLI、初始版本。
+2. 先在当前 task 的 `playground/` 创建临时 scaffold，版本固定 `0.0.1`。
+3. 构建、`twine check`，并用受控 PyPI 账号实际上传 `0.0.1` placeholder。
+4. 只有 PyPI JSON 回读确认 project 已创建后，才创建/确认 GitHub `ChatArch/<Repo>`，再初始化 canonical `core/<ProjectName>`、设置 HTTPS remote/token、push。
+5. 配置/核对 PyPI Trusted Publisher，再进入后续正式 feature/release 流程。
+
+硬边界：新包 `0.0.1` placeholder 上传或回读失败时，停止；不得先创建 GitHub repo、不得先写 canonical `core/` 仓库、不得换名字绕过。
 
 什么时候用：从零创建 ChatArch Python 包，或一个 feature PR 明确包含版本准备 / 发版准备。
 
@@ -85,8 +95,9 @@ package-development/
 
 1. 用 ChatPyPI 登录后的账号状态读取 `whoami`、project list、publisher list、pending-list。
 2. 确认 ChatArch 包的 PyPI project、GitHub owner/repo、workflow filename、environment claim。
-3. 首次发布前在 PyPI 侧配置或核对 Trusted Publisher。
-4. 写操作后回读 active/pending publisher 状态和项目级 publisher details。
+3. 已存在 PyPI project 的 Publisher 写操作直接用 `publisher detail` / `publisher add-github`，不走 pending。
+4. pending 只用于 PyPI pre-registration / 不存在项目例外或 stale pending 清理。
+5. 写操作后回读 active/pending publisher 状态和项目级 publisher details。
 
 什么时候用：创建新包进入首次发布链路、修 PyPI publish 配置、查看 publisher/pending publisher 状态。
 

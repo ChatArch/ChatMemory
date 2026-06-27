@@ -1,14 +1,14 @@
 ---
 name: chatpypi-publisher-management
-description: "Manage PyPI Trusted Publishers with ChatPyPI sessions: list projects/publishers, inspect details, add/update GitHub publisher entries, and verify safely."
-version: 0.1.0
+description: "Manage PyPI Trusted Publishers with ChatPyPI 0.2.3+: list projects/publishers, inspect details, add GitHub active publishers, and keep pending scoped to true pre-registration cases."
+version: 0.1.1
 ---
 
 # ChatPyPI Publisher Management
 
 ## When To Use
 
-Use this skill when the user asks to view, add, update, or verify PyPI publishing / Trusted Publisher configuration for ChatArch packages, especially phrases like:
+Use this skill when the user asks to view, add, update, clean, or verify PyPI publishing / Trusted Publisher configuration for ChatArch packages, especially phrases like:
 
 - "project list / publisher list"
 - "publish list"
@@ -17,13 +17,26 @@ Use this skill when the user asks to view, add, update, or verify PyPI publishin
 - "给 ChatArch/<Repo> 配 PyPI 发布"
 - "查看 pending publisher / active publisher"
 
-This skill covers PyPI-side publisher configuration. Pair it with `python-package-publishing` for release gates and `github-workflows` when repository workflows or PRs/tags are involved. For broader ChatArch package-development routing, consult the ChatMemory theme index `Skills/chatarch/package-development/README.md` when available.
+This skill covers PyPI-side publisher configuration. Pair it with `python-package-release-with-chattool-pypi` / `python-package-publishing` for release gates and with `chatgh-pr-and-ci-workflow` when repository PRs/tags/workflows are involved.
 
 ## Core Rule
 
-Do not guess the GitHub owner/repository from the PyPI username or session profile.
+For existing PyPI projects, Publisher management is **active state**, not pending. Use a working released `chatpypi` command at version 0.2.3 or newer. Prefer the installed command when it is healthy; if the shell command is shadowed or stale, use the local ChatPyPI checkout venv as the operator fallback:
 
-For ChatArch packages, the PyPI Trusted Publisher owner is normally `ChatArch`, not `RexWzh` and not the PyPI project name as an owner. Example:
+```bash
+BIN=$(command -v chatpypi || true)
+if [ -z "$BIN" ] || ! "$BIN" --version >/dev/null 2>&1; then
+  BIN="$HOME/Playground/core/ChatPyPI/.venv/bin/chatpypi"
+fi
+$BIN --version                    # should be 0.2.3 or newer for direct publisher writes
+$BIN auth login -e RexWzh --format json
+$BIN auth whoami -e RexWzh --format json
+$BIN publisher detail <ProjectName> -e RexWzh --format json
+$BIN publisher add-github <ProjectName> --owner ChatArch --repo <Repo> --workflow publish.yml --environment "" -e RexWzh --format json
+$BIN publisher pending-list -e RexWzh --format json
+```
+
+Do not guess the GitHub owner/repository from the PyPI username or session profile. For ChatArch packages, the Trusted Publisher owner is normally `ChatArch`, not `RexWzh` and not the PyPI project name as an owner.
 
 ```text
 PyPI project: ChatSage / chatsage
@@ -35,222 +48,128 @@ Environment: blank / (Any), unless the existing project/workflow explicitly uses
 
 `RexWzh/askchat` is an existing exception, not the pattern to copy to ChatArch packages.
 
+## Current ChatPyPI 0.2.3 Publisher Tree
+
+```text
+chatpypi publisher
+├── list            # account overview: active/pending counts and project names
+├── detail          # project-level active Publisher details
+├── add-github      # direct active GitHub Publisher add/verify for an existing project
+├── pending-list    # list true pending Publisher entries
+├── pending-add     # only for explicit pre-registration / nonexistent-project pending exceptions
+└── pending-remove  # remove or confirm absence of a stale pending Publisher by exact target
+```
+
+Expected active Publisher readback for ChatArch packages:
+
+```text
+active_count >= 1
+pending_count == 0 unless deliberately testing a pre-registration pending case
+publisher_details include:
+  publisher: GitHub
+  repository: ChatArch/<Repo>
+  workflow: publish.yml
+  environment: (Any)  # when the PyPI page environment is blank
+```
+
+## ChatArch New Project Baseline
+
+For this user's ChatArch packages, Publisher setup normally happens **after** the PyPI project exists. If `chatpypi pkg probe <ProjectName>` / PyPI JSON says the project does not exist, the expected bootstrap is:
+
+1. Create and upload a minimal local `0.0.1` placeholder with the controlled PyPI account.
+2. Re-probe PyPI and confirm the project exists and version `0.0.1` is visible.
+3. Configure/verify the active GitHub Trusted Publisher on the project with `publisher add-github`.
+4. Confirm `publisher detail` shows the exact owner/repo/workflow/environment and `pending_count=0`.
+5. Only then use the repository's tag-driven GitHub Actions workflow for the real feature release.
+
+Pending publishers for nonexistent projects are supported by PyPI, but in this user's workflow they are an exception/recovery path, not the default. Do not summarize a pending publisher as “the project exists,” and do not proceed as if ownership is proven until the real PyPI project or active publisher readback is verified.
+
+## What Counts As Pending
+
+Use `pending-*` only when the state is genuinely pending:
+
+1. PyPI's own pre-registration / pending Trusted Publisher feature for a project that does not exist yet;
+2. QR/device/browser verification;
+3. CAPTCHA, email verification, password confirmation, 2FA bootstrap, or other complex checkpoint-heavy flows;
+4. stale pending cleanup after an earlier wrong path.
+
+Do **not** call these pending:
+
+- existing-project Publisher add/detail/readback;
+- package probe/build/check/upload;
+- PyPI JSON/simple/pip-index version checks;
+- GitHub Actions publish status;
+- clean install verification.
+
+If an operation can be directly implemented, fix or use ChatPyPI instead of inventing a pending workflow.
+
+## Safe Workflow For Existing Projects
+
+```bash
+BIN=$(command -v chatpypi || true)
+if [ -z "$BIN" ] || ! "$BIN" --version >/dev/null 2>&1; then
+  BIN="$HOME/Playground/core/ChatPyPI/.venv/bin/chatpypi"
+fi
+PROJECT=ChatECNU
+OWNER=ChatArch
+REPO=ChatECNU
+WORKFLOW=publish.yml
+
+$BIN auth login -e RexWzh --format json
+$BIN auth whoami -e RexWzh --format json
+$BIN publisher detail "$PROJECT" -e RexWzh --format json
+$BIN publisher add-github "$PROJECT" --owner "$OWNER" --repo "$REPO" --workflow "$WORKFLOW" --environment "" -e RexWzh --format json
+$BIN publisher pending-list -e RexWzh --format json
+```
+
+Interpretation:
+
+- `posted=false` and `already_active_before=true` means the command found the correct active Publisher and did not mutate PyPI.
+- `environment=(Any)` is the expected summary when the PyPI page environment is blank.
+- `pending_count=0` is expected for normal existing-project Publisher setup.
+
+## Safe Workflow For Stale Pending Cleanup
+
+Only run this when a previous wrong path may have left a pending Publisher:
+
+```bash
+$BIN publisher pending-remove "$PROJECT" --owner "$OWNER" --repo "$REPO" --workflow "$WORKFLOW" --environment "" -e RexWzh --format json
+```
+
+Expected no-op shape when no stale pending exists:
+
+```text
+ok=True
+removed=False
+pending_count=0
+```
+
+If a matching pending exists and PyPI exposes a matching remove form, ChatPyPI 0.2.3 removes it and reads back. If not, it fails loudly rather than pretending cleanup happened.
+
 ## Safety Rules
 
 - Never print `PYPI_SESSION_TOKEN`, cookies, CSRF token values, passwords, TOTP secrets, or API tokens.
 - Use a named ChatEnv profile such as `-e RexWzh` for account-specific PyPI management.
 - Before writing to PyPI, confirm the logged-in account with `auth whoami -e <profile>`.
-- Treat adding/removing/updating Trusted Publishers as a real remote mutation.
+- Treat adding/removing/updating Trusted Publishers as real remote mutations.
 - Prefer blank environment for the current ChatArch baseline when existing similar projects show `(Any)`. Use `environment: pypi` only when the GitHub workflow and PyPI publisher are both explicitly configured for that environment.
-- Do not assume PyPI exposes a public JSON API for publisher configuration. Current practical path is authenticated PyPI web forms plus post-write readback.
+- Do not assume PyPI exposes a public JSON API for publisher configuration; the practical automation path is authenticated PyPI web forms plus post-write readback through ChatPyPI.
 
-## Read Current State
+## ChatECNU 2026-06-27 Correction
 
-Use the installed ChatPyPI from the ChatArch operator venv unless the task explicitly targets a local source checkout:
+This workflow was corrected after the ChatECNU release:
 
-```bash
-BIN=/Users/rexwzh/.chatarch/venv/bin/chatpypi
-
-$BIN auth whoami -e RexWzh --format json
-$BIN project list -e RexWzh --format json
-$BIN publisher list -e RexWzh --format json
-$BIN publisher pending-list -e RexWzh --format json
-```
-
-Important distinction:
-
-- `publisher list` overview returns active/pending counts and active project names.
-- Repository/workflow/environment details are on each project settings page and may require per-project fetches:
-
-```text
-https://pypi.org/manage/project/<project>/settings/publishing/
-```
-
-## Inspect Publisher Details
-
-For a given PyPI project, fetch the settings page with the ChatPyPI session payload and extract safe text only:
-
-```python
-from html.parser import HTMLParser
-from chatpypi.session_ops import load_session_payload_from_env, requests_session_from_payload
-
-class TextParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.text = []
-        self.skip = False
-    def handle_starttag(self, tag, attrs):
-        if tag in {"script", "style"}:
-            self.skip = True
-    def handle_endtag(self, tag):
-        if tag in {"script", "style"}:
-            self.skip = False
-    def handle_data(self, data):
-        if not self.skip:
-            value = " ".join(data.split())
-            if value:
-                self.text.append(value)
-
-payload = load_session_payload_from_env(env_profile="RexWzh")
-session = requests_session_from_payload(payload)
-resp = session.get("https://pypi.org/manage/project/ChatSage/settings/publishing/", timeout=30)
-resp.raise_for_status()
-parser = TextParser()
-parser.feed(resp.text)
-for i, value in enumerate(parser.text):
-    if value in {"Publisher Details", "GitHub", "Repository:", "Workflow:", "Environment name:"} or "ChatArch/ChatSage" in value or "publish.yml" in value:
-        print(i, value)
-```
-
-Expected successful detail shape for ChatArch projects:
-
-```text
-GitHub
-Repository:
-ChatArch/<Repo>
-Workflow:
-publish.yml
-Environment name:
-[Any or blank on page, reported as (Any) in summaries]
-```
-
-## Add a GitHub Trusted Publisher
-
-1. Confirm target from the user or from the ChatArch repo convention:
-
-```text
-PyPI project: chatsage / ChatSage
-GitHub owner: ChatArch
-GitHub repo: ChatSage
-Workflow filename: publish.yml
-Environment: blank unless explicitly required
-```
-
-2. Fetch the project publishing settings page:
-
-```python
-from html.parser import HTMLParser
-from urllib.parse import urljoin
-from chatpypi.session_ops import load_session_payload_from_env, requests_session_from_payload
-
-class FormParser(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.forms = []
-        self.cur = None
-    def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
-        if tag == "form":
-            self.cur = {"method": attrs.get("method", "get").lower(), "action": attrs.get("action", ""), "inputs": []}
-        elif self.cur is not None and tag == "input":
-            self.cur["inputs"].append({"name": attrs.get("name", ""), "type": attrs.get("type", ""), "value": attrs.get("value", "")})
-    def handle_endtag(self, tag):
-        if tag == "form" and self.cur is not None:
-            self.forms.append(self.cur)
-            self.cur = None
-
-payload = load_session_payload_from_env(env_profile="RexWzh")
-session = requests_session_from_payload(payload)
-url = "https://pypi.org/manage/project/chatsage/settings/publishing/"
-resp = session.get(url, timeout=30)
-resp.raise_for_status()
-parser = FormParser()
-parser.feed(resp.text)
-form = None
-for candidate in parser.forms:
-    names = {item["name"] for item in candidate["inputs"]}
-    if {"csrf_token", "owner", "repository", "workflow_filename", "environment"} <= names:
-        form = candidate
-        break
-if form is None:
-    raise SystemExit("GitHub trusted publisher form not found")
-csrf = next(item["value"] for item in form["inputs"] if item["name"] == "csrf_token")
-action = urljoin(resp.url, form["action"])
-post = session.post(
-    action,
-    data={
-        "csrf_token": csrf,
-        "owner": "ChatArch",
-        "repository": "ChatSage",
-        "workflow_filename": "publish.yml",
-        "environment": "",
-    },
-    headers={"Referer": resp.url, "Origin": "https://pypi.org"},
-    timeout=30,
-    allow_redirects=True,
-)
-print("post_status", post.status_code)
-print("final_url", post.url)
-```
-
-A final URL ending in `#errors` is not sufficient to determine failure because PyPI form actions often include that anchor. Always verify by readback.
-
-## Verify After Write
-
-Run both overview and detail verification.
-
-Overview:
-
-```bash
-BIN=/Users/rexwzh/.chatarch/venv/bin/chatpypi
-$BIN publisher list -e RexWzh --format json
-$BIN publisher pending-list -e RexWzh --format json
-```
-
-Look for:
-
-```text
-active_count increased as expected
-pending_count 0 unless deliberately adding a pending publisher
-FOUND_ACTIVE_PROJECT ChatSage
-```
-
-Detail page must show:
-
-```text
-GitHub
-Repository:
-ChatArch/ChatSage
-Workflow:
-publish.yml
-Environment name:
-```
-
-If the environment line is blank, summarize it as `(Any)`.
-
-## ChatSage Example From 2026-06-26
-
-Confirmed operation:
-
-```text
-Profile: RexWzh
-PyPI project: ChatSage / chatsage
-Added publisher:
-  GitHub repository: ChatArch/ChatSage
-  Workflow: publish.yml
-  Environment: (Any)
-Readback:
-  active_count: 18
-  pending_count: 0
-  active project found: ChatSage
-```
+- The initial attempt overused a pending Publisher for a nonexistent project.
+- The correct ChatArch flow was to upload `ChatECNU==0.0.1` as a real placeholder project, then configure active `ChatArch/ChatECNU` Publisher, then publish `0.1.0` through the tag-driven GitHub Actions workflow.
+- The first `v0.1.0` publish run failed with `invalid-pending-publisher: valid token, but project already exists`; after confirming account pending was gone and project active Publisher existed, rerunning the workflow succeeded.
+- Final readback: `ChatECNU==0.1.0`, active Publisher `ChatArch/ChatECNU`, workflow `publish.yml`, environment `(Any)`, `pending_count=0`.
 
 ## Common Pitfalls
 
 - Copying `RexWzh/askchat` as a pattern for ChatArch packages. It is an exception.
 - Treating the PyPI username/profile as the GitHub owner.
-- Assuming the overview page includes repository/workflow/environment details; it usually only includes project names and manage links.
-- Treating `#errors` in the form action/final URL as failure without inspecting readback.
+- Assuming the overview page includes repository/workflow/environment details; use `publisher detail <project>` for project-level details.
+- Treating `#errors` in old web-form experiments as failure without inspecting readback.
 - Adding `environment: pypi` on the PyPI side while the GitHub workflow has no matching `environment: pypi`, or vice versa.
 - Printing raw session/cookie/CSRF values during debugging.
-
-## When To Improve ChatPyPI CLI
-
-Current ChatPyPI 0.2.2 supports read paths but not a first-class publisher update command. A future CLI improvement could add:
-
-```bash
-chatpypi publisher detail <project> -e RexWzh --format json
-chatpypi publisher add-github <project> --owner ChatArch --repo ChatSage --workflow publish.yml --environment "" -e RexWzh
-```
-
-Tests should cover overview-only vs detail-page behavior, ChatArch owner defaults, environment blank = `(Any)`, and no secret output.
+- Keeping project-local PyPI scripts after ChatPyPI exposes the capability; prefer released `chatpypi 0.2.3+`.

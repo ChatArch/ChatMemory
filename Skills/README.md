@@ -18,7 +18,7 @@ Skills/
 - `chatarch`
 - `common`
 
-`local` 用于本地模板、机器特定 workflow 或 copy-and-adapt 示例，不应默认当成跨机器共享 skill group。
+`local` 用于本地模板、机器特定 workflow 或 copy-and-adapt 示例，不应默认当成跨机器共享 skill group。每台机器应维护自己 workspace 下的 `skills/local/` copy；不要把当前机器的本地分支名、路径、凭据策略写回共享组，也不要为了同步本机工作去 checkout、merge、reset 其他机器人/机器的长期分支。
 
 ## `reference:` field
 

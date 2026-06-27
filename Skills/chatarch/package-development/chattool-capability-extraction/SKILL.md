@@ -7,7 +7,7 @@ tags:
   - ChatTool
   - extraction
   - packaging
-status: draft
+status: maintained
 reference:
   - python-package-release-with-chattool-pypi: "新 standalone Python package bootstrap/release 流程"
   - chatgh-pr-and-ci-workflow: "standalone/parent PR、CI 与 review flow"
@@ -19,12 +19,11 @@ reference:
 
 Use this skill when splitting a useful ChatTool command/interface into an independent ChatArch Python package.
 
-Initial target: extract `chattool pypi` / `chatpypi` into a standalone ChatPyPI package.
-
-This skill is intentionally created early as a draft. Fill in concrete details as the ChatPyPI extraction is practiced and verified.
+This was first practiced on `chattool pypi` -> standalone `ChatPyPI` / `chatpypi`. Current ChatPyPI package-operation docs should use the explicit 0.2.3+ command tree (`chatpypi pkg init/build/check/probe/upload` and `chatpypi publisher detail/add-github/pending-*`), not old parent `chattool pypi` snippets or root shortcuts except when documenting backward compatibility.
 
 ## Current known extractions
 
+- PyPI/package release surface: `ChatPyPI` / `chatpypi` owns package scaffold/build/check/probe/upload plus PyPI account/session/project/publisher operations. Current release baseline is `ChatPyPI>=0.2.3,<0.3.0` for direct Publisher management (`publisher detail`, `publisher add-github`, and scoped `pending-*`).
 - GitHub helper surface: ChatTool GitHub functionality has been extracted to `ChatGH` / `chatgh`.
 - Setup/bootstrap surface: ChatTool setup functionality has been extracted to `ChatUp` / `chatup`; `chattool setup` is no longer a ChatTool command in ChatTool 7.1.0.
 - DNS surface: `ChatDNS` / `chatdns` owns DNS record management, DDNS, IP detection, provider clients, and DNS-01 certificate automation (`chatdns cert`) after the 2026-06 extraction plus `0.1.1` cert follow-up; DNS MCP remains a separate boundary unless explicitly scoped in.
@@ -54,12 +53,14 @@ Known source surface in ChatTool:
   - `tests/cli-tests/pypi/`
   - `tests/mock-cli-tests/client/test_chatpypi_shortcut_basic.*`
 
-Expected target shape:
+Expected/current target shape:
 
-- GitHub repo: `ChatArch/ChatPyPI` unless renamed by user.
-- PyPI distribution: confirm exact name before registry operations; do not guess a hyphenated name.
-- Python module: likely `chatpypi`.
+- GitHub repo: `ChatArch/ChatPyPI`.
+- PyPI distribution: `ChatPyPI`.
+- Python module: `chatpypi`.
 - CLI: `chatpypi`.
+- Current command tree for package operations: `chatpypi pkg init/build/check/probe/upload`; root commands remain compatibility shortcuts only.
+- Current Publisher tree: `chatpypi publisher detail/add-github/list/pending-list/pending-add/pending-remove`; existing-project Publisher writes use active `add-github`, not pending.
 
 ## DNS / operational capability extraction notes
 
@@ -115,10 +116,11 @@ Rules:
 ### Phase 1 — bootstrap or prepare standalone package
 
 1. Confirm exact names: repo, PyPI distribution, module, CLI, initial version.
-2. Check whether GitHub repo and PyPI project already exist.
-3. Scaffold/harden the standalone package.
-4. Add minimum CLI smoke: `--help`, `--version`, and a simple non-mutating command.
-5. Add CI and tag-driven publish workflow, but do not tag/publish without explicit user approval.
+2. Check whether GitHub repo and PyPI project already exist with `chatpypi pkg probe` plus GitHub repo checks.
+3. For new ChatArch PyPI projects, create the real project first via a controlled `0.0.1` placeholder upload, then configure active Publisher with `chatpypi publisher add-github`; do not use pending Publisher as the default bootstrap.
+4. Scaffold/harden the standalone package with `chatpypi pkg init` or an existing source tree.
+5. Add minimum CLI smoke: `--help`, `--version`, and a simple non-mutating command.
+6. Add CI and tag-driven publish workflow, but do not tag/publish without explicit user approval.
 
 ### Phase 2 — migrate the capability
 
@@ -146,14 +148,9 @@ Only after the standalone package is working and, if needed, published:
 - Merge is not release.
 - Keep source mutations in task-local clones until the user asks to apply them to canonical `core/` checkouts or remote repositories.
 
-## Fill in after practice
+## ChatPyPI Practice Notes
 
-As ChatPyPI extraction proceeds, add:
-
-- exact command compatibility table;
-- file migration map;
-- dependency decisions;
-- tests moved/added;
-- parent cleanup checklist;
-- release and rollback notes;
-- pitfalls discovered during the actual split.
+- Use `chatpypi pkg ...` as the canonical package-operation tree in shared docs. Root `chatpypi init/build/check/upload/probe` commands are compatibility shortcuts and should not be the primary examples.
+- Treat PyPI Publisher state as a tree with separate active and pending branches. Existing project operations are active (`publisher detail`, `publisher add-github`); only PyPI pre-registration or stale cleanup uses `pending-*`.
+- After releasing an operator tool such as ChatPyPI, upgrade `/Users/rexwzh/.chatarch/venv` to the published version and run installed-command smoke without `PYTHONPATH` before updating parent skills.
+- Parent ChatTool cleanup remains part of extraction done-ness unless the user scopes it out: remove duplicated implementation, update dependencies/extras/docs/tests, and only release ChatTool after the standalone package is published and clean-install verified.
