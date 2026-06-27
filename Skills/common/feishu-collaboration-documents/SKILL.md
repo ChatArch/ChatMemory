@@ -66,11 +66,22 @@ lark-cli auth status
 4. If user identity is expired, blocked, or unavailable, stop before doc creation and report the exact auth/keychain boundary. Do not silently fall back to bot-created docs.
 5. Prefer creating a focused child doc for each substantial topic.
 6. Add the child doc link back to the main document.
-7. Fetch the doc back after create/update and verify:
+7. For substantial reports, do not dump plain Markdown into Feishu. Use the current `lark-cli` embedded `lark-doc` skills first:
+   - `lark-cli skills read lark-doc references/lark-doc-create.md`
+   - `lark-cli skills read lark-doc references/lark-doc-xml.md`
+   - `lark-cli skills read lark-doc references/style/lark-doc-style.md`
+   - for updates: `lark-cli skills read lark-doc references/lark-doc-update.md`
+8. Prefer XML (`--doc-format xml`) for authored Feishu docs unless the user explicitly asks to import Markdown.
+   - Use chapters (`h1/h2`), callouts/highlight blocks, tables, grids, and diagrams/whiteboards when they help readability.
+   - Important mechanism reports should include at least one flow diagram when the process has multiple states or components.
+   - If a diagram block returns warnings/degradation, do not treat the doc as final; fix the diagram and republish.
+9. Fetch the doc back after create/update and verify:
    - title is correct
    - body contains intended structure
+   - rich blocks/diagrams did not degrade
    - main doc contains the child link when relevant
-8. Record final links in the active project `memory.md` and `progress.md`.
+10. If fetch/update/create hits missing user scopes, use the Common skill `lark-cli-permission-authorization` and generate a real `https://accounts.feishu.cn/oauth/v1/device/verify?...` link via `lark-cli auth login --scope ... --no-wait --json`; do not send developer-console `open.feishu.cn/app/.../auth` URLs as user-confirmable links.
+11. Record final links in the active project `memory.md` and `progress.md`.
 
 ## Known CLI Compatibility Note
 
