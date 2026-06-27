@@ -21,10 +21,13 @@ This skill covers PyPI-side publisher configuration. Pair it with `python-packag
 
 ## Core Rule
 
-For existing PyPI projects, Publisher management is **active state**, not pending. Use released ChatPyPI commands from the operator venv:
+For existing PyPI projects, Publisher management is **active state**, not pending. Use a working released `chatpypi` command at version 0.2.3 or newer. Prefer the installed command when it is healthy; if the shell command is shadowed or stale, use the local ChatPyPI checkout venv as the operator fallback:
 
 ```bash
-BIN=/Users/rexwzh/.chatarch/venv/bin/chatpypi
+BIN=$(command -v chatpypi || true)
+if [ -z "$BIN" ] || ! "$BIN" --version >/dev/null 2>&1; then
+  BIN="$HOME/Playground/core/ChatPyPI/.venv/bin/chatpypi"
+fi
 $BIN --version                    # should be 0.2.3 or newer for direct publisher writes
 $BIN auth login -e RexWzh --format json
 $BIN auth whoami -e RexWzh --format json
@@ -103,7 +106,10 @@ If an operation can be directly implemented, fix or use ChatPyPI instead of inve
 ## Safe Workflow For Existing Projects
 
 ```bash
-BIN=/Users/rexwzh/.chatarch/venv/bin/chatpypi
+BIN=$(command -v chatpypi || true)
+if [ -z "$BIN" ] || ! "$BIN" --version >/dev/null 2>&1; then
+  BIN="$HOME/Playground/core/ChatPyPI/.venv/bin/chatpypi"
+fi
 PROJECT=ChatECNU
 OWNER=ChatArch
 REPO=ChatECNU

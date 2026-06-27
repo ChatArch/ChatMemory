@@ -16,6 +16,8 @@ tags:
 
 Use this skill when a ChatArch / Chat-series repository is newly created, first checked out, or newly initialized locally and needs repo-scoped GitHub credentials.
 
+For **new Python/PyPI packages whose PyPI project does not exist yet**, do not use this skill as a reason to create the GitHub repository early. First complete the `python-package-release-with-chattool-pypi` new-project preflight: upload and verify the real PyPI `0.0.1` placeholder from a task-local `playground/` scaffold. Only after that succeeds should the GitHub repository be created and this token setup skill run.
+
 This is not a PR/CI readiness skill. `chatgh pr`, `chatgh repo ...`, `chatgh run ...`, and `chatgh repo-perms` are GitHub API surfaces, while `git push` / `git fetch` are git transport surfaces. `chatgh set-token` is still relevant to both in ChatArch workflows because the repo-local credential it writes is part of ChatGH's token resolution and also lets HTTPS git transport authenticate without SSH and without putting a token in the remote URL.
 
 ## Core rule

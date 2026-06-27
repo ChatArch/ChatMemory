@@ -42,16 +42,22 @@ package-development/
 
 用途：新建或发布一个 ChatArch 风格 Python CLI 包。
 
-覆盖流程：
+覆盖流程分两类：
 
+**已有 PyPI project / 已发过版的包**：
 1. 确认包名、仓库名、module 名、CLI 名、版本号和发布目标。
-2. 在 `ChatArch` 组织下创建/确认 GitHub repo。
-3. 用 `chatpypi pkg init <ProjectName> -t chatarch` 初始化包模板；旧 root shortcut `chatpypi init` 只作兼容入口。
-4. 检查 ChatStyle / ChatEnv 依赖、CLI 入口、README、测试和 workflow。
-5. 初始化 git、设置 HTTPS remote、配置 repo-local token、push。
-6. 跑本地测试、`chatpypi pkg build`、`chatpypi pkg check`。
-7. 首次发布前用 `chatpypi publisher detail/add-github/pending-list` 配置/核对 PyPI Trusted Publisher。
-8. 在明确授权后走 tag-driven PyPI publish，并回读 GitHub Actions / PyPI / clean install。
+2. 查询 PyPI latest / tags / CI，保持版本连续。
+3. 在现有仓库里准备版本、CHANGELOG、测试、build/check。
+4. 走 PR/MR、merge 后在默认分支 tag-driven publish，并回读 GitHub Actions / PyPI / clean install。
+
+**全新 PyPI project / “如果不在就注册”的新包**：
+1. 确认 exact PyPI project name、normalized name、module、CLI、初始版本。
+2. 先在当前 task 的 `playground/` 创建临时 scaffold，版本固定 `0.0.1`。
+3. 构建、`twine check`，并用受控 PyPI 账号实际上传 `0.0.1` placeholder。
+4. 只有 PyPI JSON 回读确认 project 已创建后，才创建/确认 GitHub `ChatArch/<Repo>`，再初始化 canonical `core/<ProjectName>`、设置 HTTPS remote/token、push。
+5. 配置/核对 PyPI Trusted Publisher，再进入后续正式 feature/release 流程。
+
+硬边界：新包 `0.0.1` placeholder 上传或回读失败时，停止；不得先创建 GitHub repo、不得先写 canonical `core/` 仓库、不得换名字绕过。
 
 什么时候用：从零创建 ChatArch Python 包，或一个 feature PR 明确包含版本准备 / 发版准备。
 
