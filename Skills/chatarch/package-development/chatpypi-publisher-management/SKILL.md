@@ -151,7 +151,9 @@ If a matching pending exists and PyPI exposes a matching remove form, ChatPyPI 0
 - Never print `PYPI_SESSION_TOKEN`, cookies, CSRF token values, passwords, TOTP secrets, or API tokens.
 - Use a named ChatEnv profile such as `-e RexWzh` for account-specific PyPI management.
 - Before writing to PyPI, confirm the logged-in account with `auth whoami -e <profile>`.
+- If `auth whoami`, `publisher detail`, or `publisher add-github` says the PyPI session is not logged in / redirected to login, refresh it with `auth login -e <profile> --format json`, then retry the same Publisher command. Session expiry is not a release blocker and must not trigger Twine/token/manual upload fallback.
 - Treat adding/removing/updating Trusted Publishers as real remote mutations.
+- For real ChatArch releases after the initial `0.0.1` placeholder/name-claim, active Publisher readback is a hard gate: no active Publisher readback means no tag and no publish attempt.
 - Prefer blank environment for the current ChatArch baseline when existing similar projects show `(Any)`. Use `environment: pypi` only when the GitHub workflow and PyPI publisher are both explicitly configured for that environment.
 - Do not assume PyPI exposes a public JSON API for publisher configuration; the practical automation path is authenticated PyPI web forms plus post-write readback through ChatPyPI.
 

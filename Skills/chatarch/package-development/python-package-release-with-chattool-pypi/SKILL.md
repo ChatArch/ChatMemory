@@ -26,8 +26,8 @@ reference:
 2. 在当前 workspace task 的 `playground/` 下创建**临时本地 package scaffold**，先验证 PyPI 占位发布可行性。
 3. 对新 PyPI project，先构建并上传真实 `0.0.1` placeholder 到 PyPI；只有 PyPI 回读确认项目存在后，才允许创建 GitHub 仓库。
 4. PyPI 占位成功后，再在 GitHub `ChatArch` 组织下创建远程仓库、初始化 canonical `core/<ProjectName>`、配置 remote/token 并 push。
-5. 配置/验证 PyPI Trusted Publisher，确认 `ChatArch/<Repo>` + `publish.yml` + environment `(Any)`。
-6. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、tag-driven publish 后回读 GitHub 与 PyPI。
+5. 配置/验证 PyPI Trusted Publisher，确认 `ChatArch/<Repo>` + `publish.yml` + environment `(Any)`；如果 PyPI session 过期，先 `chatpypi auth login -e RexWzh --format json` 刷新再继续 Publisher 操作。
+6. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、Publisher readback 后再 tag-driven publish，并回读 GitHub Actions 与 PyPI。
 
 ## 两种流程必须分开
 
