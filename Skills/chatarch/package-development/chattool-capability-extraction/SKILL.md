@@ -151,6 +151,7 @@ Only after the standalone package is working and, if needed, published:
 ## ChatPyPI Practice Notes
 
 - Use `chatpypi pkg ...` as the canonical package-operation tree in shared docs. Root `chatpypi init/build/check/upload/probe` commands are compatibility shortcuts and should not be the primary examples.
+- `chatpypi pkg upload` / Twine upload is only for the initial `0.0.1` placeholder/name-claim or explicit non-ChatArch manual cases. For ChatArch real releases after the project exists, do not use upload fallback; release through GitHub Actions + active PyPI Trusted Publisher.
 - Treat PyPI Publisher state as a tree with separate active and pending branches. Existing project operations are active (`publisher detail`, `publisher add-github`); only PyPI pre-registration or stale cleanup uses `pending-*`.
 - After releasing an operator tool such as ChatPyPI, upgrade `/Users/rexwzh/.chatarch/venv` to the published version and run installed-command smoke without `PYTHONPATH` before updating parent skills.
 - Parent ChatTool cleanup remains part of extraction done-ness unless the user scopes it out: remove duplicated implementation, update dependencies/extras/docs/tests, and only release ChatTool after the standalone package is published and clean-install verified.
