@@ -78,6 +78,42 @@ Inside a Hermes tool process, `lark-cli` may intentionally auto-detect an agent 
 
 rather than the user's normal shell/global config path. This is expected when binding the Hermes app. If the user asks about the normal/global CLI config instead, verify the intended environment before diagnosing.
 
+
+## Resolve group bot IDs
+
+Use this when the user needs the `ou_*` identifier for a bot in a group chat and blind `@` testing would be noisy.
+
+First confirm the CLI is authenticated and note which profile/app is active:
+
+```bash
+lark-cli doctor
+lark-cli profile list
+```
+
+List visible chats and pick the target `oc_*` chat ID. Prefer sorting by activity when the current conversation is recent:
+
+```bash
+lark-cli im +chat-list --as user --sort active_time --page-size 20 --format json
+```
+
+Query bots in the target group:
+
+```bash
+lark-cli im chat.members bots --as user --chat-id '<oc_chat_id>' --format json
+```
+
+If user identity is not available but bot identity is a member of the target chat, retry with `--as bot`. The caller must be in the chat and have sufficient visibility.
+
+Record only reusable mappings that are valid for the current app/profile. Feishu/Lark `open_id` values (`ou_*`) are app-scoped: the same human or robot can have different `ou_*` IDs under Hermes, Lark CLI, cc-connect, or another app. Always state which app/profile produced the ID before reusing it for mentions or API calls.
+
+For direct OpenAPI calls, the equivalent endpoint is the group bot list API behind:
+
+```bash
+lark-cli im chat.members bots --as user --chat-id '<oc_chat_id>' --dry-run
+```
+
+Use the dry-run output to inspect the HTTP method/path supported by the installed CLI version before hand-writing `lark-cli api ...` calls.
+
 ## Manual fallback when `config bind` is unavailable
 
 Prefer upgrading `lark-cli` first. If the installed version does not have `config bind`, use the non-echoing secret path:

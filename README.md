@@ -107,7 +107,7 @@ ChatMemory/
 
 ### `common/feishu-collaboration-documents`
 
-Feishu collaboration-document convention and human-AI main document navigation.
+Shared Feishu collaboration-document workflow. Concrete workspace links and group conventions belong in local skills, not this shared skill.
 
 ### `common/hermes-environment-notes`
 
@@ -115,7 +115,7 @@ Hermes tool-session environment notes for interpreter, virtualenv, CLI config na
 
 ### `common/hermes-lark-cli-binding`
 
-Install Lark CLI and bind it to the same Feishu/Lark app used by Hermes Agent on a machine.
+Install Lark CLI, bind it to the same Feishu/Lark app used by Hermes Agent on a machine, and query group bot IDs without blind mention tests.
 
 ### `common/hermes-slash-command-development`
 
@@ -158,6 +158,10 @@ ChatArch Python package creation, release, and PyPI verification workflow.
 ### `local/chatmemory-local-branch-loop`
 
 Machine-local ChatMemory PR/merge/reset loop template. It is tracked so a new machine can copy and adapt the local branch/path policy, but it is not a default linked shared skill.
+
+### `local/feishu-collaboration-local-conventions`
+
+Template for machine- or tenant-specific Feishu collaboration document URLs, chat conventions, and app-scoped bot ID mappings. Copy and fill locally; do not treat it as portable shared policy.
 
 ## Local workspace link convention
 
