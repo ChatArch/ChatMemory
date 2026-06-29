@@ -5,8 +5,6 @@ description: Add, review, or debug a ChatEnv typed-config provider. Use when a p
 
 # Chatenv Provider Workflow
 
-Use this skill when a package should integrate with ChatEnv and the question is whether the provider is discoverable, testable, and understandable from the CLI.
-
 ## Workflow
 
 1. Confirm the package publishes a `chatenv.configs` entry point in `pyproject.toml`.

@@ -1,6 +1,6 @@
 ---
 name: hermes-slash-command-development
-description: Add or update Hermes slash commands safely: registry, gateway dispatch, Feishu thread helpers, tests, aliases, and verification.
+description: "Add or update Hermes slash commands safely: registry, gateway dispatch, Feishu thread helpers, tests, aliases, and verification."
 version: 0.1.0
 ---
 

@@ -14,6 +14,8 @@ Do not assume a command invoked from Hermes uses the same interpreter, virtualen
 
 Before relying on an installed CLI or helper, verify the live execution context and choose the environment intentionally.
 
+For the reusable procedure to configure Hermes `terminal` tool subprocesses to default to ChatArch's venv without changing Hermes runtime/source, see the `hermes-terminal-env-profile` skill.
+
 ## Checklist
 
 1. Confirm workspace root and project/repo root first.

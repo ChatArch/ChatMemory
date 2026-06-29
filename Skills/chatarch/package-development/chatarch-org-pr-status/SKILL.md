@@ -23,7 +23,7 @@ Use this skill when the user asks questions like:
 - “快速看一下整个 ChatArch 当前工作状态。”
 - “哪些项目还有 open PR，需要收敛？”
 
-This is a ChatArch-specific operational workflow, so it belongs under `Skills/chatarch/`, not `Skills/common/`.
+This is a ChatArch-specific operational workflow, so it belongs under `Skills/chatarch/package-development/`, not `Skills/common/`.
 
 ## Principle
 
@@ -44,13 +44,13 @@ From the workspace root:
 
 ```bash
 cd ~/Playground
-python Skills/chatarch/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
+python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
 ```
 
 For owners with repositories that have many stale PRs, keep output compact:
 
 ```bash
-python Skills/chatarch/chatarch-org-pr-status/scripts/org_pr_status.py \
+python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py \
   --owner cubenlp \
   --pr-limit-per-repo 10
 ```
@@ -58,25 +58,20 @@ python Skills/chatarch/chatarch-org-pr-status/scripts/org_pr_status.py \
 Write JSON for follow-up processing:
 
 ```bash
-python Skills/chatarch/chatarch-org-pr-status/scripts/org_pr_status.py \
+python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py \
   --owner ChatArch \
   --json-output \
   --output projects/<task>/playground/chatarch-open-prs.json
 ```
 
-If the installed `chatgh` command is stale or not on PATH, use the ChatArch venv:
+Keep the installed `chatgh` command current. If the command is missing or stale, upgrade it in the environment that runs the script, then run the script normally:
 
 ```bash
-CHATGH_PYTHON=/Users/rexwzh/.chatarch/venv/bin/python \
-python Skills/chatarch/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
-```
+python -m pip install -U ChatGH
+# or, when using the local checkout:
+python -m pip install -U ~/Playground/core/ChatGH
 
-For local ChatGH source testing:
-
-```bash
-CHATGH_COMMAND='python -m chatgh.cli' \
-PYTHONPATH=core/ChatGH/src \
-python Skills/chatarch/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
+python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
 ```
 
 ## Output interpretation
@@ -108,7 +103,7 @@ chatgh pr checks <NUMBER> --repo ChatArch/<RepoName> --json-output
 Or use the ChatArch readiness helper:
 
 ```bash
-python Skills/chatarch/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
+python Skills/chatarch/package-development/chatgh-pr-and-ci-workflow/scripts/pr_readiness.py \
   --repo ChatArch/<RepoName> \
   --number <NUMBER>
 ```

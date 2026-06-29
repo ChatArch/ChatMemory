@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.3
+version: 0.1.4
 tags:
   - ChatArch
   - Python
@@ -9,6 +9,11 @@ tags:
   - ChatTool
   - ChatStyle
   - ChatGH
+reference:
+  - chatarch-cli-package-conventions: "ChatArch CLI/package 模板、ChatEnv/ChatStyle 与 dependency 规范"
+  - chatgh-repo-token-setup: "新仓库或首次 checkout 后配置 HTTPS repo-local git token"
+  - chatpypi-publisher-management: "首次发布前配置/核对 PyPI Trusted Publisher"
+  - chatgh-pr-and-ci-workflow: "PR、CI、Actions 与 review/merge 前状态检查"
 ---
 
 # ChatArch Python 包创建与发版流程
@@ -17,12 +22,34 @@ tags:
 
 当需要创建一个新的 ChatArch 风格 Python CLI 包，并完整跑通以下流程时使用：
 
-1. 在 GitHub `ChatArch` 组织下创建远程仓库。
-2. 用独立 `chatpypi init ... -t chatarch` 初始化包模板。
-3. 确认 ChatStyle / ChatEnv 依赖、CLI 入口、README、测试、workflow。
-4. 初始化 git、commit、设置 remote、push。
-5. 本地测试、`chatpypi build`、`chatpypi check`、tag-driven publish。
-6. 回读 GitHub 与 PyPI，确认真实可用。
+1. 确认品牌、PyPI project name、normalized name、module、CLI、初始版本和发布目标。
+2. 在当前 workspace task 的 `playground/` 下创建**临时本地 package scaffold**，先验证 PyPI 占位发布可行性。
+3. 对新 PyPI project，先构建并上传真实 `0.0.1` placeholder 到 PyPI；只有 PyPI 回读确认项目存在后，才允许创建 GitHub 仓库。
+4. PyPI 占位成功后，再在 GitHub `ChatArch` 组织下创建远程仓库、初始化 canonical `core/<ProjectName>`、配置 remote/token 并 push。
+5. 配置/验证 PyPI Trusted Publisher，确认 `ChatArch/<Repo>` + `publish.yml` + environment `(Any)`。
+6. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、tag-driven publish 后回读 GitHub 与 PyPI。
+
+## 两种流程必须分开
+
+### 已有 PyPI project / 已发过版的包
+
+如果 PyPI project 已存在，并且本次是在现有仓库上做 feature/release，按正常 repo/PR/tag 流程推进：查 PyPI latest、准备连续版本、跑本地 gate、合并后在默认分支 tag-driven publish。这个场景不需要重新证明“能否创建 PyPI project”。
+
+### 全新 PyPI project / 用户说“如果不在就注册”的新包
+
+这是不同流程。**在 PyPI project 尚不存在时，不得先创建 GitHub repo、不得先在 `core/` 创建 canonical 仓库、不得先 push scaffold。**
+
+原因：`chatpypi pkg probe` / PyPI JSON 只能证明 exact name 是否存在，不能预测 PyPI 上传阶段的名称相似性拦截、账号权限、token scope、metadata policy 等真实创建失败。唯一可靠 gate 是用受控账号实际上传一个最小 `0.0.1` placeholder，并回读 PyPI 确认 project 已创建。
+
+新包硬顺序：
+
+1. 在当前 task 的 `playground/` 下创建临时 scaffold，例如 `projects/<task>/playground/<ProjectName>-pypi-preflight/`。
+2. 写入最终目标的 exact `[project].name`、module、CLI、版本 `0.0.1`；不要使用正式 `core/<ProjectName>`，不要创建 GitHub repo。
+3. 构建 + `twine check`。
+4. 使用受控 PyPI 账号实际上传 `0.0.1` placeholder。
+5. 回读 PyPI JSON，确认 `info.name`、version `0.0.1`、normalized name 符合预期。
+6. 只有第 4-5 步成功后，才创建 GitHub `ChatArch/<ProjectName>`、初始化/复制 canonical `core/<ProjectName>`、commit/push、配置 Publisher。
+7. 如果 placeholder 上传失败，停止；不要创建 repo，不要换名字绕过，不要继续写一堆 scaffold。把 PyPI 错误和候选相近项目报告给用户，让用户决定下一步。
 
 ## 硬性安全门槛
 
@@ -36,7 +63,6 @@ tags:
 - 版本号，例如 `0.1.0`。
 - GitHub 目标仓库，例如 `ChatArch/ChatNPM`。
 - GitHub visibility：默认 `private`；只有用户明确点名批准 public 时才改 public。
-- 发布目标：PyPI production 还是 TestPyPI。
 
 ### 版本连续性硬门槛
 
@@ -52,16 +78,16 @@ tags:
 
 只有当 feature PR/MR 原本没有发版意图、合并后才临时决定要发版时，才允许补一个 release-only PR/MR 来更新版本号和 `CHANGELOG.md`；这不是常规路径。
 
-发布准备或正式发版前必须同时检查三层状态。当前 `chatpypi probe` 可以替代手写 PyPI JSON 脚本做 first-pass 包名/latest metadata 检查；recent releases 列表仍需要 PyPI JSON 脚本或未来的 `chatpypi versions/status` 命令：
+发布准备或正式发版前必须同时检查三层状态。当前 `chatpypi pkg probe` 可以替代手写 PyPI JSON 脚本做 first-pass 包名/latest metadata 检查；recent releases 列表仍需要 PyPI JSON 脚本或未来的 `chatpypi pkg versions/status` 命令：
 
 ```bash
-chatpypi probe <ProjectName> || true
+chatpypi pkg probe <ProjectName> || true
 git fetch --tags origin
 git tag --list 'v*' --sort=-v:refname | head -20
 git ls-remote --tags origin 'v*' | tail -20
 ```
 
-如必须列出 recent releases，暂时保留脚本：
+如必须列出 recent releases，暂时保留 PyPI JSON 脚本；这只补 `pkg probe` 当前还没有覆盖的 release-list 维度：
 
 ```bash
 python3 - <<'PY'
@@ -105,42 +131,72 @@ core/<ProjectName>/
 
 源码仓库放 `core/<ProjectName>/`；任务进展写 `projects/.../progress.md`。
 
-### 2. 预检查远程和包名
+### 2. 预检查 PyPI 名称与现有状态
 
-检查 PyPI 名称状态：
+检查 PyPI 名称状态。先用 ChatPyPI 0.2.3+ 的 package probe；需要 exact/normalized 多候选时逐个 probe：
 
 ```bash
+for name in ChatNPM chatnpm chat-npm; do
+  chatpypi pkg probe "$name" || true
+done
+```
+
+`probe` 返回非零通常表示名字已存在或不可用；不要只看 exit code，记录输出中的 project/latest metadata。`probe` / PyPI JSON 只覆盖 exact project-name existence，不保证 PyPI upload 阶段不会因名称相似性策略拒绝新项目。若需要 recent release 列表，再临时补 PyPI JSON 脚本。
+
+分支：
+
+- **PyPI project 已存在 / 已发过版**：按现有仓库 release 流程继续；查询 latest、保持版本连续、跑本地 gate、PR/merge/tag-driven publish。
+- **PyPI project 不存在 / 用户要求“如果不在就注册”**：进入 `0.0.1` preflight。此时禁止创建 GitHub repo 或 canonical `core/<ProjectName>`。
+
+### 3. 全新 PyPI project 的 `0.0.1` preflight（必须早于 GitHub repo）
+
+推荐直接使用最终品牌名作为模板 name，避免生成错误的 kebab-case 分发名；但目标目录必须是 task-local playground，不是 `core/`：
+
+```bash
+cd ~/Playground
+PREFLIGHT="projects/<task>/playground/<ProjectName>-pypi-preflight"
+chatpypi pkg init <ProjectName> \
+  -t chatarch \
+  --project-dir "$PREFLIGHT" \
+  --description '<ProjectName>: <short description>' \
+  --author 'ChatArch' \
+  --email '1073853456@qq.com' \
+  --license MIT \
+  --python '>=3.10' \
+  --version 0.0.1 \
+  -I
+```
+
+Run only the gates needed to prove PyPI project creation:
+
+```bash
+cd "$PREFLIGHT"
+uv venv .venv --seed
+. .venv/bin/activate
+uv pip install -e '.[dev]'
+python -m pytest -q
+chatpypi pkg build --project-dir .
+chatpypi pkg check --project-dir .
+chatpypi auth whoami -e RexWzh --format json
+chatpypi pkg upload --project-dir . --token-env PYPI_API_TOKEN
 python3 - <<'PY'
-import json, urllib.error, urllib.request
-for name in ['ChatNPM', 'chatnpm', 'chat-npm']:
-    try:
-        with urllib.request.urlopen(f'https://pypi.org/pypi/{name}/json', timeout=20) as r:
-            data=json.load(r)
-        print(name, 'EXISTS', data['info']['name'], data['info'].get('version'), data['info'].get('project_url'))
-    except urllib.error.HTTPError as e:
-        print(name, 'HTTP', e.code)
+import json, urllib.request
+name = '<ProjectName>'
+with urllib.request.urlopen(f'https://pypi.org/pypi/{name}/json', timeout=20) as r:
+    data = json.load(r)
+print(data['info']['name'], data['info']['version'])
 PY
 ```
+
+If upload or readback fails, stop. Do not create a GitHub repo, do not initialize `core/<ProjectName>`, do not pick a workaround name silently. Report the blocker and wait for the user.
+
+### 4. 只有 PyPI `0.0.1` project 存在后，创建 GitHub 仓库
 
 检查或创建 GitHub 仓库。优先用 ChatGH：
 
 ```bash
 chatgh repo list --owner ChatArch --limit 20
 chatgh repo create \
-  --owner ChatArch \
-  --name <ProjectName> \
-  --description '<description>' \
-  --if-exists use
-```
-
-如果当前安装的 `chatgh` 没有 `repo` 子命令，但 `~/Playground/core/ChatGH` 源码包含新版命令，可用源码版执行：
-
-```bash
-cd ~/Playground/core/ChatGH
-. .venv/bin/activate 2>/dev/null || uv venv .venv && . .venv/bin/activate
-uv pip install -e .
-PYTHONPATH=src python -m chatgh.cli repo list --owner ChatArch --limit 20
-PYTHONPATH=src python -m chatgh.cli repo create \
   --owner ChatArch \
   --name <ProjectName> \
   --description '<description>' \
@@ -185,13 +241,13 @@ Never print the token, `.git/config` extraHeader, or decoded Authorization value
 Upgrade to GitHub Pro or make this repository public to enable this feature.
 ```
 
-### 3. 用 ChatPyPI / ChatStyle 模板初始化
+### 5. 初始化 canonical `core/<ProjectName>`
 
-推荐直接使用最终品牌名作为模板 name，避免生成错误的 kebab-case 分发名：
+PyPI `0.0.1` 成功后，可以把 preflight scaffold 复制/重建为 canonical repo；正式后续 feature release 再使用连续版本号。示例：
 
 ```bash
 cd ~/Playground
-chatpypi init <ProjectName> \
+chatpypi pkg init <ProjectName> \
   -t chatarch \
   --project-dir ~/Playground/core/<ProjectName> \
   --description '<ProjectName>: <short description>' \
@@ -199,11 +255,11 @@ chatpypi init <ProjectName> \
   --email '1073853456@qq.com' \
   --license MIT \
   --python '>=3.10' \
-  --version 0.1.0 \
+  --version 0.0.1 \
   -I
 ```
 
-Shortcut form is also available when the first argument is not a known subcommand:
+Legacy shortcut form may still work when the first argument is not a known subcommand, but shared docs should prefer the explicit `pkg init` tree:
 
 ```bash
 chatpypi <ProjectName> -t chatarch --project-dir ~/Playground/core/<ProjectName> -I
@@ -237,6 +293,8 @@ ChatArch 模板应包含：
 - 依赖 `chatstyle>=0.1.0,<0.2.0` 与 `chatenv>=0.2.0,<0.3.0`
 - 默认 publish workflow 不应包含 `environment: pypi`，除非 PyPI Trusted Publisher 明确配置了同名 environment。
 
+ChatArch 模板的 CLI skeleton 细节按 ChatArch CLI/package conventions 检查；这里不重复展开模板内部命令形态。初始化后检查真实 package command skeleton、ChatEnv/ChatStyle wiring、tests、build/check、publish workflow，不把示例/demo 命令当作发布验收点。
+
 ### 4. 本地验证
 
 使用项目本地 venv，不全局安装：
@@ -248,18 +306,18 @@ uv venv .venv
 uv pip install -e '.[dev]'
 python -m pytest -q
 rm -rf dist build *.egg-info src/*.egg-info
-chatpypi build --project-dir .
-chatpypi check --project-dir .
+chatpypi pkg build --project-dir .
+chatpypi pkg check --project-dir .
 <cli-command> --help
 ```
 
-`chatpypi build/check` wrap `python -m build` and `twine check`; the active venv still needs those tools installed, usually through `.[dev]`.
+`chatpypi pkg build/check` wrap `python -m build` and `twine check`; the active venv still needs those tools installed, usually through `.[dev]`.
 
 期望：
 
 - pytest 全部通过。
-- `chatpypi build` 生成 sdist 和 wheel。
-- `chatpypi check` 对所有 dist 文件 `PASSED`。
+- `chatpypi pkg build` 生成 sdist 和 wheel。
+- `chatpypi pkg check` 对所有 dist 文件 `PASSED`。
 - CLI help 正常显示。
 
 ### 5. 初始化 git、commit、push
@@ -285,7 +343,29 @@ git ls-remote --heads origin main
 
 Use the HTTPS remote plus `chatgh set-token` repo-local credential setup by default. Avoid embedding tokens in `remote.origin.url`, avoid command-line PAT arguments, and never print raw `.git/config` auth header values.
 
-### 6. Tag-driven PyPI 发布与回读验证
+### 6. 首次发布前 PyPI project / Publisher 检查
+
+对新 ChatArch 包，默认不是 pending Publisher 路径：
+
+1. 若 PyPI project 不存在，先用 controlled account 发布 `0.0.1` placeholder，让项目真实存在。
+2. 用 active Publisher 命令配置/核对项目级 Trusted Publisher。
+3. 只有 `publisher detail` 读到 active Publisher 且 `pending_count=0` 后，才进入正式 tag-driven 发布。
+
+```bash
+chatpypi publisher detail <ProjectName> -e RexWzh --format json
+chatpypi publisher add-github <ProjectName> \
+  --owner ChatArch \
+  --repo <ProjectName> \
+  --workflow publish.yml \
+  --environment "" \
+  -e RexWzh \
+  --format json
+chatpypi publisher pending-list -e RexWzh --format json
+```
+
+只在明确使用 PyPI 官方 pre-registration pending feature 或清理 stale pending 时，才使用 `publisher pending-add` / `publisher pending-remove`。
+
+### 7. Tag-driven PyPI 发布与回读验证
 
 发布前再次打印安全 metadata，但不要打印凭据。常规发布必须走 PR -> merge -> 默认分支 tag -> GitHub Actions publish；不要用本地 Twine 当正常发版路径：
 
@@ -294,8 +374,8 @@ cd ~/Playground/core/<ProjectName>
 . .venv/bin/activate
 python -m pytest -q
 rm -rf dist build *.egg-info src/*.egg-info
-chatpypi build --project-dir .
-chatpypi check --project-dir .
+chatpypi pkg build --project-dir .
+chatpypi pkg check --project-dir .
 
 git checkout main
 git pull --ff-only origin main
@@ -306,7 +386,7 @@ git push origin v<X.Y.Z>
 发布后回读：
 
 ```bash
-chatpypi probe <ProjectName> || true
+chatpypi pkg probe <ProjectName> || true
 python3 - <<'PY'
 import json, urllib.request
 for name in ['<ProjectName>', '<normalized-name>']:
@@ -317,7 +397,7 @@ for name in ['<ProjectName>', '<normalized-name>']:
 PY
 ```
 
-`chatpypi probe` gives a fast latest-version/project metadata check. Keep the JSON snippet only when you need recent release lists until ChatPyPI grows a dedicated `versions/status` command.
+`chatpypi pkg probe` gives a fast latest-version/project metadata check. Keep the JSON snippet only when you need recent release lists until ChatPyPI grows a dedicated `pkg versions/status` command.
 再做隔离安装验证：
 
 ```bash
@@ -326,20 +406,6 @@ uv venv ~/Playground/projects/<task>/playground/install-check
 uv pip install '<ProjectName>==<version>'
 <cli-command> --help
 ```
-
-## ChatNPM 案例记录
-
-本流程已用 `ChatNPM` 跑通过一次：
-
-- 旧错误本地目录已移到 `~/Playground/.trash/ChatNPM-old-20260622-012703`。
-- 使用命令：`chatpypi init ChatNPM -t chatarch --project-dir ~/Playground/core/ChatNPM ...`。
-- 生成结果：`project.name = "ChatNPM"`，module 为 `chatnpm`，CLI 为 `chatnpm`。
-- GitHub 仓库通过 ChatGH 源码版创建：`ChatArch/ChatNPM`，初始为 private。
-- local commit：`a6434a7 Initial ChatNPM package scaffold`。
-- remote：`https://github.com/ChatArch/ChatNPM.git`，并通过 `chatgh set-token` 配置 repo-local HTTPS token。
-- PyPI：`ChatNPM==0.1.0` 上传成功，项目页 `https://pypi.org/project/ChatNPM/0.1.0/`。
-- 隔离安装验证：`uv pip install 'ChatNPM==0.1.0'` 后 `chatnpm --help` 正常。
-- 后续只有在用户明确批准后，才将 `ChatArch/ChatNPM` 改为 public 并设置默认分支保护；这不是 Python/PyPI 发布流程的默认步骤。
 
 ## 结束同步硬门槛
 
@@ -378,7 +444,7 @@ git log -1 --oneline --decorate
 - PyPI: https://pypi.org/project/<ProjectName>/<version>/
 - Local source: ~/Playground/core/<ProjectName>
 - Tests: python -m pytest -q -> ... passed
-- Build: `chatpypi build --project-dir .` -> wheel + sdist
-- Check: `chatpypi check --project-dir .` -> PASSED
+- Build: `chatpypi pkg build --project-dir .` -> wheel + sdist
+- Check: `chatpypi pkg check --project-dir .` -> PASSED
 - Install check: uv pip install '<ProjectName>==<version>' + <cli-command> --help OK
 ```
