@@ -15,7 +15,6 @@
 package-review/
   README.md
   chatenv-provider-workflow/
-  chatgh-project-cli-review/
 ```
 
 ## 每个 skill 是什么
@@ -34,18 +33,5 @@ package-review/
 
 什么时候用：已有包暴露出 `Env list` / `chatenv cat/test/use` 不符合预期，或后续规范要求回头检查 ChatEnv provider 时。
 
-### `chatgh-project-cli-review`
-
-用途：review 或更新 ChatGH `project` / GitHub Projects v2 相关 PR，确认其符合 ChatGH-native Project CLI 树和 ChatArch 系列开发规范。
-
-覆盖流程：
-
-1. 先读当前任务 PRD/spec/review 报告，不只看旧测试或 CI green。
-2. 打印真实注册 CLI 树，确认 `project item ...` 和 `project field ...` 已打开。
-3. 确认不保留 `item-add` / `field-list` 等官方 `gh project` 扁平兼容入口，除非用户明确要求兼容层。
-4. 检查 CLI 背后是否使用可 import 的 `chatgh.github.projects` Python API。
-5. 检查 ChatEnv token resolution、JSON 输出、安全门、REST `id` / GraphQL `node_id` normalization、docs/changelog/tests/CI。
-
-什么时候用：ChatGH Project CLI 或 GitHub Projects v2 PR 出现“官方 gh 参考 vs ChatGH 自有树”边界时，或 review PR 是否符合 ChatArch 系列 CLI 开发规范时。
 
 后续如果要对“已发版一段时间的包”按新规范做专项后处理 review，再按具体问题创建新的 review skill；这些 review skill 可以引用 `../package-development/` 里的开发阶段技能作为背景，但不把开发阶段技能本体放进 review 主题。
