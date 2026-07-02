@@ -30,9 +30,9 @@ There are only two cases after `git fetch --prune origin`:
 
 2. **Cannot fast-forward first**
    - `<machine-branch>` has local work.
-   - Keep the local Git log while preparing the PR; do not rebase/reset before PR.
+   - Keep the local Git log until the PR is merged; do not rebase/reset/clean those commits before merge.
    - Push `<machine-branch>` and open/update PR to `<default-branch>`.
-   - Merge the PR with **squash** so `<default-branch>` gets one clean commit.
+   - Merge the PR with **squash** so `<default-branch>` gets one clean commit. All PR merges to the default branch must use squash.
    - After the squash merge lands on `origin/<default-branch>`, refresh `<machine-branch>` back to `origin/<default-branch>` for the next PR.
 
 ## Commands
@@ -83,6 +83,6 @@ fi
 
 ## Notes
 
-- Keep Git log before PR because it carries the work being proposed.
+- Keep Git log until PR merge because it carries the work being proposed.
 - Squash when merging upward so the default branch stays clean.
 - Refresh/rebase-align the machine branch only after the squash merge, so the next PR starts from remote default branch.
