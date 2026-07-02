@@ -1,7 +1,7 @@
 ---
 name: lark-cli-permission-authorization
 version: 0.1.0
-description: Request Feishu/Lark permissions with lark-cli correctly: user-scope device verify links, QR codes, bot/app-scope boundaries, and post-authorization completion.
+description: "Request Feishu/Lark permissions with lark-cli correctly: user-scope device verify links, QR codes, bot/app-scope boundaries, and post-authorization completion."
 ---
 
 # Lark CLI Permission Authorization

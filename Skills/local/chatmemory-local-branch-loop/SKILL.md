@@ -1,54 +1,90 @@
 ---
 name: chatmemory-local-branch-loop
-description: Local machine workflow for ChatMemory PR/MR sync and maintaining this machine's long-running branch.
-version: 0.1.0
+description: Template for a machine-local ChatMemory/Skills refresh workflow.
+version: 0.6.0
 tags:
   - local
   - ChatMemory
   - GitHub
 ---
 
-# ChatMemory Local Branch Loop
+# ChatMemory Local Branch Loop Template
 
-This is a local-only skill for this Playground machine. Do not move it into shared ChatMemory groups such as `Skills/chatarch`, `Skills/common`, or `Skills/agents`.
+Copy this template into a machine's workspace-local `skills/local/`, then replace placeholders with that machine's values.
 
-## Local convention
+Variables:
 
-- Repo: `<WORKSPACE_ROOT>/core/ChatMemory`
-- Default branch: `main`
-- This machine's long-running branch: `rex/cubelab`
-- Keep this branch current by fetching and merging/fast-forwarding from `origin/main`; do not use `git reset --hard` unless the user explicitly approves it.
-- Other machines may use different local long-running branch names.
+- `<chatmemory-repo>`: local ChatMemory checkout path.
+- `<default-branch>`: default branch, usually `main`.
+- `<machine-branch>`: this machine's ChatMemory branch.
+- `<repo-slug>`: remote repository slug, usually `ChatArch/ChatMemory`.
 
-## Complete loop
+For normal ChatMemory/Skills maintenance, each machine should commit directly on its own long-running machine branch. Do not create extra `feat/...` or `docs/...` branches unless the user explicitly asks for a temporary branch; if such a branch is used, delete it after its PR/MR is merged.
 
-Treat a ChatMemory sync as one lightweight complete action:
+## Refresh rule
 
-1. Work on `rex/cubelab`.
-2. Self-review the diff lightly.
-3. Open or update a PR from `rex/cubelab` to `main`.
-4. Merge the PR/MR when ready.
-5. Sync `main`.
-6. Bring `rex/cubelab` forward from the updated `main` by merge or fast-forward.
-7. Push `rex/cubelab` normally; use force-with-lease only after explicit confirmation that branch history was intentionally rewritten.
+There are only two cases after `git fetch --prune origin`:
+
+1. **Can fast-forward first**
+   - `<machine-branch>` has no unique local work.
+   - Fast-forward to `origin/<default-branch>`.
+   - Push `<machine-branch>` normally if it moved.
+
+2. **Cannot fast-forward first**
+   - `<machine-branch>` has local work.
+   - Keep the local Git log until the PR is merged; do not rebase/reset/clean those commits before merge.
+   - Push `<machine-branch>` and open/update PR to `<default-branch>`.
+   - Merge the PR with **squash** so `<default-branch>` gets one clean commit. All PR merges to the default branch must use squash.
+   - After the squash merge lands on `origin/<default-branch>`, refresh `<machine-branch>` back to `origin/<default-branch>` for the next PR.
 
 ## Commands
 
 ```bash
-cd <WORKSPACE_ROOT>/core/ChatMemory
+cd <chatmemory-repo>
 
-git diff --check
-chatgh pr create --repo ChatArch/ChatMemory --base main --head rex/cubelab --title "TITLE" --body-file BODY.md --json-output
-chatgh pr merge NUMBER --repo ChatArch/ChatMemory --method squash --check --json-output
+git checkout <machine-branch>
+git status --short --branch
+# If dirty, review and commit intended local changes first.
 
 git fetch --prune origin
-git checkout main
-git pull --ff-only origin main
-git checkout rex/cubelab
-git merge --ff-only main || git merge main
-git push origin rex/cubelab
+
+if git merge-base --is-ancestor HEAD origin/<default-branch>; then
+  # Case 1: can fast-forward first.
+  git merge --ff-only origin/<default-branch>
+  git push origin <machine-branch>
+else
+  # Case 2: cannot fast-forward first; preserve logs for PR.
+  git diff --check
+  # Run changed-skill validation here.
+  git push origin <machine-branch>
+
+  chatgh pr create \
+    --repo <repo-slug> \
+    --base <default-branch> \
+    --head <machine-branch> \
+    --title "TITLE" \
+    --body-file BODY.md \
+    --json-output
+
+  # Merge only after explicit approval. Use squash.
+  chatgh pr merge NUMBER \
+    --repo <repo-slug> \
+    --method squash \
+    --check \
+    --json-output
+
+  # After squash merge, align the machine branch back to remote default branch for the next PR.
+  git fetch --prune origin
+  git checkout <default-branch>
+  git pull --ff-only origin <default-branch>
+  git checkout <machine-branch>
+  git reset --hard origin/<default-branch>
+  git push --force-with-lease origin <machine-branch>
+fi
 ```
 
-## Boundary
+## Notes
 
-This skill records machine-local branch policy. Shared ChatArch/ChatMemory skills should only describe portable repo workflows, not this machine's branch name.
+- Keep Git log until PR merge because it carries the work being proposed.
+- Squash when merging upward so the default branch stays clean.
+- Refresh/rebase-align the machine branch only after the squash merge, so the next PR starts from remote default branch.

@@ -433,7 +433,7 @@ git log -1 --oneline --decorate
 - 新建 ChatArch 仓库后，默认把 local `origin` 设为 HTTPS，并通过 `chatgh set-token` 配置 repo-local git transport credential。不要手写或展示 raw auth header；不要把 token 放进 remote URL；写完后必须用 `chatgh repo-perms`、`git ls-remote --heads origin main` 和 `git push --dry-run origin main` 验证。
 - Trusted Publishing 的 `environment` 必须与 PyPI Publisher 配置完全一致。不要在 publish workflow 中默认写 `environment: pypi`；只有确认 PyPI Trusted Publisher 的 claim 包含 `environment:pypi` 时才加。若 PyPI 配置是无 environment 的 publisher，workflow 必须移除 `environment`，否则会失败为 `invalid-publisher`，claim 类似 `repo:OWNER/REPO:environment:pypi`。
 - 正式发版必须走标准链路：PR 绿灯 -> merge 到默认分支 -> 在默认分支 merge commit 上打 `vX.Y.Z` tag -> GitHub Actions publish -> PyPI JSON/simple index -> clean install。不要为了省事用本地 Twine key 代替 tag workflow；本地 Twine 只能作为已明确记录的异常救援，并且之后必须修复标准 workflow。
-- build/pytest 会产生 `.venv`、`dist`、`.pytest_cache`、`*.egg-info` 等中间产物；commit 前确认 `.gitignore` 生效，必要时清理或保持未跟踪文件不入库。
+- build/pytest/docs 会产生 `.venv`、`dist`、`.pytest_cache`、`*.egg-info`、`site/` 等中间产物；commit 前确认 `.gitignore` 生效，必要时清理或保持未跟踪文件不入库。尤其是对新生成的 MkDocs 包，本地跑过 `mkdocs build --strict` 后要确认 `site/` 没有被 `git add .` 带进初始提交；如果模板缺少规则，先把 `site/` 加入 `.gitignore` 再提交。
 
 ## 完成汇报模板
 
