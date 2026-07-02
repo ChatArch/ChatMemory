@@ -38,6 +38,6 @@ package-review/
 
 ### `chatarch-cli-code-review`
 
-用途：review ChatArch Python CLI 包的常规代码质量，重点检查 CLI 树是否干净、ChatEnv/ChatStyle 是否合规、业务逻辑是否从 `cli.py` 解耦、主要能力是否提供可 import 的 Python API。
+用途：review ChatArch 系列 CLI 仓库开发完成后的仓库质量，重点检查六点：CLI 树简洁清晰、代码解耦分层、ChatStyle 交互规范、主要能力提供 Python API、密钥/私人信息安全、测试与 gates 覆盖准确。
 
 什么时候用：CLI 包做重构、命名收敛、ChatEnv/ChatStyle 改造、模块拆分、或 PR review 时。
