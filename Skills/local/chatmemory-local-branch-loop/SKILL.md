@@ -1,7 +1,7 @@
 ---
 name: chatmemory-local-branch-loop
-description: Template for creating a machine-local ChatMemory PR/MR sync skill and maintaining that machine's long-running branch without rewriting history.
-version: 0.2.0
+description: Template for creating a machine-local ChatMemory/Skills refresh workflow with a long-running machine branch.
+version: 0.3.0
 tags:
   - local
   - ChatMemory
@@ -29,39 +29,50 @@ Create a workspace-local copy such as `<workspace>/skills/local/chatmemory-local
 - This machine's long-running branch: `<machine-branch>`
 - Other machines may use different local long-running branch names.
 
-## Policy
+## Intent
 
-The machine branch is a long-running work ledger. Preserve its visible history.
+Do not apply a blanket rule such as “never rewrite history” or “always rebase”. Choose the operation by intent:
 
-Default sync policy:
+1. **Development / PR-preparation phase**
+   - Preserve current work.
+   - Use normal commits.
+   - When preparing to push/open PR, preserve local branch information richness: do not rebase, reset, or delete commits before the work has reached `<default-branch>`.
+   - Do not rebase just because `<default-branch>` moved while developing or while preparing a PR.
+   - The PR needs the original branch to still contain the work being proposed to `<default-branch>`.
 
-- Use normal commits for local skill updates.
-- When `<default-branch>` advances, merge `origin/<default-branch>` into `<machine-branch>` with a normal merge commit if the machine branch has unique commits.
-- Resolve conflicts in that merge commit, keeping useful information from both sides.
-- Push the machine branch normally.
-- Do not rewrite the long branch as routine cleanup.
+2. **Post-merge refresh / return-to-default-branch phase**
+   - After the PR/MR has been merged to `<default-branch>`, the machine branch should be reset/refreshed to the latest `<default-branch>` so the next work batch starts cleanly from `<default-branch>`.
+   - If it can fast-forward to `origin/<default-branch>`, fast-forward.
+   - If it cannot fast-forward because it had unique commits, first merge those commits to `<default-branch>` through the PR/MR flow. After the PR/MR is merged and `origin/<default-branch>` contains the result, reset/refresh `<machine-branch>` to the updated default branch and push with lease.
+   - This prevents the machine branch from repeatedly appearing ahead of `<default-branch>` with already-merged/stale commits and avoids accumulating conflict-prone ancestry.
 
-Do **not** use routine rebase, reset, or force-push on `<machine-branch>`. Only rewrite history when the user explicitly asks for that specific operation and accepts the audit tradeoff.
+The reset/force-with-lease step belongs only to the explicit post-merge refresh/return-to-default-branch phase after the work is already merged to `<default-branch>`; it is not the development update or PR-preparation mechanism.
 
-Keep `<default-branch>` clean: update it only by fast-forwarding from `origin/<default-branch>` or by the reviewed PR/MR merge result.
+## Complete refresh loop
 
-## Complete loop
-
-Treat a ChatMemory sync as one lightweight complete action. Start with a fetch and compare `<machine-branch>` against `origin/<default-branch>` before deciding whether a PR is needed:
-
-1. Check workspace/backend and enter `<chatmemory-repo>`.
-2. Check out `<machine-branch>` and inspect `git status --short --branch`.
-3. If the worktree has dirty changes, review and commit intended skill changes before integrating remote updates. Do not switch branches with unreviewed dirty work.
-4. Fetch `origin`, then compute `behind ahead` with `git rev-list --left-right --count origin/<default-branch>...HEAD`.
-5. If `ahead == 0`, there are no local commits to preserve. Fast-forward `<machine-branch>` to `origin/<default-branch>` and push normally if it moved. This is a fast-forward, not a history rewrite.
-6. If `behind != 0` and `ahead != 0`, merge `origin/<default-branch>` into `<machine-branch>` with a normal merge commit, resolve conflicts, validate, and commit the merge.
-7. Run validation, usually:
-   - `git diff --check`
-   - changed-skill frontmatter/name/reference sanity checks
-   - any task-specific checks for touched helper scripts
-8. Push `<machine-branch>` normally.
-9. Open or update a PR/MR from `<machine-branch>` to `<default-branch>` only when the user asks for合版/PR, or when the batch is ready and the workflow calls for review.
-10. Merge PR/MR only after explicit approval. After merge, fast-forward local `<default-branch>` from `origin/<default-branch>`. Keep `<machine-branch>` history unless the user explicitly asks to archive or reset it.
+1. Confirm the active backend/workspace before touching this repo.
+2. Enter `<chatmemory-repo>`.
+3. Check out `<machine-branch>` and inspect `git status --short --branch`.
+4. If the worktree has dirty files, review and commit intended skill changes first. Do not hide dirty work behind branch switches.
+5. Fetch remote state:
+   ```bash
+   git fetch --prune origin
+   ```
+6. Check whether the machine branch can fast-forward to default branch:
+   ```bash
+   git merge-base --is-ancestor HEAD origin/<default-branch>
+   echo $?
+   ```
+   - exit `0`: `HEAD` is already an ancestor of `origin/<default-branch>`; fast-forward is valid.
+   - nonzero: the machine branch has unique commits not in `origin/<default-branch>`; do not reset them away.
+7. If fast-forward is valid, run `git merge --ff-only origin/<default-branch>` and push normally.
+8. If fast-forward is not valid:
+   - run validation (`git diff --check`, changed-skill frontmatter/name/reference checks, script checks when relevant)
+   - push `<machine-branch>` normally
+   - open/update PR/MR from `<machine-branch>` to `<default-branch>` when the user asks for合版/PR or the batch is ready
+   - merge only after explicit approval
+   - after merge, fetch/pull latest `<default-branch>`, then reset/refresh `<machine-branch>` to it and push with lease
+9. Record conflicts/resolution in active task `progress.md` when a task record exists.
 
 ## Commands
 
@@ -70,57 +81,54 @@ cd <chatmemory-repo>
 
 git checkout <machine-branch>
 git status --short --branch
-
 # If dirty, review and commit intended local changes first.
-# Do not hide dirty work behind branch switches or history rewrites.
 
 git fetch --prune origin
-read behind ahead <<EOF
-$(git rev-list --left-right --count origin/<default-branch>...HEAD)
-EOF
-printf 'behind=%s ahead=%s\n' "$behind" "$ahead"
 
-if [ "$ahead" = "0" ]; then
-  # No local commits to preserve. Move forward only.
+if git merge-base --is-ancestor HEAD origin/<default-branch>; then
+  # The machine branch has no unique unmerged commits. Refresh by fast-forward only.
   git merge --ff-only origin/<default-branch>
+  git push origin <machine-branch>
 else
-  if [ "$behind" != "0" ]; then
-    # Preserve the branch work log with a normal merge commit.
-    git merge --no-ff origin/<default-branch>
-  fi
+  # The machine branch has unique commits. Do not rebase/reset them before they are in default branch.
   git diff --check
   # Run changed-skill validation here.
   git push origin <machine-branch>
+
+  # Only when requested/ready:
+  chatgh pr create \
+    --repo <repo-slug> \
+    --base <default-branch> \
+    --head <machine-branch> \
+    --title "TITLE" \
+    --body-file BODY.md \
+    --json-output
+
+  # Merge only after explicit approval. Then refresh the machine branch from default branch:
+  git fetch --prune origin
+  git checkout <default-branch>
+  git pull --ff-only origin <default-branch>
+  git checkout <machine-branch>
+  git reset --hard <default-branch>
+  git push --force-with-lease origin <machine-branch>
 fi
-```
-
-PR/MR step, only when requested or ready:
-
-```bash
-chatgh pr create \
-  --repo <repo-slug> \
-  --base <default-branch> \
-  --head <machine-branch> \
-  --title "TITLE" \
-  --body-file BODY.md \
-  --json-output
 ```
 
 `chatgh pr merge ...` is a real remote mutation. Run it only after explicit merge approval.
 
 ## Conflict handling
 
-When a merge from `origin/<default-branch>` conflicts:
+When preparing the PR/MR or resolving conflicts:
 
 1. Read both sides of each conflict.
-2. Preserve the current machine branch's work log and intent.
-3. Preserve newer shared/main changes unless they are clearly superseded.
-4. Prefer generic shared-template placeholders over machine-specific names in shared templates.
-5. Validate the resolved files before committing the merge.
+2. Preserve the current machine branch's work intent until it is merged to `<default-branch>`.
+3. Preserve newer shared/default-branch changes unless they are clearly superseded.
+4. Prefer placeholders over machine-specific names in shared templates.
+5. Validate resolved files before committing.
 6. Record what conflicted and how it was resolved in the active task `progress.md` when a task record exists.
 
 ## Boundary
 
-This template records the shape of a machine-local branch policy. The copied local skill should contain real machine-specific paths and branch names; this template should keep placeholders so it can be reused on new machines.
+This template records the shape of a machine-local branch policy. The copied local skill should contain real machine-specific paths and branch names; this template keeps placeholders so it can be reused on new machines.
 
-The key invariant: `<machine-branch>` is an auditable work ledger. Normal commits and merge commits are allowed and expected; routine history rewriting is not.
+Key invariant: the machine branch starts each refreshed work batch from `<default-branch>`. Development commits are preserved until merged; after they are merged, the machine branch is reset/refreshed back to `<default-branch>` so future batches do not accumulate repeated merge commits or stale branch ancestry.

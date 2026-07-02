@@ -13,4 +13,4 @@ Important boundaries:
 
 ## Skills
 
-- `chatmemory-local-branch-loop/` — template for creating a machine-local ChatMemory PR/merge/reset loop; copy and adapt on each new machine.
+- `chatmemory-local-branch-loop/` — copy-and-adapt template for creating a machine-local ChatMemory/Skills refresh workflow. The active per-machine skill belongs in that machine's workspace-local `skills/local/` and may contain concrete branch names such as `rex/chatmini`.
