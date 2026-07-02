@@ -15,6 +15,7 @@
 package-review/
   README.md
   chatenv-provider-workflow/
+  chatarch-cli-code-review/
 ```
 
 ## 每个 skill 是什么
@@ -35,3 +36,9 @@ package-review/
 
 
 后续如果要对“已发版一段时间的包”按新规范做专项后处理 review，再按具体问题创建新的 review skill；这些 review skill 可以引用 `../package-development/` 里的开发阶段技能作为背景，但不把开发阶段技能本体放进 review 主题。
+
+### `chatarch-cli-code-review`
+
+用途：review ChatArch 系列 CLI 仓库开发完成后的仓库质量，重点检查六点：CLI 树简洁清晰、代码解耦分层、ChatStyle 交互规范、主要能力提供 Python API、密钥/私人信息安全、测试与 gates 覆盖准确。
+
+什么时候用：CLI 包做重构、命名收敛、ChatEnv/ChatStyle 改造、模块拆分、或 PR review 时。
