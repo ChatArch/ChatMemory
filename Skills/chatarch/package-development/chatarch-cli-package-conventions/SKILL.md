@@ -146,9 +146,13 @@ Use ChatStyle for user-facing interactive behavior instead of hand-rolled prompt
 
 - interactive mode flags should follow the shared `-i` / `-I` / non-interactive pattern where applicable
 - use ChatStyle input resolution helpers for commands that can be provided by CLI args, prompts, or defaults
+- default auto-prompt behavior must respect the ChatArch environment toggle: `CHATARCH_AUTO_PROMPT=0/false/no/off` disables automatic prompting for missing recoverable inputs, so machine/CI callers fail fast instead of blocking on prompts
+- explicit `-i` still forces prompting when a TTY is available; explicit `-I` still disables prompting and must fail cleanly when required values are missing
+- prompted values must receive equivalent validation to CLI options, including choices, ranges, and one-of input contracts; interactive input must not bypass Click/Typer validation
+- one-of recoverable inputs should prompt only when the package has a clear safe primary path; otherwise fail cleanly instead of inventing an ambiguous target
 - use ChatStyle confirmation/select/text helpers instead of raw `input()`
 - non-interactive mode must fail cleanly when required values are missing
-- destructive or publish-like actions need explicit confirmation unless the command has a documented `--yes`/`--force` style override
+- destructive or publish-like actions need explicit confirmation unless the command has a documented `--yes`/`--force` style override; do not auto-prompt destructive confirmations just because other fields are interactive
 
 Package CLIs should expose:
 

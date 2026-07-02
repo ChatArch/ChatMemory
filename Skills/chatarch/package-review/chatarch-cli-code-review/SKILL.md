@@ -76,9 +76,12 @@ Review checks:
 
 - Interactive commands follow the shared `-i` / `-I` pattern where applicable.
 - Required values can be resolved through CLI args/options, environment variable names, defaults, or ChatStyle prompts.
+- Default auto-prompt behavior respects the ChatArch environment toggle: `CHATARCH_AUTO_PROMPT=0/false/no/off` disables automatic prompting for missing recoverable inputs, so machine/CI callers fail fast instead of blocking on prompts.
+- Explicit `-i` still forces prompting when a TTY is available; explicit `-I` still disables prompting and must fail cleanly when required values are missing.
 - `CommandSchema` / `resolve_command_inputs` or equivalent ChatStyle helpers are used when appropriate.
-- Non-interactive mode fails cleanly when required values are missing.
-- Write/destructive operations require confirmation or an explicit flag such as `--yes` / `--force`.
+- Prompted values receive equivalent validation to CLI options, including choices, ranges, and one-of input contracts; interactive input must not bypass Click/Typer validation.
+- One-of recoverable inputs prompt only when the package has a clear safe primary path; otherwise the command fails clearly instead of inventing an ambiguous target.
+- Write/destructive operations require confirmation or an explicit flag such as `--yes` / `--force`; destructive confirmations are not auto-prompted just because other fields are interactive.
 - Success, warning, and error output follow the package's ChatStyle rendering conventions.
 
 ### 4. CLI capabilities have reusable Python APIs
