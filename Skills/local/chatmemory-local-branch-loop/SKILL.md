@@ -36,9 +36,9 @@ Treat a ChatMemory sync as one lightweight complete action. Start with a fetch a
 1. Work on `<machine-branch>` and check the worktree. If `git status --short` shows dirty files, review the diff first and either commit the intended skill changes or pause before moving branches.
 2. Fetch `origin`, then compute `behind ahead` with `git rev-list --left-right --count origin/<default-branch>...HEAD`.
 3. If local is **not ahead** of `origin/<default-branch>` (`ahead == 0`), there are no local changes to PR. Fast-forward directly to `origin/<default-branch>`, update local `<default-branch>`, and push `<machine-branch>` normally if it moved.
-4. If `origin/<default-branch>` is ahead while local has no unique commits, use the same direct fast-forward path; do not open a PR just to refresh the branch.
-5. Otherwise local has changes that are not on `origin/<default-branch>`: run `git diff --check`, self-review the diff lightly, open/update a PR from `<machine-branch>` to `<default-branch>`, and merge only after explicit approval.
-6. After a PR merge and explicit branch-refresh approval, sync local `<default-branch>` from `origin/<default-branch>`, reset/overwrite `<machine-branch>` from the updated `<default-branch>`, then force-push `<machine-branch>` with lease.
+4. If `origin/<default-branch>` has advanced while local also has unique commits, merge `origin/<default-branch>` into `<machine-branch>` with a normal merge commit. Resolve conflicts in that merge, keep both sides' useful information, run validation, commit the merge, and push normally.
+5. If local has changes that are not on `origin/<default-branch>`, run `git diff --check`, self-review the diff lightly, push `<machine-branch>` normally, then open/update a PR from `<machine-branch>` to `<default-branch>` and merge only after explicit approval.
+6. After a PR merge, sync local `<default-branch>` from `origin/<default-branch>`. Do not reset/rebase/force-push the long-running machine branch as routine cleanup; preserve its commit log as the work ledger unless the user explicitly asks to rewrite history.
 
 ## Commands
 
@@ -59,20 +59,18 @@ if [ "$ahead" = "0" ]; then
   git checkout <machine-branch>
   git push origin <machine-branch>
 else
-  git diff --check origin/<default-branch>...HEAD
+  if [ "$behind" != "0" ]; then
+    git merge --no-ff origin/<default-branch>
+  fi
+  git diff --check
   # Use ChatGH for PR operations; merge only after explicit approval.
+  git push origin <machine-branch>
   chatgh pr create --repo <repo-slug> --base <default-branch> --head <machine-branch> --title "TITLE" --body-file BODY.md --json-output
-  chatgh pr merge NUMBER --repo <repo-slug> --method squash --check --json-output
-
-  git fetch --prune origin
-  git checkout <default-branch>
-  git pull --ff-only origin <default-branch>
-  git checkout <machine-branch>
-  git reset --hard <default-branch>
-  git push --force-with-lease origin <machine-branch>
 fi
 ```
 
 ## Boundary
 
 This template records the shape of a machine-local branch policy. The copied local skill should contain real machine-specific paths and branch names; this template should keep placeholders so it can be reused on new machines.
+
+Do not use routine rebase/reset/force-push on the long-running branch. The branch history is allowed to contain normal commits and merge commits because it records the machine's ongoing work.
