@@ -27,10 +27,10 @@ Normalize voice/transcription variants that refer to the agent runtime to **Herm
 ## Workspace boundary for this user's Playground
 
 1. Confirm backend first with `ssh_mode.status` when SSH could matter.
-2. Work in local `~/Playground` unless the user explicitly selects an SSH target.
-3. Read `~/Playground/AGENTS.md` before creating or switching tasks.
-4. Put task records under `~/Playground/projects/hermes/<MM-DD-task>/`.
-5. For Hermes source changes, do not edit the running checkout at `/Users/rexwzh/.hermes/hermes-agent` directly. Use a task-local isolated clone under the task `playground/`, or an explicitly approved isolated checkout.
+2. Work in local `<WORKSPACE_ROOT>` unless the user explicitly selects an SSH target.
+3. Read `<WORKSPACE_ROOT>/AGENTS.md` before creating or switching tasks.
+4. Put task records under `<WORKSPACE_ROOT>/projects/hermes/<MM-DD-task>/`.
+5. For Hermes source changes, do not edit the running checkout at `<HERMES_HOME>/hermes-agent` directly. Use a task-local isolated clone under the task `playground/`, or an explicitly approved isolated checkout.
 6. Before editing, record source path, branch, HEAD, remote, and clean/dirty status in `progress.md`.
 7. Do not push, open PRs, merge, tag, release, restart the live gateway, or write runtime config/SSH registry unless the user explicitly approves that side effect.
 
@@ -96,7 +96,7 @@ A proven implementation route for the 2026-07-02 SSH Mode task:
 ## Pitfalls
 
 - Do not work directly in the running Hermes install unless explicitly told to.
-- Do not confuse profile-local Hermes skills under `~/.hermes/skills` with shared ChatMemory skills under `~/Playground/core/ChatMemory/Skills`.
+- Do not confuse profile-local Hermes skills under `<HERMES_HOME>/skills` with shared ChatMemory skills under `<WORKSPACE_ROOT>/core/ChatMemory/Skills`.
 - Do not encode machine-specific SSH aliases, key paths, Feishu IDs, tokens, or branch names into shared skills.
 - Do not let a card callback show an approved/resolved card before authorization and chat checks pass.
 - Do not leave a model tool blocked on a non-interactive text fallback; if no interactive resolver is available, fail closed or return `approval_required` without blocking.
