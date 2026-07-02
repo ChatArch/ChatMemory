@@ -19,6 +19,8 @@ Variables:
 - `<machine-branch>`: this machine's ChatMemory branch.
 - `<repo-slug>`: remote repository slug, usually `ChatArch/ChatMemory`.
 
+For normal ChatMemory/Skills maintenance, each machine should commit directly on its own long-running machine branch. Do not create extra `feat/...` or `docs/...` branches unless the user explicitly asks for a temporary branch; if such a branch is used, delete it after its PR/MR is merged.
+
 ## Refresh rule
 
 There are only two cases after `git fetch --prune origin`:

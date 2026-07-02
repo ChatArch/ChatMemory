@@ -64,7 +64,7 @@ lark-cli auth status
    - rich blocks/diagrams did not degrade
    - main doc contains the child link when relevant
 10. If fetch/update/create hits missing user scopes, use the Common skill `lark-cli-permission-authorization` and generate a real `https://accounts.feishu.cn/oauth/v1/device/verify?...` link via `lark-cli auth login --scope ... --no-wait --json`; do not send developer-console `open.feishu.cn/app/.../auth` URLs as user-confirmable links.
-11. Record final links in the active project `memory.md` and `progress.md`.
+11. Record final links in durable project files immediately. Minimum: append the URL and document role to the active project's `progress.md`. For any task that creates Feishu docs or other external artifacts, also maintain `reports/links.md` as the explicit link index so future sessions can recover links without relying on chat context, compressed memory, or the Feishu hub alone.
 
 ## Known CLI Compatibility Note
 
