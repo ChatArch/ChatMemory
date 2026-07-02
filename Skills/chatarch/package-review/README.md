@@ -15,6 +15,7 @@
 package-review/
   README.md
   chatenv-provider-workflow/
+  chatarch-cli-code-review/
 ```
 
 ## 每个 skill 是什么
@@ -34,3 +35,9 @@ package-review/
 什么时候用：已有包暴露出 `Env list` / `chatenv cat/test/use` 不符合预期，或后续规范要求回头检查 ChatEnv provider 时。
 
 后续如果要对“已发版一段时间的包”按新规范做专项后处理 review，再按具体问题创建新的 review skill；这些 review skill 可以引用 `../package-development/` 里的开发阶段技能作为背景，但不把开发阶段技能本体放进 review 主题。
+
+### `chatarch-cli-code-review`
+
+用途：review ChatArch Python CLI 包的常规代码质量，重点检查 CLI 树是否干净、ChatEnv/ChatStyle 是否合规、业务逻辑是否从 `cli.py` 解耦、主要能力是否提供可 import 的 Python API。
+
+什么时候用：CLI 包做重构、命名收敛、ChatEnv/ChatStyle 改造、模块拆分、或 PR review 时。
