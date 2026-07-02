@@ -8,16 +8,16 @@ version: 0.1.0
 
 Use this skill when adding or changing a Hermes slash command in the Hermes source tree.
 
-This workspace skill is for the user's Playground collaboration workflow. Do not confuse it with Hermes runtime skills under `~/.hermes/skills/` or Hermes repository built-in skills under `core/hermes/skills/`.
+This workspace skill is for the user's Playground collaboration workflow. Do not confuse it with Hermes runtime skills under `<HERMES_HOME>/skills/` or Hermes repository built-in skills under `core/hermes/skills/`.
 
 ## First: establish the workspace
 
-1. Start at `~/Playground`.
+1. Start at `<WORKSPACE_ROOT>`.
 2. Read `AGENTS.md`.
 3. Read `projects/README.md`.
-4. Confirm the active project under `~/Playground/projects/`.
+4. Confirm the active project under `<WORKSPACE_ROOT>/projects/`.
 5. Record work in that project's `PRD.md` and `progress.md`.
-6. Confirm the source checkout and branch before editing. For the live Hermes checkout this may be `~/.hermes/hermes-agent`; for repo work it may be `~/Playground/core/hermes`.
+6. Confirm the source checkout and branch before editing. For the live Hermes checkout this may be `<HERMES_HOME>/hermes-agent`; for repo work it may be `<WORKSPACE_ROOT>/core/hermes`.
 
 ## Command contract checklist
 
@@ -102,9 +102,9 @@ The platform-specific API belongs in the adapter; command semantics belong in `g
 
 For `/template`, keep private templates separate from official Hermes skills:
 
-- Store templates under `~/.hermes/templates/<name>/SKILL.md`.
+- Store templates under `<HERMES_HOME>/templates/<name>/SKILL.md`.
 - Reuse SKILL.md shape: YAML frontmatter plus instruction body.
-- Do not store these under `~/.hermes/skills/`, because Hermes auto-scans that tree and exposes `/<skill-name>` dynamic commands.
+- Do not store these under `<HERMES_HOME>/skills/`, because Hermes auto-scans that tree and exposes `/<skill-name>` dynamic commands.
 - `/template <name> ...` defaults to use.
 - `/template list` lists available private templates without starting a thread or agent turn.
 - `/template use <name> ...` explicitly uses a template.
@@ -162,9 +162,9 @@ Keep `PRD.md` for stable requirements and accepted design, not noisy logs.
 
 ## Pitfalls
 
-- Do not confuse `~/Playground/Skills` with Hermes runtime skills or built-in repo skills.
+- Do not confuse `<WORKSPACE_ROOT>/Skills` with Hermes runtime skills or built-in repo skills.
 - Do not write workflow documentation into Hermes official `skills/` unless explicitly asked.
-- Do not put private templates under `~/.hermes/skills/` unless you intentionally want dynamic slash commands for each template.
+- Do not put private templates under `<HERMES_HOME>/skills/` unless you intentionally want dynamic slash commands for each template.
 - Do not add aliases without checking `resolve_command`, dynamic skill commands, and bundle aliases.
 - Do not retarget a Feishu event to a thread while keeping the parent session key.
 - Do not start new work during gateway drain/restart.

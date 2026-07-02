@@ -14,7 +14,7 @@ This is a local-only skill for this Playground machine. Do not move it into shar
 
 ## Local convention
 
-- Repo: `/home/cubebot/Playground/core/ChatMemory`
+- Repo: `<WORKSPACE_ROOT>/core/ChatMemory`
 - Default branch: `main`
 - This machine's long-running branch: `rex/cubelab`
 - Keep this branch current by fetching and merging/fast-forwarding from `origin/main`; do not use `git reset --hard` unless the user explicitly approves it.
@@ -35,7 +35,7 @@ Treat a ChatMemory sync as one lightweight complete action:
 ## Commands
 
 ```bash
-cd /home/cubebot/Playground/core/ChatMemory
+cd <WORKSPACE_ROOT>/core/ChatMemory
 
 git diff --check
 chatgh pr create --repo ChatArch/ChatMemory --base main --head rex/cubelab --title "TITLE" --body-file BODY.md --json-output

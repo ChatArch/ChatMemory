@@ -113,10 +113,10 @@ PY
 
 ### 1. 建立 workspace 与任务记录
 
-从 `~/Playground` 开始：
+从 `<WORKSPACE_ROOT>` 开始：
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 sed -n '1,140p' AGENTS.md
 sed -n '1,180p' projects/README.md
 ```
@@ -153,7 +153,7 @@ done
 推荐直接使用最终品牌名作为模板 name，避免生成错误的 kebab-case 分发名；但目标目录必须是 task-local playground，不是 `core/`：
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 PREFLIGHT="projects/<task>/playground/<ProjectName>-pypi-preflight"
 chatpypi pkg init <ProjectName> \
   -t chatarch \
@@ -210,7 +210,7 @@ chatgh repo create \
 最小形状：
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 git remote add origin https://github.com/ChatArch/<ProjectName>.git 2>/dev/null || \
   git remote set-url origin https://github.com/ChatArch/<ProjectName>.git
 git remote set-url --push origin https://github.com/ChatArch/<ProjectName>.git
@@ -246,10 +246,10 @@ Upgrade to GitHub Pro or make this repository public to enable this feature.
 PyPI `0.0.1` 成功后，可以把 preflight scaffold 复制/重建为 canonical repo；正式后续 feature release 再使用连续版本号。示例：
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 chatpypi pkg init <ProjectName> \
   -t chatarch \
-  --project-dir ~/Playground/core/<ProjectName> \
+  --project-dir <WORKSPACE_ROOT>/core/<ProjectName> \
   --description '<ProjectName>: <short description>' \
   --author 'ChatArch' \
   --email '1073853456@qq.com' \
@@ -262,13 +262,13 @@ chatpypi pkg init <ProjectName> \
 Legacy shortcut form may still work when the first argument is not a known subcommand, but shared docs should prefer the explicit `pkg init` tree:
 
 ```bash
-chatpypi <ProjectName> -t chatarch --project-dir ~/Playground/core/<ProjectName> -I
+chatpypi <ProjectName> -t chatarch --project-dir <WORKSPACE_ROOT>/core/<ProjectName> -I
 ```
 
 生成后核对：
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 python3 - <<'PY'
 import tomllib, pathlib, json
 p=tomllib.loads(pathlib.Path('pyproject.toml').read_text())
@@ -300,7 +300,7 @@ ChatArch 模板的 CLI skeleton 细节按 ChatArch CLI/package conventions 检�
 使用项目本地 venv，不全局安装：
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 uv venv .venv
 . .venv/bin/activate
 uv pip install -e '.[dev]'
@@ -323,7 +323,7 @@ chatpypi pkg check --project-dir .
 ### 5. 初始化 git、commit、push
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 git init -b main
 git add .
 git commit -m 'Initial <ProjectName> package scaffold'
@@ -370,7 +370,7 @@ chatpypi publisher pending-list -e RexWzh --format json
 发布前再次打印安全 metadata，但不要打印凭据。常规发布必须走 PR -> merge -> 默认分支 tag -> GitHub Actions publish；不要用本地 Twine 当正常发版路径：
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 . .venv/bin/activate
 python -m pytest -q
 rm -rf dist build *.egg-info src/*.egg-info
@@ -401,8 +401,8 @@ PY
 再做隔离安装验证：
 
 ```bash
-uv venv ~/Playground/projects/<task>/playground/install-check
-. ~/Playground/projects/<task>/playground/install-check/bin/activate
+uv venv <WORKSPACE_ROOT>/projects/<task>/playground/install-check
+. <WORKSPACE_ROOT>/projects/<task>/playground/install-check/bin/activate
 uv pip install '<ProjectName>==<version>'
 <cli-command> --help
 ```
@@ -428,7 +428,7 @@ git log -1 --oneline --decorate
 - 不要把品牌名 `ChatNPM` 自动改成 `chat-npm`；PyPI 会规范化显示文件名，但 `[project].name` 应使用确认过的 exact name。
 - PyPI 的 normalized name 与显示名可能不同：`ChatNPM` 会归一到 `chatnpm`。
 - 删除错误 PyPI 项目不能靠 `twine`；`twine` 只有 `check/register/upload`。删除通常需要 PyPI Web UI，且不保证立即释放相似名限制。
-- 如果全局 `chatgh` 没有某个子命令，先检查 `~/Playground/core/ChatGH` 的源码版，不要绕过 ChatGH 流程。
+- 如果全局 `chatgh` 没有某个子命令，先检查 `<WORKSPACE_ROOT>/core/ChatGH` 的源码版，不要绕过 ChatGH 流程。
 - `.pypirc`、GitHub token、ChatEnv token 都不能输出内容；日志只记录凭据是否存在和使用的工具路径。
 - 新建 ChatArch 仓库后，默认把 local `origin` 设为 HTTPS，并通过 `chatgh set-token` 配置 repo-local git transport credential。不要手写或展示 raw auth header；不要把 token 放进 remote URL；写完后必须用 `chatgh repo-perms`、`git ls-remote --heads origin main` 和 `git push --dry-run origin main` 验证。
 - Trusted Publishing 的 `environment` 必须与 PyPI Publisher 配置完全一致。不要在 publish workflow 中默认写 `environment: pypi`；只有确认 PyPI Trusted Publisher 的 claim 包含 `environment:pypi` 时才加。若 PyPI 配置是无 environment 的 publisher，workflow 必须移除 `environment`，否则会失败为 `invalid-publisher`，claim 类似 `repo:OWNER/REPO:environment:pypi`。
@@ -442,7 +442,7 @@ git log -1 --oneline --decorate
 ```text
 - GitHub: https://github.com/ChatArch/<ProjectName>
 - PyPI: https://pypi.org/project/<ProjectName>/<version>/
-- Local source: ~/Playground/core/<ProjectName>
+- Local source: <WORKSPACE_ROOT>/core/<ProjectName>
 - Tests: python -m pytest -q -> ... passed
 - Build: `chatpypi pkg build --project-dir .` -> wheel + sdist
 - Check: `chatpypi pkg check --project-dir .` -> PASSED
