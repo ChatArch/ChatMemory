@@ -45,7 +45,7 @@ Run this immediately after any of these:
 From the local repository root:
 
 ```bash
-cd ~/Playground/core/<RepoName>
+cd <WORKSPACE_ROOT>/core/<RepoName>
 
 git remote add origin https://github.com/ChatArch/<RepoName>.git 2>/dev/null || \
   git remote set-url origin https://github.com/ChatArch/<RepoName>.git

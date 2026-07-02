@@ -50,7 +50,7 @@ Keep the installed `chatgh` command current. Use the environment that owns `chat
 ```bash
 python -m pip install -U ChatGH
 # or, when using the local checkout:
-python -m pip install -U ~/Playground/core/ChatGH
+python -m pip install -U <WORKSPACE_ROOT>/core/ChatGH
 
 chatgh ...
 ```
@@ -60,7 +60,7 @@ chatgh ...
 Start from the workspace root and record findings in the active project:
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 sed -n '1,140p' AGENTS.md
 sed -n '1,180p' projects/README.md
 ```

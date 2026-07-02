@@ -96,8 +96,8 @@ High-level flow:
 
 Validated current-thread readback:
 
-- current thread: `omt_1921a9a0bf8f1be7`;
-- message id: `om_x100b6b558b7b4888b1c56b465677274`;
+- current thread: `<LOCAL_FEISHU_THREAD_ID>`;
+- message id: `<LOCAL_FEISHU_MESSAGE_ID>`;
 - readback `msg_type`: `post`;
 - readback content contained the text plus `[Image: img_v3_...]`.
 
@@ -142,7 +142,7 @@ lark-cli im +threads-messages-list \
 5. If the image is missing, do not claim success. Inspect Hermes logs first:
 
 ```bash
-grep -i "Failed to send image\|field validation failed\|inline image delivery" ~/.hermes/logs/gateway.log | tail -40
+grep -i "Failed to send image\|field validation failed\|inline image delivery" <HERMES_HOME>/logs/gateway.log | tail -40
 ```
 
 ## Troubleshooting

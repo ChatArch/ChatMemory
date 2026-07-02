@@ -12,13 +12,15 @@ Skills/
   local/     # 本仓库中的本地模板/示例；默认不作为共享链接组使用
 ```
 
-`chatup workspace` / workspace setup 应把共享 skill groups 链接到 `~/Playground/skills/` 下。当前默认共享组是：
+`chatup workspace` / workspace setup 应把共享 skill groups 链接到 `<WORKSPACE_ROOT>/skills/` 下。当前默认共享组是：
 
 - `agents`
 - `chatarch`
 - `common`
 
 `local` 用于本地模板、机器特定 workflow 或 copy-and-adapt 示例，不应默认当成跨机器共享 skill group。每台机器应维护自己 workspace 下的 `skills/local/` copy；不要把当前机器的本地分支名、路径、凭据策略写回共享组，也不要为了同步本机工作去 checkout、merge、reset 其他机器人/机器的长期分支。
+
+共享 skill 默认按“可能公开到互联网”处理：禁止写入真实飞书/Slack/Discord/Telegram 文档链接、账号、open_id、chat_id、message_id、app_id、token、机器私有路径或其他租户/账号特定信息。共享 skill 只能写占位符和通用流程；真实值必须放在 workspace 本地 `skills/local/`、机器 memory 或任务私有记录中。
 
 ## `reference:` field
 

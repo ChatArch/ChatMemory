@@ -12,7 +12,7 @@ Use this skill when setting up a machine after Hermes Agent Feishu/Lark gateway 
 
 Keep these aligned on each machine:
 
-- Hermes Feishu gateway credentials: `~/.hermes/.env` with `FEISHU_APP_ID` / `FEISHU_APP_SECRET`.
+- Hermes Feishu gateway credentials: `<HERMES_HOME>/.env` with `FEISHU_APP_ID` / `FEISHU_APP_SECRET`.
 - Lark CLI app binding: same app/bot as Hermes, usually under the Hermes-aware CLI workspace.
 
 Do **not** manually print or copy raw app secrets in chat or logs. Prefer `lark-cli config bind --source hermes`, which reads the Hermes config and stores the CLI-side secret using its own storage policy, such as macOS Keychain.
@@ -73,7 +73,7 @@ Expected healthy signs:
 Inside a Hermes tool process, `lark-cli` may intentionally auto-detect an agent workspace and use:
 
 ```text
-~/.lark-cli/hermes/config.json
+<LARK_CLI_HOME>/hermes/config.json
 ```
 
 rather than the user's normal shell/global config path. This is expected when binding the Hermes app. If the user asks about the normal/global CLI config instead, verify the intended environment before diagnosing.
@@ -85,7 +85,7 @@ Prefer upgrading `lark-cli` first. If the installed version does not have `confi
 ```bash
 # Review commands before running. Do not print the secret.
 set -a
-. ~/.hermes/.env
+. <HERMES_HOME>/.env
 set +a
 printf '%s' "$FEISHU_APP_SECRET" | lark-cli config init \
   --app-id "$FEISHU_APP_ID" \

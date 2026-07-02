@@ -6,45 +6,28 @@ version: 0.1.0
 
 # Feishu Collaboration Documents
 
-## Main Document
+## Private Feishu/Lark Context Policy
 
-The Playground workspace's human-AI collaboration main document is:
+Shared ChatMemory skills are synchronized through GitHub and must be treated as content that could be read outside the current machine/workspace. Do **not** put real Feishu/Lark document URLs, wiki URLs, tenant domains, user open IDs, chat IDs, message IDs, app IDs, account names, or other machine/account-specific collaboration identifiers in shared skills.
 
-https://chatarch.feishu.cn/docx/HpiudaXjCoJ7vxxmiN2ccCMmnMe
+Use placeholders in shared skills:
 
-Title observed via `lark-cli docs +fetch`:
+```text
+<LOCAL_FEISHU_MAIN_DOC_URL>
+<LOCAL_FEISHU_CHILD_DOC_URL>
+<LOCAL_FEISHU_DOC_TOKEN>
+<LOCAL_FEISHU_USER_OPEN_ID>
+<LOCAL_FEISHU_CHAT_ID>
+<LOCAL_FEISHU_MESSAGE_ID>
+```
 
-`🤝 人机协作主文档`
+Machine-specific Feishu/Lark context belongs in one of these local-only places:
 
-Use this document as the durable navigation entry for human-facing Feishu collaboration docs.
+- the active machine's workspace-local skill, for example `<WORKSPACE_ROOT>/skills/local/feishu-collaboration-context/SKILL.md`;
+- the active machine's durable assistant memory, if it is small and operationally important;
+- a task-local project note under `projects/...`, if it is only relevant to that task.
 
-## Current Agent Infra Blueprint Document
-
-The current Agent Infra blueprint discussion document is:
-
-https://chatarch.feishu.cn/docx/Z1G2duuoWoeoXexPHMBcKVTtnDh
-
-Title:
-
-`Agent Infra 蓝图整理`
-
-This doc was created from:
-
-`projects/06-18-agent-system-blueprint/playground/agent-infra-blueprint-doc.md`
-
-It is linked from the main document under the section `Agent Infra 蓝图整理`.
-
-## Daily Brainstorm Log Convention
-
-When the user is brainstorming broad, incomplete, or messy ideas, use a daily Feishu log document rather than creating many small docs.
-
-- Main document section: `每日思考 / Brainstorm 日志`
-- Naming pattern: `YYYY-MM-DD｜<short topic summary>`
-- Purpose: capture and compress the day's conversation.
-- Main doc should keep only the dated link and a short note; details belong in the daily log.
-- Current first daily log:
-  - `2026-06-18｜ChatArch、人机协作与 TODO 体系 Brainstorm`
-  - https://chatarch.feishu.cn/docx/JaTpddW25o7TZ0xbWUtcLvUknze
+The shared workflow below describes **how** to create and link human-facing documents. It intentionally does not hard-code this workspace's real Feishu main document link or account identifiers.
 
 ## Workflow Convention
 
@@ -107,14 +90,14 @@ The Playground user often runs global `lark-cli` from their normal shell, where 
 
 ```text
 workspace: local
-Config file path: /Users/rexwzh/.lark-cli/config.json
+Config file path: <LARK_CLI_HOME>/config.json
 ```
 
 Inside a Hermes tool process, the same binary can auto-detect an Agent workspace and instead report:
 
 ```text
 workspace: hermes
-Config file path: /Users/rexwzh/.lark-cli/hermes/config.json
+Config file path: <LARK_CLI_HOME>/hermes/config.json
 ```
 
 Do not confuse these. When the user explicitly refers to their global/local `lark-cli`, first verify with:
@@ -128,8 +111,8 @@ If Hermes workspace auto-detection is getting in the way and the task is to use 
 
 ```bash
 /usr/bin/env -i \
-  HOME=/Users/rexwzh \
-  PATH=/Users/rexwzh/.nvm/versions/node/v24.14.1/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin \
+  HOME=<LOCAL_HOME> \
+  PATH=<LOCAL_NODE_HOME>/versions/node/v24.14.1/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin \
   lark-cli config show
 ```
 
