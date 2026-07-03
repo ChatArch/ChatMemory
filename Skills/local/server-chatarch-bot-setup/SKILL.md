@@ -31,6 +31,7 @@ On the remote server:
 - `chatup` is installed in the ChatArch venv.
 - Node.js >= 20 exists; install through `chatup nodejs -I` when needed.
 - `cc-connect` is installed through `chatup cc-connect -I` or a known internal package path such as `@chatarch/cc-connect`.
+- If replacing/removing an old unscoped global `cc-connect` package, expect npm to remove the shared `cc-connect` bin link; immediately run `npm install -g @chatarch/cc-connect@<version> --force` and verify `readlink -f $(command -v cc-connect)` resolves under `node_modules/@chatarch/cc-connect/`.
 - CC Connect config defines project `playground` with `work_dir = "/home/<user>/Playground"`.
 - If using Codex agent, `@openai/codex` is installed globally through npm and the agent config uses `codex`.
 - If using Cursor Agent, use agent type `cursor`, prefer absolute `cmd = "/home/<user>/.local/bin/agent"`, and verify `agent models` plus a bounded print-mode smoke test.
