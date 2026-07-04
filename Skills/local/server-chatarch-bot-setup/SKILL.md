@@ -13,6 +13,7 @@ This is a copy-and-adapt local Skill template. Keep machine-specific hosts, Feis
 ## Principles
 
 - Keep scripts, logs, copied references, and reports in the active local Playground project.
+- For uv / Python / `~/.chatarch/venv` / ChatUp preinstall, load `chatarch-server-preinstall` first and follow that flow instead of inventing ad-hoc system Python or per-tool venv setup.
 - Use remote `~/Playground` with capital `P` unless the target explicitly uses another workspace.
 - Use ordinary local `ssh <alias> ...` and `scp` for cross-machine setup; do not switch the Hermes thread into SSH Mode unless the user explicitly asks.
 - Start with redacted inventory before writes: host/user/home, `~/Playground`, `chatup`, Node.js, `cc-connect`, existing config paths, existing Feishu credentials, and service state.
