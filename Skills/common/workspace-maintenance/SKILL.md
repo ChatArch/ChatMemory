@@ -8,7 +8,10 @@ version: 0.2.2
 
 Use this skill when maintaining the outer workspace rather than editing a source repository.
 
-- keep active work under `projects/` and archive inactive work into `archive/YYYY-MM-DD/`
+- keep active work under `projects/` and archive inactive work into `archive/YYYY-MM-DD/`, using the date when archiving happens
+- treat Project items and Discussion items as the two basic project-like item types; a Discussion item lives under `discussion/MM-DD-<topic>/`, includes `card.md`, and uses `Items/` when it temporarily absorbs other items
+- when a discussion completes, handle and clear `Items/`; keep `card.md`, `progress.md`, or reports as the record
+- move soft-deleted or no-longer-valuable tasks into `discard/`; keep `.trash/` as a low-level safety buffer only
 - update `ARCHIVE.md` when projects are archived or restored
 - keep workspace-level scripts under `scripts/`
 - prefer moving files into the nearest `.trash/` instead of deleting them directly
