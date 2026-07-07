@@ -21,5 +21,5 @@
 
 ### Workspace
 
-- `workspace-maintenance/` — outer workspace 结构维护、归档 review、文件移动与协议对齐。
-- `workspace-structure-alignment/` — 将旧机器/旧 workspace 对齐到最新 `chatup workspace` 模板、ChatMemory shared skill 布局和项目 Markdown 规范。
+- `workspace-maintenance/` — outer workspace 结构维护、Project/Discussion item 生命周期、Discard/Archive 路由、文件移动与协议对齐。
+- `workspace-structure-alignment/` — 将旧机器/旧 workspace 对齐到最新 `chatup workspace` 模板、ChatMemory shared skill 布局、Project/Discussion item 协议和项目 Markdown 规范。
