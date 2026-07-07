@@ -57,8 +57,8 @@ The current base workspace is a wrapper around source repositories and human-fac
   projects/
     README.md
   discussion/
+    README.md
     MM-DD-<topic>/
-      card.md
       PRD.md
       progress.md
       reports/
@@ -84,8 +84,8 @@ The current base workspace is a wrapper around source repositories and human-fac
 Important current conventions:
 
 - `projects/` holds active work. Old inactive work goes to `archive/YYYY-MM-DD/`, where `YYYY-MM-DD` is the date when archiving happens, and `archive/index.md` records what moved.
-- The directory protocol has two basic project-like item types: Project items and Discussion items. `discussion/` holds Discussion items; each Discussion uses `discussion/MM-DD-<topic>/card.md` to describe the topic, absorption goal, current judgment, and `Items/` classification logic. Use `Items/` when a Discussion item temporarily absorbs other items for correction, routing, or synthesis.
-- A completed Discussion should handle and clear its concrete `Items/`, then keep `card.md`, `progress.md`, or reports as the record instead of nesting Discussions recursively.
+- The directory protocol has two basic project-like item types: Project items and Discussion items. `discussion/` holds Discussion items; use `discussion/MM-DD-<topic>/Items/` when a Discussion item temporarily absorbs other items for correction, routing, or synthesis.
+- A completed Discussion should handle and clear its concrete `Items/`, then keep `progress.md` or reports as the record instead of nesting Discussions recursively.
 - `discard/` is the soft-delete/recycle area for tasks explicitly deleted by the user or judged no longer valuable. `.trash/` remains a low-level safety buffer, not a main lifecycle area.
 - `core/` holds source repositories. Do not copy source repos into individual projects.
 - `scripts/` is for reusable workspace-level maintenance scripts. Task-specific scripts belong under the task project.
@@ -151,7 +151,7 @@ git -C core/ChatUp status --short --branch 2>/dev/null || true
 python3 - <<'PY'
 from pathlib import Path
 root = Path('.').resolve()
-for rel in ['AGENTS.md','TODO.md','ARCHIVE.md','projects/README.md','archive/index.md','scripts/README.md','public/README.md','skills/README.md']:
+for rel in ['AGENTS.md','TODO.md','ARCHIVE.md','projects/README.md','discussion/README.md','archive/index.md','scripts/README.md','public/README.md','skills/README.md']:
     p = root / rel
     print(rel, 'exists=' + str(p.exists()), 'symlink=' + str(p.is_symlink()))
 for rel in ['.trash','projects','discussion','archive','discard','core','scripts','skills','public','skills/local']:
@@ -186,7 +186,8 @@ For root protocol files, prefer a reviewed patch over blind overwrite:
 - `AGENTS.md`: current workspace entry and workflow contract
 - `TODO.md`: near-term workspace TODO note
 - `ARCHIVE.md`: archive procedure guide
-- `projects/README.md`: project naming, topic grouping, lifecycle areas, file roles
+- `projects/README.md`: project naming, topic grouping, file roles
+- `discussion/README.md`: discussion-stage workflow and item review rules
 - `archive/index.md`: archive contents index
 - `scripts/README.md`: workspace-level scripts convention
 - `public/README.md`: public artifact convention
@@ -236,8 +237,8 @@ For each active project/case:
 4. Add `.trash/` before any cleanup.
 5. If a topic root contains task artifacts, create or update `projects/<topic>/README.md` and move artifacts into a child project after review.
 6. Preserve user-written history. Prefer small patches and move-first cleanup over regenerated Markdown.
-7. If several projects need to be digested together or user correction should become a reusable decision sample, create or update a `discussion/MM-DD-<topic>/` node, write/update its `card.md`, and move absorbed projects into `Items/` after review.
-8. When the Discussion completes, handle and clear `Items/`, then update `card.md`, `progress.md`, or reports with the result.
+7. If several projects need to be digested together or user correction should become a reusable decision sample, create or update a `discussion/MM-DD-<topic>/` node and move absorbed projects into `Items/` after review.
+8. When the Discussion completes, handle and clear `Items/`, then update `progress.md` or reports with the result.
 9. If a task is explicitly deleted or judged no longer valuable, move it to `discard/` rather than physical deletion.
 10. When an inactive project is truly old, follow the archive flow: collect candidates, model-review, move to `archive/YYYY-MM-DD/` using the date when archiving happens, then update `archive/index.md`.
 
@@ -251,7 +252,7 @@ python3 - <<'PY'
 from pathlib import Path
 root = Path('.').resolve()
 required_dirs = ['.trash','projects','discussion','archive','discard','core','scripts','skills','public']
-required_files = ['AGENTS.md','TODO.md','ARCHIVE.md','projects/README.md','archive/index.md','scripts/README.md','public/README.md']
+required_files = ['AGENTS.md','TODO.md','ARCHIVE.md','projects/README.md','discussion/README.md','archive/index.md','scripts/README.md','public/README.md']
 missing = [p for p in required_dirs if not (root/p).is_dir()]
 missing += [p for p in required_files if not (root/p).exists()]
 print('missing:', missing)
