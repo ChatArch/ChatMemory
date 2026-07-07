@@ -14,8 +14,8 @@ Do not use this skill as the primary task execution workflow. Project authors sh
 
 ## Core Rules
 
-- Treat `card.md` as required for Discussion items and optional for Project items.
-- Do not mention, request, or require `card.md` when creating a normal Project item. Project authors should only see the Project baseline (`PRD.md`, `progress.md`, `reports/`, etc.); Project cards are generated later by a reviewer, Discussion review, scheduled board-maintenance job, or explicit board refresh.
+- Treat `card.md` as required for Discussion items and optional reviewer-generated board metadata for Project items.
+- For Project items, start from an existing Project with its baseline materials (`PRD.md`, `progress.md`, `reports/`, etc.), then write a card only during a reviewer, Discussion review, scheduled board-maintenance, or explicit board refresh pass.
 - Create or update `card.md` directly as Markdown when needed; use a local card helper/CLI only if it is already available.
 - Review the item before writing: read `PRD.md`, current `progress.md`, key files under `reports/`, and `Items/` when present.
 - Default to Chinese for title, summary, current status, and next action unless the project itself is clearly English-only.
@@ -131,7 +131,6 @@ When a Discussion completes:
 ## Pitfalls
 
 - Do not treat `card.md` as a substitute for `PRD.md` or `progress.md`.
-- Do not surface `card.md` in normal Project creation instructions; card writing belongs to reviewer/board-maintenance contexts.
 - Do not write cards from filenames only when PRD/progress/reports exist.
 - Do not create polished cards for every old directory without review.
 - Do not expose secrets, private tokens, raw credentials, or sensitive IDs in card body or links.
