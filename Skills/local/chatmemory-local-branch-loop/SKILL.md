@@ -1,7 +1,7 @@
 ---
 name: chatmemory-local-branch-loop
 description: Template for a machine-local ChatMemory/Skills refresh workflow.
-version: 0.6.0
+version: 0.6.1
 tags:
   - local
   - ChatMemory
@@ -21,6 +21,8 @@ Variables:
 
 For normal ChatMemory/Skills maintenance, each machine should commit directly on its own long-running machine branch. Do not create extra `feat/...` or `docs/...` branches unless the user explicitly asks for a temporary branch; if such a branch is used, delete it after its PR/MR is merged.
 
+Treat a user request such as “刷新 Skills” or “同步 ChatMemory/Skills” as one continuous refresh loop: publish local skill changes, squash them into `<default-branch>`, then reset the machine branch back to `origin/<default-branch>` unless there is a real blocker such as dirty uncommitted work, conflicts, failing validation, or an explicit user instruction to stop before merge.
+
 ## Refresh rule
 
 There are only two cases after `git fetch --prune origin`:
@@ -34,7 +36,7 @@ There are only two cases after `git fetch --prune origin`:
    - `<machine-branch>` has local work.
    - Keep the local Git log until the PR is merged; do not rebase/reset/clean those commits before merge.
    - Push `<machine-branch>` and open/update PR to `<default-branch>`.
-   - Merge the PR with **squash** so `<default-branch>` gets one clean commit. All PR merges to the default branch must use squash.
+   - Merge the PR with **squash** so `<default-branch>` gets one clean commit. All PR merges to the default branch must use squash. This is part of the normal refresh request; do not pause for a separate merge confirmation unless a blocker appears.
    - After the squash merge lands on `origin/<default-branch>`, refresh `<machine-branch>` back to `origin/<default-branch>` for the next PR.
 
 ## Commands
@@ -66,7 +68,7 @@ else
     --body-file BODY.md \
     --json-output
 
-  # Merge only after explicit approval. Use squash.
+  # Squash merge as part of the refresh loop unless a blocker appeared.
   chatgh pr merge NUMBER \
     --repo <repo-slug> \
     --method squash \
@@ -88,3 +90,4 @@ fi
 - Keep Git log until PR merge because it carries the work being proposed.
 - Squash when merging upward so the default branch stays clean.
 - Refresh/rebase-align the machine branch only after the squash merge, so the next PR starts from remote default branch.
+- A plain refresh request already authorizes the full loop: push/open PR, squash merge, fetch default branch, reset the machine branch to `origin/<default-branch>`, and force-with-lease the refreshed machine branch.
