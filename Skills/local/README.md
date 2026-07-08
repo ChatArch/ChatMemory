@@ -14,3 +14,4 @@ Important boundaries:
 ## Skills
 
 - `chatmemory-local-branch-loop/` — copy-and-adapt template for creating a machine-local ChatMemory/Skills refresh workflow. The active per-machine skill belongs in that machine's workspace-local `skills/local/` and may contain concrete branch names such as `rex/chatmini`.
+- `server-chatarch-bot-setup/` — copy-and-adapt template for configuring a managed server as a ChatArch Playground host with CC Connect, selected agent CLI, Feishu onboarding, and a user-level service.
