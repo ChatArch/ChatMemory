@@ -17,6 +17,7 @@ package-development/
   python-package-release-with-chattool-pypi/
   chatgh-pr-and-ci-workflow/
   chatgh-repo-token-setup/
+  chatarch-mkdocs-docs-alignment/
   chatpypi-publisher-management/
   public-repo-and-default-branch-protection/
   chattool-capability-extraction/
@@ -86,6 +87,19 @@ package-development/
 3. 验证 `chatgh repo-perms`、`git push --dry-run`、`git remote -v`。
 
 什么时候用：新仓库创建后、首次本地初始化后、HTTPS `git push/fetch` 失败时。
+
+### `chatarch-mkdocs-docs-alignment`
+
+用途：把 ChatArch package 文档站对齐到 ChatTea-style MkDocs 结构、双语文档、GitHub Pages custom-domain preview、Pages/CNAME readback 和标准验证流程。
+
+覆盖流程：
+
+1. 对齐 `mkdocs.yml`、README、docs home、package metadata、workflow 和 changelog。
+2. 让 Preview Docs 从 `site_url` 生成 `https://arch.gh.wzhecnu.cn/<Repo>/dev/`，避免硬编码 `github.io`。
+3. 回读 org Pages CNAME 和 project Pages source/cname/html_url，确认 project repo 不误加 root-domain CNAME。
+4. 用 `mkdocs build --strict`、domain scan、PR CI/Preview Docs 和 HTTP 200 回读验证。
+
+什么时候用：用户要求对齐 ChatTea 文档模式、修文档站域名、检查 CNAME/Pages、补中英文文档或清理旧文档结构。
 
 ### `chatpypi-publisher-management`
 
