@@ -27,7 +27,7 @@ reference:
 3. 对新 PyPI project，先构建并上传真实 `0.0.1` placeholder 到 PyPI；只有 PyPI 回读确认项目存在后，才允许创建 GitHub 仓库。
 4. PyPI 占位成功后，再在 GitHub `ChatArch` 组织下创建远程仓库、初始化 canonical `core/<ProjectName>`、配置 remote/token 并 push。
 5. 配置/验证 PyPI Trusted Publisher，确认 `ChatArch/<Repo>` + `publish.yml` + environment `(Any)`；如果 PyPI session 过期，先 `chatpypi auth login -e RexWzh --format json` 刷新再继续 Publisher 操作。
-6. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、Publisher readback 后再 tag-driven publish，并回读 GitHub Actions 与 PyPI。
+6. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、Publisher readback 后，再根据任务目标决定是否 tag-driven publish；如果用户只是要“注册/占名一个新包”，到 `0.0.1` placeholder + GitHub repo + active Publisher + canonical main placeholder 即可停止，不要自动 bump/tag `0.1.0`。
 
 ## 两种流程必须分开
 
@@ -49,7 +49,8 @@ reference:
 4. 使用受控 PyPI 账号实际上传 `0.0.1` placeholder。
 5. 回读 PyPI JSON，确认 `info.name`、version `0.0.1`、normalized name 符合预期。
 6. 只有第 4-5 步成功后，才创建 GitHub `ChatArch/<ProjectName>`、初始化/复制 canonical `core/<ProjectName>`、commit/push、配置 Publisher。
-7. 如果 placeholder 上传失败，停止；不要创建 repo，不要换名字绕过，不要继续写一堆 scaffold。把 PyPI 错误和候选相近项目报告给用户，让用户决定下一步。
+7. 如果本次任务只是注册包名，canonical `core/<ProjectName>` 应保持 `0.0.1` placeholder 状态；不要因为“first real version”惯例而立即改成 `0.1.0`、推 tag 或触发 release workflow。`0.1.0` 留给后续真实功能发布。
+8. 如果 placeholder 上传失败，停止；不要创建 repo，不要换名字绕过，不要继续写一堆 scaffold。把 PyPI 错误和候选相近项目报告给用户，让用户决定下一步。
 
 ## 硬性安全门槛
 
@@ -60,7 +61,7 @@ reference:
 - PyPI normalized name，例如 `chatnpm`。
 - Python import module，例如 `chatnpm` 或 `chat_npm`。
 - CLI 入口，例如 `chatnpm`。
-- 版本号，例如 `0.1.0`。
+- 版本目标：全新包占名任务使用 `0.0.1` placeholder；已有包或真实功能发布才使用连续 release 版本，例如 next patch。
 - GitHub 目标仓库，例如 `ChatArch/ChatNPM`。
 - GitHub visibility：默认 `private`；只有用户明确点名批准 public 时才改 public。
 
@@ -194,6 +195,8 @@ If upload or readback fails, stop. Do not create a GitHub repo, do not initializ
 
 检查或创建 GitHub 仓库。优先用 ChatGH：
 
+注意：这里说的 ChatGH 是 ChatArch 的 GitHub 工具，不是官方 GitHub CLI 语义。部分机器上可执行文件可能叫 `gh`，但 `--version` 显示 `chatgh`；这种情况下仍按 ChatGH 处理。不要套用官方 `gh auth status`、`gh api` 或官方 `--json` 字段名（如 `nameWithOwner`、`url`）。ChatGH repo readback 使用 `full_name`、`html_url`、`private`、`visibility` 等字段；不确定时先看 `chatgh --help` / `gh --version`，确认实际是 ChatGH 后再执行。
+
 ```bash
 chatgh repo list --owner ChatArch --limit 20
 chatgh repo create \
@@ -243,7 +246,7 @@ Upgrade to GitHub Pro or make this repository public to enable this feature.
 
 ### 5. 初始化 canonical `core/<ProjectName>`
 
-PyPI `0.0.1` 成功后，可以把 preflight scaffold 复制/重建为 canonical repo；正式后续 feature release 再使用连续版本号。示例：
+PyPI `0.0.1` 成功后，可以把 preflight scaffold 复制/重建为 canonical repo；如果当前任务只是注册/占名，canonical repo 仍应是 `0.0.1` placeholder。不要在此步把版本改成 `0.1.0`；正式后续 feature release 再使用连续版本号。示例：
 
 ```bash
 cd <WORKSPACE_ROOT>
@@ -294,6 +297,8 @@ ChatArch 模板应包含：
 - 默认 publish workflow 不应包含 `environment: pypi`，除非 PyPI Trusted Publisher 明确配置了同名 environment。
 
 ChatArch 模板的 CLI skeleton 细节按 ChatArch CLI/package conventions 检查；这里不重复展开模板内部命令形态。初始化后检查真实 package command skeleton、ChatEnv/ChatStyle wiring、tests、build/check、publish workflow，不把示例/demo 命令当作发布验收点。
+
+如果本次 scaffold 明确使用了 `--without-mkdocs`，初次 push 前必须检查 `.github/workflows/ci.yml`，确保没有残留 `mkdocs build --strict`。如果 CI 已经因为 `mkdocs: command not found` 失败，先删除该步骤、提交修复、等待 main CI 绿灯，再打 release tag；不要在 CI 红灯状态下继续 tag/publish。
 
 ### 4. 本地验证
 
@@ -367,7 +372,7 @@ chatpypi publisher pending-list -e RexWzh --format json
 
 ### 7. Tag-driven PyPI 发布与回读验证
 
-发布前再次打印安全 metadata，但不要打印凭据。常规发布必须走 PR -> merge -> 默认分支 tag -> GitHub Actions publish；不要用本地 Twine 当正常发版路径：
+发布前再次打印安全 metadata，但不要打印凭据。常规发布必须走 PR -> merge -> 默认分支 tag -> GitHub Actions publish；不要用本地 Twine 当正常发版路径。如果本次任务只是注册/占名新包，不进入本节，不创建 `v0.1.0` tag：
 
 ```bash
 cd <WORKSPACE_ROOT>/core/<ProjectName>
@@ -426,6 +431,8 @@ git log -1 --oneline --decorate
 ## 常见坑
 
 - 不要把品牌名 `ChatNPM` 自动改成 `chat-npm`；PyPI 会规范化显示文件名，但 `[project].name` 应使用确认过的 exact name。
+- 新包注册任务不要在 `0.0.1` placeholder 后立刻把 canonical repo 改成 `0.1.0` 或推 `v0.1.0`；除非用户明确要求做真实功能首发，否则停止在 `0.0.1` + GitHub repo + active Publisher + canonical main placeholder。
+- GitHub 侧不要按官方 GitHub CLI 猜命令和字段。即使命令名是 `gh`，只要版本/帮助显示 ChatGH，就必须按 ChatGH 的命令树和 JSON 字段执行；官方 `gh` 只能作为接口参考，不能作为 ChatArch 发布流程 fallback。
 - PyPI 的 normalized name 与显示名可能不同：`ChatNPM` 会归一到 `chatnpm`。
 - 删除错误 PyPI 项目不能靠 `twine`；`twine` 只有 `check/register/upload`。删除通常需要 PyPI Web UI，且不保证立即释放相似名限制。
 - 如果全局 `chatgh` 没有某个子命令，先检查 `<WORKSPACE_ROOT>/core/ChatGH` 的源码版，不要绕过 ChatGH 流程。
@@ -434,6 +441,7 @@ git log -1 --oneline --decorate
 - Trusted Publishing 的 `environment` 必须与 PyPI Publisher 配置完全一致。不要在 publish workflow 中默认写 `environment: pypi`；只有确认 PyPI Trusted Publisher 的 claim 包含 `environment:pypi` 时才加。若 PyPI 配置是无 environment 的 publisher，workflow 必须移除 `environment`，否则会失败为 `invalid-publisher`，claim 类似 `repo:OWNER/REPO:environment:pypi`。
 - 正式发版必须走标准链路：PR 绿灯 -> merge 到默认分支 -> 在默认分支 merge commit 上打 `vX.Y.Z` tag -> GitHub Actions publish -> PyPI JSON/simple index -> clean install。不要为了省事用本地 Twine key 代替 tag workflow；本地 Twine 只能作为已明确记录的异常救援，并且之后必须修复标准 workflow。
 - build/pytest/docs 会产生 `.venv`、`dist`、`.pytest_cache`、`*.egg-info`、`site/` 等中间产物；commit 前确认 `.gitignore` 生效，必要时清理或保持未跟踪文件不入库。尤其是对新生成的 MkDocs 包，本地跑过 `mkdocs build --strict` 后要确认 `site/` 没有被 `git add .` 带进初始提交；如果模板缺少规则，先把 `site/` 加入 `.gitignore` 再提交。
+- `--without-mkdocs` 包不应保留 CI 的 `mkdocs build --strict` 步骤。若 workflow 模板仍包含该步骤，这是模板/生成物错配，先修 workflow 并等 CI 绿灯，再继续 tag-driven publish。
 
 ## 完成汇报模板
 

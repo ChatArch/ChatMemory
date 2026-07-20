@@ -43,6 +43,40 @@ For active Hermes work, load or consult the relevant Hermes runtime skills/docs 
 - `test-driven-development` — production behavior changes should start with RED tests.
 - Local machine-only SSH operations may have a separate `local/hermes-ssh-mode-operations` skill; do not promote machine-specific hosts, key paths, or branches into this shared skill.
 
+## Feishu / Lark gateway admission configuration
+
+When configuring Hermes itself to let Feishu/Lark users wake the gateway, use the official Hermes config paths instead of direct file mutation. `~/.hermes/config.yaml` and `~/.hermes/.env` are protected runtime config/credential files; direct `patch`/`write_file` edits may be refused or overwritten by the verifier.
+
+Keep the gates separate:
+
+1. Adapter group intake: `FEISHU_GROUP_POLICY=open` or `platforms.feishu.extra.default_group_policy=open` admits group messages at the Feishu adapter layer.
+2. Final gateway authorization: `FEISHU_ALLOW_ALL_USERS=true` is the current Feishu-wide allow-all switch; `FEISHU_ALLOWED_USERS=<open_id,...>` is the narrower per-user allowlist. Avoid `GATEWAY_ALLOW_ALL_USERS=true` unless the user explicitly wants all platforms open.
+3. Group wake rule: `FEISHU_REQUIRE_MENTION=true` or `platforms.feishu.extra.require_mention=true` keeps groups intentional: users must @mention the bot.
+4. DM impact: `FEISHU_ALLOW_ALL_USERS=true` also opens Feishu DMs; if the user asks for group-only access, state that current final authz is not group-scoped unless a code/config enhancement exists.
+
+For the common request "allow all Feishu users who can reach the bot, but still require @mention in groups", use Hermes commands/config helpers, not raw file edits. Run the Python helper from an environment that can import `hermes_cli` (for example the active Hermes CLI venv):
+
+```bash
+python - <<'PY'
+from hermes_cli.config import save_env_value
+save_env_value("FEISHU_ALLOW_ALL_USERS", "true")
+save_env_value("FEISHU_ALLOWED_USERS", "")
+save_env_value("FEISHU_GROUP_POLICY", "open")
+save_env_value("FEISHU_REQUIRE_MENTION", "true")
+PY
+
+hermes config set platforms.feishu.extra.default_group_policy open
+hermes config set platforms.feishu.extra.require_mention true
+```
+
+This mirrors the official Feishu setup surface: `hermes gateway setup` writes the Feishu env settings through Hermes config helpers; `hermes config set` is the safe command path for YAML `platforms.feishu.extra.*`. After changing persisted settings, restart the gateway before testing:
+
+```bash
+hermes gateway restart
+```
+
+Before reporting success, verify redacted persisted values and gateway state: Feishu connected, `FEISHU_ALLOW_ALL_USERS=true`, `FEISHU_GROUP_POLICY=open`, `FEISHU_REQUIRE_MENTION=true`, and whether `FEISHU_ALLOWED_USERS` is intentionally empty.
+
 ## Development workflow
 
 1. **Kickoff and isolate**
