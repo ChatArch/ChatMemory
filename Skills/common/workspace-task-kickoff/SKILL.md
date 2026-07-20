@@ -28,6 +28,7 @@ version: 1.0.0
 4. 创建最低限度控制文件：
    - `PRD.md`：目标、范围、约束、交付物、完成标准；
    - `progress.md`：当前状态、已完成动作、下一步；
+   - `links.md`：外部产物、在线文档、PR、报告等链接索引；
    - `.trash/`：需要清理时采用 move-first；
    - `reports/`、`scripts/`、`playground/`、`reference/` 按任务实际需要创建。
 5. 把当前用户目标和硬边界写入 PRD，再开始调研、克隆、编码、生成素材或创建在线文档。
@@ -41,6 +42,7 @@ version: 1.0.0
 <WORKSPACE_ROOT>/projects/MM-DD-<task-name>/
   PRD.md
   progress.md
+  links.md
   .trash/
   reports/
   playground/
@@ -62,7 +64,7 @@ version: 1.0.0
 创建飞书文档或其他外部产物时：
 
 - 先在 Project 内完成报告源和素材整理；
-- 把在线链接写入 `progress.md` 和 `reports/links.md`；
+- 把在线链接写入 `progress.md`、Project 根目录 `links.md` 和 `reports/links.md`；
 - 按工作区协作规范回链主文档；
 - 回读验证在线内容后才能宣布完成。
 
@@ -81,7 +83,7 @@ version: 1.0.0
 开始实质工作前确认：
 
 - Project 路径位于正确工作区；
-- `PRD.md` 和 `progress.md` 已存在；
+- `PRD.md`、`progress.md` 和 `links.md` 已存在；
 - PRD 反映用户当前目标与边界；
 - 报告、素材、实验和外部链接都有明确落点；
 - 后续动作不再依赖聊天历史作为唯一事实源。

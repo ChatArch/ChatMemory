@@ -99,7 +99,7 @@ reference:
 4. 在对应章节插入关键图片、图表和来源链接。
 5. 创建或更新在线文档后立即 Fetch 回读，验证标题、章节、表格、图片、caption、链接和图示。
 6. 检查没有遗留占位符、降级警告、空章节或被拆坏的表格。
-7. Playground 任务将最终链接写入 `progress.md` 和 `reports/links.md`，并按协作规范回链主文档。
+7. Playground 任务将最终链接写入 `progress.md`、Project 根目录 `links.md` 和 `reports/links.md`，并按协作规范回链主文档。
 
 ## 交付前自检
 
