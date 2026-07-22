@@ -1,54 +1,61 @@
 ---
 name: chatarch-mkdocs-docs-alignment
-description: "Align ChatArch package docs to the ChatTea-style MkDocs structure, bilingual docs, GitHub Pages custom-domain previews, About URLs, DNS, and Page settings."
-version: 0.1.1
+description: "Align ChatArch package docs to the ChatArch MkDocs bilingual documentation standard, GitHub Pages previews, About URLs, package metadata, and verification flow."
+version: 0.1.3
 ---
 
 # ChatArch MkDocs Docs Alignment
 
-Use this skill when a ChatArch package needs its documentation site, README links, MkDocs navigation, or GitHub Pages workflows aligned to the current ChatTea-style pattern.
+Use this skill when a ChatArch package needs a documentation site, README documentation links, MkDocs navigation, bilingual docs, GitHub Pages workflows, GitHub About metadata, or package documentation metadata aligned to the ChatArch project standard.
+
+ChatTea can be used as one reference implementation, but it is not the source of the rule. The rule is the ChatArch-series MkDocs documentation standard and applies even when the current repository has no relationship to ChatTea.
 
 ## Trigger Conditions
 
 Use this when the user says any of:
 
-- "对齐 ChatTea 文档模式"
+- "补文档站"
+- "对齐 MkDocs 文档规范"
+- "对齐 ChatArch 文档规范"
 - "文档站域名不对"
-- "确保 CNAME / Pages 正常"
 - "Preview Docs 链接不对"
+- "Pages 没启用 / Pages 404 / gh-pages 有但站点打不开"
 - "About URL / homepage 没同步"
-- "给组织或项目配置 docs 域名"
+- "PyPI Documentation 链接没同步"
 - "补中英文文档 / i18n / 栏目分栏"
 - "把旧文档改成标准模式"
 
+If the user names ChatTea, ChatGH, ChatData, or another package as an example, treat it as a reference repo to inspect, not as the naming center of the norm.
+
 ## Target Shape
 
-Do not blindly copy ChatTea's product content. Copy the documentation mechanics and adapt the information architecture to the package's real domain.
+Do not blindly copy another package's product content. Copy the documentation mechanics and adapt the information architecture to the current package's real domain.
 
-Before editing any repository, create or reuse a Playground project under `<WORKSPACE_ROOT>/projects/...`. Put worktrees, patches, logs, scripts, smoke-output, and other intermediate files under that project's `playground/`, `scripts/`, `reports/`, or `reference/`. Do not put task work in `/tmp`; if an accidental `/tmp` worktree exists, migrate its diff into the project and remove the `/tmp` worktree before continuing.
+Before editing any repository, create or reuse a Playground project under `<WORKSPACE_ROOT>/projects/...` when the work is non-trivial. Put worktrees, patches, logs, scripts, smoke-output, and other intermediate files under that project's `playground/`, `scripts/`, `reports/`, or `reference/`. Do not put task work in `/tmp`; if an accidental `/tmp` worktree exists, migrate its diff into the project and remove the `/tmp` worktree before continuing.
 
 Use the Chat-series tools by responsibility:
 
-- ChatGH owns GitHub repository, PR, Actions, About metadata, and GitHub Pages API calls.
-- ChatDNS owns DNS provider records such as Aliyun/Tencent CNAME/A/TXT records.
+- ChatGH owns GitHub repository metadata, PRs, Actions, GitHub About metadata, and GitHub Pages API calls.
 - Git edits remain normal repo work in a project-local worktree or in `core/` when explicitly appropriate.
-- If a Chat-series CLI is missing a capability, add or fix that interface first instead of leaving raw one-off API calls in the skill.
+- If a Chat-series CLI is missing a GitHub Pages capability, add or fix that interface first when feasible; otherwise use a short token-safe REST bridge for the immediate readback and record the missing command as a ChatGH capability gap.
 
 A standard package docs PR should usually align:
 
-- `mkdocs.yml`: site metadata, repo URL, Material theme, nav, docs-domain `site_url`.
-- `README.md` and `README.en.md`: docs links and short navigation.
-- `docs/index.md` and `docs/index.en.md`: Chinese-first docs home plus English counterpart.
-- Domain-specific docs pages: capability map, interface tree, quickstart, API/CLI alignment, or design docs as appropriate.
-- `pyproject.toml`: `[project.urls] Documentation` when package metadata has docs URLs.
+- `mkdocs.yml`: site metadata, repo URL, Material theme, sectioned nav, docs-domain `site_url`, and `mkdocs-static-i18n` plugin config.
+- `README.md` and `README.en.md`: documentation links and short navigation.
+- `docs/index.md` and `docs/index.en.md`: Chinese default docs home plus English counterpart; `.en.md` files are language-source mirrors, not separate nav entries.
+- Domain-specific docs pages: quickstart, capability map, interface tree, workflow guide, API/CLI alignment, design docs, or operations notes as appropriate.
+- `pyproject.toml`: `[project.urls] Documentation` when package metadata has docs URLs, plus `mkdocs-static-i18n` in the `docs` extra.
 - GitHub repository About / homepage URL: use `chatgh repo edit <Owner>/<Repo> --homepage <site_url> --json-output` so the About panel points to the built docs site.
-- `.github/workflows/preview.yaml`: preview comment URL generated from `mkdocs.yml site_url`, not hardcoded `github.io`.
-- `.github/workflows/deploy.yaml`: deploys the built MkDocs site to `gh-pages`.
+- `.github/workflows/ci.yml`: install `.[dev,docs]` when package metadata/workflows are touched and run `mkdocs build --strict`.
+- `.github/workflows/preview.yaml`: PR preview deploys to the project Pages `/dev/` path and comments the public-domain preview URL.
+- `.github/workflows/deploy.yaml`: default-branch deploy publishes the built MkDocs site to `gh-pages`.
+- `.gitignore`: ignores generated `site/` output.
 - `CHANGELOG.md`: user-visible docs/metadata/workflow changes.
 
-## Domain Rules
+## Public URL Rules
 
-For ChatArch package project pages, the canonical public docs URL should be the ChatArch Pages custom domain path:
+For ChatArch package project pages, the canonical public docs URL should be the ChatArch Pages public-domain path:
 
 ```text
 site_url: https://arch.gh.wzhecnu.cn/<Repo>/
@@ -65,57 +72,33 @@ preview: https://cas.gh.wzhecnu.cn/<Repo>/dev/
 about homepage: https://cas.gh.wzhecnu.cn/<Repo>/
 ```
 
-Keep normal repository, badge, and source links on `github.com` when they point to GitHub itself. The custom-domain rule is specifically for built docs URLs, canonical/sitemap URLs, language alternates, package metadata documentation links, and Preview Docs comments.
+Keep normal repository, badge, source, issue, and PR links on `github.com` when they point to GitHub itself. The public-domain rule is specifically for built docs URLs, canonical/sitemap URLs, language alternates, package metadata documentation links, GitHub About homepage, and Preview Docs comments.
 
-## CNAME And Pages Settings
+## GitHub Pages Settings
 
-Do not add a project-level `docs/CNAME` just because a project uses `https://arch.gh.wzhecnu.cn/<Repo>/`.
+The ChatArch package-docs workflow assumes the public docs domain already exists. Do not add per-repository custom-domain files or DNS setup to a normal package docs PR.
 
 Current ChatArch pattern:
 
-- The organization Pages repository owns the root CNAME.
-- `https://arch.gh.wzhecnu.cn/CNAME` should return `arch.gh.wzhecnu.cn`.
-- Project pages such as `ChatTea` and `ChatGH` use `gh-pages` branch `/` as source.
-- Project pages normally show `cname: null` in the GitHub Pages API; that is expected because they inherit the org custom domain path.
+- Project pages use `gh-pages` branch `/` as source.
+- Project docs are served under the existing public-domain path, for example `https://arch.gh.wzhecnu.cn/<Repo>/`.
+- A successful `gh-pages` push is not sufficient proof that Pages is live.
+- If `/repos/<Owner>/<Repo>/pages` returns `404` but `gh-pages` exists, enable Pages for that repository with source `gh-pages` `/`, then verify the public-domain URL returns HTTP 200.
 
-Readback pattern uses ChatGH rather than raw REST snippets:
+Readback pattern uses the GitHub Pages API. Prefer a first-class ChatGH command only if the installed ChatGH implements it; do not document or call nonexistent `chatgh repo pages ...` commands as if they are available.
 
-```bash
-# Safe fields only; do not print tokens.
-chatgh repo pages view ChatArch/ChatArch.github.io --json-output
-chatgh repo pages view ChatArch/<Repo> --json-output
-chatgh repo pages health ChatArch/ChatArch.github.io --json-output
-```
-
-Expected safe result:
+Safe fields to report:
 
 ```text
-ChatArch.github.io: source main /, cname arch.gh.wzhecnu.cn, html_url https://arch.gh.wzhecnu.cn/
-<Repo>: source gh-pages /, cname null, html_url http(s)://arch.gh.wzhecnu.cn/<Repo>/
+html_url
+status
+source.branch
+source.path
 ```
 
-If `/repos/<Owner>/<Repo>/pages` returns `404` but `gh-pages` exists, enable Pages for that repository with source `gh-pages` `/`, then verify the custom-domain URL returns HTTP 200:
+Never print tokens or auth headers. Do not make custom-domain records, DNS provider state, or per-repo domain files part of the standard package-docs acceptance path.
 
-```bash
-chatgh repo pages set-source <Owner>/<Repo> --branch gh-pages --path / --json-output
-chatgh repo pages view <Owner>/<Repo> --json-output
-```
-
-If the organization root domain is new or changing, configure DNS with ChatDNS first, then set the Pages custom domain on the organization Pages repository:
-
-```bash
-# DNS provider state lives outside GitHub. Use ChatDNS/provider credentials; never print secrets.
-# For cas.gh.wzhecnu.cn, domain is wzhecnu.cn and RR is cas.gh.
-chatdns records wzhecnu.cn -r <rr> -t CNAME -p aliyun
-chatdns set <rr>.wzhecnu.cn -t CNAME -v <Owner>.github.io -p aliyun -I
-
-chatgh repo pages set-domain <Owner>/<Owner>.github.io --cname <rr>.wzhecnu.cn --json-output
-chatgh repo pages health <Owner>/<Owner>.github.io --json-output
-```
-
-Only pass `--https-enforced` after DNS has propagated and health/readback shows the domain is valid.
-
-## Preview Workflow Pattern
+## Preview Docs Workflow Pattern
 
 Avoid hardcoded preview URLs such as:
 
@@ -123,25 +106,41 @@ Avoid hardcoded preview URLs such as:
 https://${owner}.github.io/${repo}/dev/
 ```
 
-Instead derive the preview URL from `mkdocs.yml` `site_url` so custom-domain changes are reflected in PR comments and summaries:
+Use the ChatArch preview-flow shape. The workflow deploys the PR docs into `gh-pages` with `mike deploy dev`, then comments the public-domain `/dev/` URL:
 
 ```yaml
+name: Preview Docs
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[docs]"
       - run: |
           git fetch origin
           mike deploy dev -p --allow-empty
-          site_url=$(python - <<'PY'
-          from pathlib import Path
-
-          for line in Path("mkdocs.yml").read_text(encoding="utf-8").splitlines():
-              if line.startswith("site_url:"):
-                  print(line.split(":", 1)[1].strip().rstrip("/"))
-                  break
-          else:
-              raise SystemExit("mkdocs.yml is missing site_url")
-          PY
-          )
-          preview_url="${site_url}/dev/"
-          echo "CHATARCH_PREVIEW_URL=${preview_url}" >> "$GITHUB_ENV"
+          repo="${GITHUB_REPOSITORY#*/}"
+          preview_url="https://arch.gh.wzhecnu.cn/${repo}/dev/"
           echo "Preview URL: ${preview_url}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Comment PR with Preview Link
@@ -149,12 +148,57 @@ Instead derive the preview URL from `mkdocs.yml` `site_url` so custom-domain cha
         with:
           script: |
             const { payload, repo } = context;
-            const previewLink = process.env.CHATARCH_PREVIEW_URL;
+            const previewLink = `https://arch.gh.wzhecnu.cn/${repo.repo}/dev/`;
+            const comments = await github.rest.issues.listComments({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: payload.number,
+            });
+            const existingComment = comments.data.find(comment => comment.body.includes(previewLink));
+            if (!existingComment) {
+              await github.rest.issues.createComment({
+                owner: repo.owner,
+                repo: repo.repo,
+                issue_number: payload.number,
+                body: `Preview available at: ${previewLink}`,
+              });
+            }
 ```
 
-If the workflow already created a wrong `github.io` preview comment, delete or update only that bot-generated comment after the correct custom-domain comment exists.
+If the workflow already created a wrong `github.io` preview comment, update only that bot-generated comment after the correct public-domain comment exists.
 
-## About URL Sync
+## Deploy Docs Workflow Pattern
+
+Formal docs deployment runs from the default branch after merge:
+
+```yaml
+name: Deploy Docs
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[docs]"
+      - run: mkdocs gh-deploy --force
+```
+
+Do not claim the formal docs site has changed until the default-branch deploy completes and HTTP readback confirms the new content.
+
+## About URL And Package Metadata Sync
 
 After deciding the canonical docs URL, synchronize every public surface that claims to be documentation:
 
@@ -162,7 +206,9 @@ After deciding the canonical docs URL, synchronize every public surface that cla
 chatgh repo edit <Owner>/<Repo> --homepage <site_url> --json-output
 ```
 
-For package metadata, align `[project.urls] Documentation` in `pyproject.toml` to the same `<site_url>`. For README/docs links, use the canonical docs URL for user-facing documentation and keep `github.com` links only for source, issues, PRs, or repository badges. Verify the About homepage by reading the repo payload after update:
+For package metadata, align `[project.urls] Documentation` in `pyproject.toml` to the same `<site_url>`. For README/docs links, use the canonical docs URL for user-facing documentation and keep `github.com` links only for source, issues, PRs, or repository badges.
+
+Verify the About homepage by reading the repo payload after update:
 
 ```bash
 chatgh repo view <Owner>/<Repo> --json homepage,html_url,description
@@ -170,14 +216,51 @@ chatgh repo view <Owner>/<Repo> --json homepage,html_url,description
 
 ## Bilingual / i18n Guidance
 
-Use Chinese as the default public docs language unless the page is explicitly English.
+The ChatArch package docs pattern is plugin-based language switching, not two separate nav trees and not Chinese/English text crammed into one page.
 
-Two acceptable maturity levels:
+Use this mechanism:
 
-1. Simple bilingual pages: keep `docs/index.md` and `docs/index.en.md`, and list English pages explicitly in `mkdocs.yml`.
-2. Full suffix-mode i18n: add `mkdocs-static-i18n`, use `docs_structure: suffix`, Chinese default, English under `/en/`, `fallback_to_default: true`, `reconfigure_material: true`, and `reconfigure_search: true`.
+1. Chinese is the default source page, for example `docs/index.md`.
+2. English source pages use suffix names, for example `docs/index.en.md`.
+3. `mkdocs-static-i18n` with `docs_structure: suffix` builds the default Chinese site at `/<Repo>/` and the English site at `/<Repo>/en/`.
+4. `extra.alternate` creates the Material language switch button in the header.
+5. `nav` lists only the default-language page names such as `index.md` and `agent-definition.md`; it must not list `index.en.md` or `agent-definition.en.md` as separate pages.
+6. `nav_translations` maps Chinese nav labels to English labels for the `/en/` site.
+7. `fallback_to_default: true` is allowed for pages without an English mirror, but do not call that a complete English translation.
 
-Do not claim full i18n if the repo only has explicit `.en.md` pages without the i18n plugin.
+Minimum config shape:
+
+```yaml
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: zh
+          default: true
+          name: 中文
+          build: true
+          site_name: <Repo> 文档
+        - locale: en
+          name: English
+          build: true
+          site_name: <Repo> Documentation
+          nav_translations:
+            首页: Home
+extra:
+  alternate:
+    - name: 中文
+      link: /<Repo>/
+      lang: zh
+    - name: English
+      link: /<Repo>/en/
+      lang: en
+nav:
+  - 首页: index.md
+```
 
 ## Information Architecture
 
@@ -190,9 +273,8 @@ Prefer sectioned nav by user scenario:
 - CLI/API alignment
 - Agent/bot/runtime design where relevant
 - Development / release / operations notes
-- English section or full i18n alternate
 
-For formal interface trees, list implemented commands only. Put planned commands in a capability map or roadmap with status labels.
+For formal interface trees, list implemented commands only. Put planned commands in a capability map or roadmap with status labels. Do not make future commands look like implemented user-facing interfaces.
 
 ## Verification Checklist
 
@@ -202,7 +284,7 @@ Local checks:
 git diff --check
 mkdocs build --strict
 python -m pytest -q  # when the package has tests and the docs PR touches package metadata/workflows
-rg -n "github\.io|arch\.gh\.wzhecnu\.cn|cas\.gh\.wzhecnu\.cn|CNAME|site_url|Preview URL|homepage" -g '*.md' -g '*.toml' -g '*.yml' -g '*.yaml' . .github
+rg -n "github\.io|arch\.gh\.wzhecnu\.cn|cas\.gh\.wzhecnu\.cn|site_url|Preview URL|homepage" -g '*.md' -g '*.toml' -g '*.yml' -g '*.yaml' . .github
 ```
 
 Generated-site checks:
@@ -210,8 +292,9 @@ Generated-site checks:
 ```bash
 mkdocs build --strict
 test -f site/index.html
+test -f site/en/index.html
 test -f site/sitemap.xml
-rg -n "arch\.gh\.wzhecnu\.cn/<Repo>" site/sitemap.xml site/index.html
+rg -n "md-select|/<Repo>/en/|hreflang=\"en\"|arch\.gh\.wzhecnu\.cn/<Repo>" site/index.html site/en/index.html site/sitemap.xml
 rm -rf site
 ```
 
@@ -222,17 +305,16 @@ Remote checks after PR push:
 - PR `Preview Docs` workflow completed successfully.
 - `https://arch.gh.wzhecnu.cn/<Repo>/dev/` or `https://cas.gh.wzhecnu.cn/<Repo>/dev/` returns HTTP 200, depending on owner/domain.
 - Any important new docs page under `/dev/` returns HTTP 200.
-- `chatgh repo pages view <Owner>/<Repo> --json-output` reports the expected source branch/path.
+- GitHub Pages API reports the expected source branch/path.
 - `chatgh repo view <Owner>/<Repo> --json homepage` reports the canonical docs URL in the repository About homepage.
-- If DNS changed, `chatdns records ...` and `dig` agree on the expected CNAME/A/TXT record.
-- The PR body records Pages/CNAME/About readback without secrets.
+- The PR body records Pages/About readback without secrets.
 ```
 
 ## Safety Notes
 
-- Do not print tokens, repo-local `extraHeader` values, GitHub API auth headers, or DNS provider credentials.
+- Do not print tokens, repo-local `extraHeader` values, GitHub API auth headers, or provider credentials.
 - Do not use `/tmp` for code, worktrees, patches, logs, or scripts; use the active project's `playground/`, `scripts/`, `reports/`, or `reference/` directories.
-- Do not add or change a CNAME file in a project repo unless the user explicitly asks for a dedicated custom domain for that exact repo.
+- Do not create per-repository custom-domain files or DNS changes as part of a normal package docs alignment task.
 - Do not claim a preview is live until the Preview Docs workflow has completed and HTTP readback returns 200.
 - Do not claim the formal docs site is updated until the PR is merged, deploy completes on the default branch, and HTTP readback confirms the new content.
 - If the skill repo is dirty with unrelated changes, edit only the new/target skill files and report the unrelated dirty files as untouched.
