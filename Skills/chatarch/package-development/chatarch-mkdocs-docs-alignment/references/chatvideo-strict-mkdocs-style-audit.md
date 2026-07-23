@@ -24,8 +24,7 @@ For ChatVideo, the strict follow-up PR did the following:
 - Converted `docs/index.md` and `docs/index.en.md` into Material card hub pages.
 - Added `attr_list` and `md_in_html` to `mkdocs.yml`.
 - Updated nav to `命令与工作流` with `CLI 树` and `设计蓝图`.
-- Replaced formal-doc PR-history wording with `当前能力`, `规划边界`, `已实现`, `规划中`, and `安全默认值`.
-- Kept `generate image` / `generate frames` as planned blueprints while `chatvideo design` remained the only implemented non-trivial command.
+- Replaced formal-doc PR-history wording with `当前能力`, `规划边界`, `已实现`, `规划中`, and `安全默认值`; later follow-up removed `chatvideo design` entirely because documentation blueprints must not be wrapped as CLI behavior.
 
 ## Extra Checks
 

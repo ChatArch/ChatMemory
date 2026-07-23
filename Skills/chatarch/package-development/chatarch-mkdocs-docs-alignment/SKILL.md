@@ -1,7 +1,7 @@
 ---
 name: chatarch-mkdocs-docs-alignment
 description: "Align ChatArch package docs to the ChatArch MkDocs bilingual documentation standard, GitHub Pages previews, About URLs, package metadata, and verification flow."
-version: 0.1.12
+version: 0.1.13
 ---
 
 # ChatArch MkDocs Docs Alignment
@@ -61,6 +61,8 @@ When the repository has no real docs site yet, treat the review as a first-site 
 
 Do not stop a docs review at MkDocs mechanics. After `mkdocs.yml`, workflows, metadata, and preview URLs look correct, verify that README/docs/design pages express the user's corrected product model and clearly separate implemented commands from planned blueprints. For the ChatVideo image-to-video correction pattern, see `references/chatvideo-image-to-video-keyframe-docs.md`.
 
+When a package has workflow/design material, keep documentation blueprints in docs and keep the CLI reserved for executable tool behavior. Do not create a `design` command whose only job is to print Markdown-like plans. If no real subcommands exist yet, the CLI tree should list only real entries such as `--help` and `--version`, and the planned capabilities should be marked as documentation-only. For the ChatVideo rollback and language-separation follow-up, see `references/chatvideo-cli-doc-boundary-and-language.md`.
+
 When the user asks to apply the MkDocs style strictly, audit formal docs architecture even if the PR already merged and all workflows passed. Check for first-class CLI tree pages, Material card hub pages, `attr_list`/`md_in_html`, stable internal anchors, README language-label context, and absence of PR-history wording in formal docs. For the ChatVideo strict follow-up, see `references/chatvideo-strict-mkdocs-style-audit.md`.
 
 Before editing any repository, create or reuse a Playground project under `<WORKSPACE_ROOT>/projects/...` when the work is non-trivial. Put worktrees, patches, logs, scripts, smoke-output, and other intermediate files under that project's `playground/`, `scripts/`, `reports/`, or `reference/`. Do not put task work in `/tmp`; if an accidental `/tmp` worktree exists, migrate its diff into the project and remove the `/tmp` worktree before continuing.
@@ -76,7 +78,7 @@ For non-package static content sites in ChatArch, such as Docusaurus-based ChatB
 A standard package docs PR should usually align:
 
 - `mkdocs.yml`: site metadata, repo URL, Material theme, sectioned nav, docs-domain `site_url`, and `mkdocs-static-i18n` plugin config.
-- `README.md` and `README.en.md`: documentation links and short navigation.
+- `README.md` and `README.en.md`: documentation links and short navigation. Keep the Chinese default README in Chinese and the English README in English; do not leave English badge HTML/prose in `README.md` if the language checker will treat it as Chinese source.
 - `docs/index.md` and `docs/index.en.md`: Chinese default docs home plus English counterpart; `.en.md` files are language-source mirrors, not separate nav entries.
 - Domain-specific docs pages: quickstart, command map, capability map, interface tree, workflow guide, API/CLI alignment, design docs, or operations notes as appropriate.
 - For package scaffolding templates, placeholder content is expected and useful: the template should create correct structural slots that future model/project work fills with real package details. Keep only durable review surfaces by default: index/home, CLI tree, capability map, and interface tree. Do not default-generate development-plan/roadmap placeholders, generic `commands.md` replacements for the CLI tree, or per-repository domain ownership files. In the normal ChatArch Pages model, project docs live under the organization public-domain path `https://arch.gh.wzhecnu.cn/<Repo>/`, so scaffolds should generate URLs/badges/preview links from the docs domain + repo path and should not expose a `CNAME` file or `--with-docs-cname` option unless the user explicitly asks for a nonstandard custom-domain workflow.
@@ -87,7 +89,7 @@ A standard package docs PR should usually align:
 - `.github/workflows/preview.yaml`: PR preview deploys to the project Pages `/dev/` path and comments the public-domain preview URL.
 - `.github/workflows/deploy.yaml`: default-branch deploy publishes the built MkDocs site to `gh-pages`.
 - `.gitignore`: ignores generated `site/` output.
-- `CHANGELOG.md`: user-visible docs/metadata/workflow changes.
+- `CHANGELOG.md`: user-visible docs/metadata/workflow changes. In a Chinese-default package, keep changelog prose Chinese unless the repo deliberately maintains a separate English changelog surface.
 
 ## ChatTea Pattern Reuse For Scaffolds
 
@@ -438,7 +440,7 @@ rg -n "grid cards|cli-tree" site/index.html site/en/index.html
 rm -rf site
 ```
 
-The bundled `scripts/check_doc_language.py` checks source-language separation, generated English article bodies, and formal-doc progress/history labels. Use it before pushing a docs PR that touches bilingual pages or interface docs.
+The bundled `scripts/check_doc_language.py` checks source-language separation, generated English article bodies, and formal-doc progress/history labels. Treat it as a merge gate before pushing or merging a docs PR that touches bilingual pages, README surfaces, changelogs, or interface docs. Do not rely on `mkdocs build --strict` alone for Chinese/English separation.
 
 Remote checks after PR push:
 

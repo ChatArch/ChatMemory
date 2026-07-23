@@ -42,5 +42,5 @@ When reviewing package docs, do not stop after confirming MkDocs mechanics. Also
 
 - Saying “video tooling” when the package is being shaped around image-to-video.
 - Treating “three images” as a generic multi-image prompt instead of ordered keyframes.
-- Showing `generate image` or `generate frames` as if already implemented when the PR only implements `chatvideo design`.
+- Showing `generate image` or `generate frames` as if already implemented when the repository has no real generation command yet; the later ChatVideo rollback also removed the documentation-only `chatvideo design` command.
 - Passing a docs review just because `mkdocs.yml`, workflows, and metadata are correct.
