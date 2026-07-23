@@ -1,7 +1,7 @@
 ---
 name: chatarch-mkdocs-docs-alignment
 description: "Align ChatArch package docs to the ChatArch MkDocs bilingual documentation standard, GitHub Pages previews, About URLs, package metadata, and verification flow."
-version: 0.1.3
+version: 0.1.12
 ---
 
 # ChatArch MkDocs Docs Alignment
@@ -9,6 +9,8 @@ version: 0.1.3
 Use this skill when a ChatArch package needs a documentation site, README documentation links, MkDocs navigation, bilingual docs, GitHub Pages workflows, GitHub About metadata, or package documentation metadata aligned to the ChatArch project standard.
 
 ChatTea can be used as one reference implementation, but it is not the source of the rule. The rule is the ChatArch-series MkDocs documentation standard and applies even when the current repository has no relationship to ChatTea.
+
+For the ChatVideo strict-style follow-up where an already-merged MkDocs site still failed the full style review, see `references/chatvideo-strict-mkdocs-style-review.md`. That case is the reminder that mechanics, content model, and formal documentation style must all pass before merge.
 
 ## Trigger Conditions
 
@@ -41,10 +43,11 @@ Use the Chat-series tools by responsibility:
 
 A standard package docs PR should usually align:
 
-- `mkdocs.yml`: site metadata, repo URL, Material theme, sectioned nav, docs-domain `site_url`, and `mkdocs-static-i18n` plugin config.
-- `README.md` and `README.en.md`: documentation links and short navigation.
-- `docs/index.md` and `docs/index.en.md`: Chinese default docs home plus English counterpart; `.en.md` files are language-source mirrors, not separate nav entries.
-- Domain-specific docs pages: quickstart, capability map, interface tree, workflow guide, API/CLI alignment, design docs, or operations notes as appropriate.
+- `mkdocs.yml`: site metadata, repo URL, Material theme, sectioned nav, docs-domain `site_url`, `mkdocs-static-i18n` plugin config, and `markdown_extensions: attr_list` / `md_in_html` when hub/cards are used.
+- `README.md` and `README.en.md`: documentation links and short navigation; Chinese README should use Chinese link labels such as `英文版`, while English README uses English labels.
+- `docs/index.md` and `docs/index.en.md`: Chinese default docs home plus English counterpart; `.en.md` files are language-source mirrors, not separate nav entries. Treat the home page as a navigation hub, not a linear progress note.
+- Domain-specific docs pages: quickstart, CLI tree, command map, capability map, interface tree, workflow guide, API/CLI alignment, design docs, or operations notes as appropriate.
+- For CLI packages, add first-class `CLI 树` / `CLI Tree` pages when commands exist or command blueprints are being reviewed. The CLI tree page must list implemented commands only and must mark planned command groups as planned boundaries.
 - `pyproject.toml`: `[project.urls] Documentation` when package metadata has docs URLs, plus `mkdocs-static-i18n` in the `docs` extra.
 - GitHub repository About / homepage URL: use `chatgh repo edit <Owner>/<Repo> --homepage <site_url> --json-output` so the About panel points to the built docs site.
 - `.github/workflows/ci.yml`: install `.[dev,docs]` when package metadata/workflows are touched and run `mkdocs build --strict`.
@@ -268,13 +271,30 @@ Prefer sectioned nav by user scenario:
 
 - Home / overview
 - Quick start
+- Command reference with an explicit CLI tree for CLI packages
 - Interface tree or capability map
 - Core workflows
 - CLI/API alignment
 - Agent/bot/runtime design where relevant
 - Development / release / operations notes
 
-For formal interface trees, list implemented commands only. Put planned commands in a capability map or roadmap with status labels. Do not make future commands look like implemented user-facing interfaces.
+Use non-linear, task-oriented documentation structure by default. This is a hard requirement for formal ChatArch package docs, not a visual nice-to-have:
+
+- Do not write docs as one long linear essay, setup diary, PR narrative, or single-column instruction stream.
+- Treat the home page as a hub: expose primary entry points, use cases, safety/defaults, and next actions as parallel cards.
+- If a page has three or more peer concepts, commands, flows, or decision paths, use columns/cards/table grouping before prose.
+- Prefer MkDocs Material `grid cards` / `cards` markup with `attr_list` and `md_in_html`; do not rely only on plain lists when a page is a navigation hub.
+- `mkdocs.yml` for first-site package docs should include `markdown_extensions: attr_list` and `md_in_html` when cards/grids are used.
+
+Formal package docs are product/user documentation, not development history. Write what exists, what is planned, what is out of scope, and what safety contract applies. Do not describe the PR journey or implementation sequence inside formal pages.
+
+Avoid progress-history headings and phrases in formal docs:
+
+- Do not write `当前 PR`, `本 PR`, `本轮`, `Phase 1`, `Phase 2`, `第一阶段`, or `第二阶段` inside `docs/*.md`.
+- Prefer `当前能力`, `规划中`, `规划边界`, `不在当前范围`, `安全默认值`, and `当前 CLI 到 Python API 映射`.
+- Keep PR history in the PR body, `progress.md`, or `CHANGELOG.md`; keep formal docs stable and reader-facing.
+
+For formal interface trees, list implemented commands only. Put planned commands in a capability map, design blueprint, or roadmap with status labels. Do not make future commands look like implemented user-facing interfaces.
 
 ## Verification Checklist
 
@@ -290,11 +310,16 @@ rg -n "github\.io|arch\.gh\.wzhecnu\.cn|cas\.gh\.wzhecnu\.cn|site_url|Preview UR
 Generated-site checks:
 
 ```bash
-mkdocs build --strict
+mkdocs build --strict 2>&1 | tee <project>/reports/mkdocs-build.log
+! rg -n "contains a link" <project>/reports/mkdocs-build.log
 test -f site/index.html
 test -f site/en/index.html
+test -f site/cli-tree/index.html  # for CLI packages
+test -f site/en/cli-tree/index.html  # for bilingual CLI packages
 test -f site/sitemap.xml
 rg -n "md-select|/<Repo>/en/|hreflang=\"en\"|arch\.gh\.wzhecnu\.cn/<Repo>" site/index.html site/en/index.html site/sitemap.xml
+rg -n "grid cards|md-grid|cli-tree" site/index.html site/en/index.html
+! rg -n "当前 PR|本 PR|本轮|Phase [0-9]|第一阶段|第二阶段" docs README.md README.en.md
 rm -rf site
 ```
 
