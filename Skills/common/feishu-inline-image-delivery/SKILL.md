@@ -1,7 +1,10 @@
 ---
 name: feishu-inline-image-delivery
-description: Send screenshots/images to Feishu as text-with-inline-image post messages through Hermes normal conversation delivery; verify current thread/topic readback instead of using PDF/file/Lark CLI workarounds.
-version: 0.2.0
+description: Use when sending screenshots or generated images to Feishu, including files created on an active Hermes SSH target.
+version: 0.3.0
+reference:
+  - hermes-platform-development: "Hermes gateway, Feishu delivery, deployment, and runtime verification boundaries"
+  - hermes-ssh-target-configuration: "SSH registry aliases and session-bound target configuration"
 ---
 
 # Feishu Inline Image Delivery
@@ -26,20 +29,49 @@ Do **not** count these as acceptance:
 
 ## Normal Hermes output format
 
-For normal Hermes conversation delivery, the assistant should output ordinary text plus a local media marker:
+For normal Hermes conversation delivery, output ordinary explanatory text plus one explicit `MEDIA:` resource directive.
+
+Gateway-local file, canonical form:
 
 ```text
 Here is the summary or explanation.
 
-MEDIA:/absolute/path/to/image.png
+MEDIA:file:///absolute/path/to/image.png
 ```
+
+File created on the current SSH target:
+
+```text
+Here is the summary or explanation.
+
+MEDIA:ssh://<current-target-alias>/absolute/remote/path/to/image.png
+```
+
+`MEDIA:/absolute/path/to/image.png` remains a compatibility form. Prefer the typed URI forms because they state which filesystem owns the path.
 
 Important details:
 
-- Use an absolute local path that exists on the machine running Hermes.
+- Get `<current-target-alias>` from `ssh_mode.status` or `/ssh status`. Use the exact Hermes registry alias, not a guessed hostname, IP address, or another configured target.
+- `file:///...` means a file on the gateway host. It must not be used for a path that exists only on the SSH target.
+- `ssh://<alias>/...` means a file on the currently bound SSH target. The alias must match the current section/thread binding or delivery fails closed.
+- Use an absolute path. Percent-encode spaces and other URI-sensitive characters, for example `page%20one.png`.
+- Keep the SSH binding active through the final response. The gateway materializes the remote bytes into its local delivery cache before the Feishu adapter runs.
+- Do not manually `scp` the image back, generate a local stand-in, or use Lark CLI for delivery. Those paths bypass the capability being validated.
 - Do not use Markdown local image syntax such as `![x](./image.png)` for Feishu inline delivery.
 - Do not pre-convert to PDF or send a file attachment unless the user explicitly asks for a fallback.
-- After the Hermes Feishu inline-media fix, a single image plus non-empty text is routed through Feishu `send_image_file(..., caption=...)`, producing a single rich `post` instead of a detached image.
+- A single image plus non-empty text is routed through Feishu `send_image_file(..., caption=...)`, producing a single rich `post` instead of a detached image.
+
+## SSH Mode remote-image workflow
+
+1. Confirm the current binding with `ssh_mode.status`; if switching is needed, use the authorized `ssh_mode.request_use` / YOLO flow or ask the user to run `/ssh use <alias>`.
+2. Generate the image on the SSH target using terminal, browser, screenshot, plotting, or another remote execution tool.
+3. Verify the remote file exists, is a regular file, and has a non-zero size. Do not read or expose unrelated sensitive paths.
+4. Return normal explanatory text followed by `MEDIA:ssh://<current-target-alias>/absolute/remote/path.png` while the binding is still active.
+5. Hermes verifies the current alias, canonical remote path, sensitive-path policy, regular-file metadata, size/count/deadline limits, and transfer consistency before atomically staging the file in the gateway cache.
+6. The Feishu adapter receives only the gateway-local staged path and sends the text plus image in the current thread/topic.
+7. Treat user confirmation or Feishu readback in the current thread/topic as acceptance. Do not claim success from the model response alone.
+
+If materialization fails, Hermes removes the unusable directive and emits a generic attachment warning without exposing the remote path. Check the current alias, remote file existence/size, and gateway logs before retrying.
 
 ## Correct Feishu/Lark wire format
 
@@ -103,9 +135,9 @@ Validated current-thread readback:
 
 ## Another-machine validation checklist
 
-On another machine, first ensure the Hermes version includes the Feishu inline-media fix, then validate in a real Feishu thread/topic.
+On another machine, first ensure the Hermes version includes both the Feishu inline-media fix and SSH remote-media materialization, then validate in a real Feishu thread/topic.
 
-1. Confirm the image exists locally on that machine:
+1. Identify the resource owner and confirm the image exists there. For local mode, inspect the gateway-local path. For SSH Mode, inspect the path through the active SSH backend without copying it locally:
 
 ```bash
 python3 - <<'PY'
@@ -115,10 +147,16 @@ print('exists', p.exists(), 'bytes', p.stat().st_size if p.exists() else None)
 PY
 ```
 
-2. In a normal Hermes conversation, ask it to send a final answer containing text and:
+2. In a normal Hermes conversation, use the matching typed resource directive:
 
 ```text
-MEDIA:/absolute/path/to/image.png
+MEDIA:file:///absolute/gateway/path/to/image.png
+```
+
+or, while bound to the target:
+
+```text
+MEDIA:ssh://<current-target-alias>/absolute/remote/path/to/image.png
 ```
 
 3. Read back the current Feishu thread/topic. With Lark CLI, use readback only:
@@ -150,5 +188,20 @@ grep -i "Failed to send image\|field validation failed\|inline image delivery" <
 - If readback does not show the marker, retry readback with `--sort desc`; default ascending pagination may return old thread messages first.
 - If the message appears in the parent chat but not the thread/topic, the delivery metadata lost the thread/reply anchor.
 - If a text message appears but no image appears, inspect logs for Feishu upload/send failures before retrying.
+- If SSH delivery reports a materialization failure, verify that the URI alias exactly matches the active binding and that the file exists on that target. Do not switch to `file://` for a remote-only path.
 - If the output is two messages (text plus detached image), the Hermes instance is likely missing the inline-media fix or did not use the `caption` path.
 - Keep secrets out of logs and reports. Redact app ids, tenant keys, tokens, and user identifiers when storing readback artifacts.
+
+## Critical text report formatting
+
+For Feishu release reports or validation summaries where exact dependency/version text matters, avoid using multiple fenced Markdown code blocks for core evidence. Prefer short paragraphs, bullet lists, inline code, and bare links.
+
+Known risky patterns include dependency constraints with angle brackets, such as `package>=0.2.2,<0.3.0`, when they appear inside complex code blocks or mixed Markdown structures. Feishu may accept the post while rendering drops nearby text, so this may not surface as a send error.
+
+For critical reports, verify readback or user confirmation when possible. If rendered output is missing core lines, resend using simpler plain-text bullets and compare three layers: assistant final text, the outbound/API-stored payload, and client-visible rendering.
+
+Treat repeated missing or swallowed text as a delivery/rendering bug rather than a formatting annoyance. Reproduce with the smallest offending text in the current thread, then read it back through Feishu OpenAPI or Lark CLI. Use Lark CLI for readback only, never as a replacement delivery path.
+
+## Included validation script
+
+- `scripts/validate_feishu_inline_media.py` exercises the Hermes FeishuAdapter normal text-plus-`MEDIA:` pipeline without starting a second websocket. Use it only in an explicitly authorized validation context and keep identifiers and credentials out of stored output.
