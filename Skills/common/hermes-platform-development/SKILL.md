@@ -1,7 +1,7 @@
 ---
 name: hermes-platform-development
 description: Hermes 作为智能体载体的平台开发、配置、gateway、Feishu 卡片、SSH Mode 与运行验证入口。
-version: 0.1.0
+version: 0.1.1
 reference:
   - hermes-slash-command-development: "Hermes slash/gateway command、Feishu thread/card、/ssh command 开发模式"
   - hermes-ssh-target-configuration: "Hermes SSH target registry、bindings、known_hosts 与安全配置"
@@ -42,6 +42,20 @@ For active Hermes work, load or consult the relevant Hermes runtime skills/docs 
 - `hermes-slash-command-development` — slash command, gateway command, Feishu thread/card, `/ssh`, and session-scoped backend command patterns.
 - `test-driven-development` — production behavior changes should start with RED tests.
 - Local machine-only SSH operations may have a separate `local/hermes-ssh-mode-operations` skill; do not promote machine-specific hosts, key paths, or branches into this shared skill.
+
+## New-machine runtime baseline
+
+When provisioning a new Hermes machine or changing its primary model, do not copy one machine's `config.yaml` wholesale. Build a redacted baseline through Hermes's supported configuration surface and verify the provider's real wire behavior.
+
+Required baseline checks:
+
+1. Record the installed Hermes version and whether gateway hygiene uses a fixed wait or activity-aware waiting.
+2. Verify the selected provider, API mode, model ID, reasoning effort, and the provider's real context limit. A catalog/UI value is not proof that a custom endpoint accepts that many tokens.
+3. Keep the model context length, compression trigger threshold, auxiliary request timeout, gateway hygiene timeout, total ceiling, message-count safety valve, and failure cooldown internally consistent.
+4. Use `hermes config set` or `hermes_cli.config.load_config()/save_config()`; never patch protected runtime config directly.
+5. Re-read the persisted values without printing credentials, then restart only when authorized and verify the new process plus a normal turn.
+
+Use `references/hermes-runtime-initialization-baseline.md` for the fixed-wait/activity-aware templates, context-length verification rules, rollback manifest, and smoke-test checklist.
 
 ## Feishu / Lark gateway admission configuration
 
