@@ -1,7 +1,7 @@
 ---
 name: chatarch-cli-package-conventions
 description: "ChatArch Python CLI package conventions: ChatEnv integration, ChatStyle interactive UX, dependency bounds, and package-template checks."
-version: 0.1.0
+version: 0.1.1
 ---
 
 # ChatArch CLI Package Conventions
@@ -38,8 +38,11 @@ Generated ChatArch CLI packages should include:
 - tests for the real command skeleton and version output
 - ChatEnv/ChatStyle wiring when the package defines config or interactive input
 - build/check/publish workflow files that match the intended release path
+- when MkDocs is enabled: bounded docs dependencies, `mkdocs.yml`, bilingual source slots, CI/Preview/Deploy workflows, package Documentation URL, and ignored `site/` output
 
 When scaffold behavior changes, update the template source, generated-template tests, and workflow docs together.
+
+Template generation is not remote Pages acceptance. Before the first `0.1.x` release of a generated package with MkDocs, load `chatarch-mkdocs-docs-alignment` to configure/read back `gh-pages:/`, set/read GitHub About homepage, and prove Preview/production HTTP. A green docs workflow or generated `gh-pages` files alone are insufficient.
 
 
 ## ChatEnv Rules
@@ -208,6 +211,7 @@ Before finalizing a ChatArch CLI package PR:
 - Passing secret values in argv instead of env-var-name options.
 - Making reserved high-risk operations exit 0 with only a roadmap notice.
 - Updating README but forgetting docs, tests, CLI help, or generated templates.
+- Leaving docs extras unbounded. ChatArch scaffolds that run `mkdocs build --strict` can fail when a new `mkdocs-material` release emits upstream warnings; generated templates should use bounded docs deps such as `mkdocs>=1.6,<2.0`, `mkdocs-material>=9.5,<9.7`, `mkdocs-static-i18n>=1.2,<2.0`, and `mike>=2.0,<3.0`, and ignore generated `site/` output.
 
 ## Verification Commands
 
