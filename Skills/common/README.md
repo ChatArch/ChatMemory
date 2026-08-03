@@ -20,6 +20,10 @@
 - `feishu-inline-image-delivery/` — Hermes 正常会话路径里发送/验证 Feishu inline image。
 - `lark-cli-permission-authorization/` — lark-cli 权限申请、授权和 completion 流程。
 
+### Research / exploration
+
+- `technical-exploration-workflow/` — 技术、产品、仓库与生态调研的静态优先流程：广泛发现、候选认知卡片、证据台账、矩阵过滤、shortlist 和独立 runtime gate。
+
 ### Workspace
 
 - `workspace-task-kickoff/` — 稍复杂的调研、报告、设计、实现和外部交付在实质工作前创建规范 Project。
