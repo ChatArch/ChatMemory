@@ -1,7 +1,7 @@
 ---
 name: chatmemory-local-branch-loop
 description: Template for a machine-local ChatMemory/Skills refresh workflow.
-version: 0.6.2
+version: 0.6.3
 tags:
   - local
   - ChatMemory
@@ -21,7 +21,9 @@ Variables:
 
 For normal ChatMemory/Skills maintenance, each machine should commit directly on its own long-running machine branch. Do not create extra `feat/...` or `docs/...` branches unless the user explicitly asks for a temporary branch; if such a branch is used, delete it after its PR/MR is merged.
 
-Treat a user request such as “刷新 Skills” or “同步 ChatMemory/Skills” as one continuous refresh loop: publish local skill changes, squash them into `<default-branch>`, then reset the machine branch back to `origin/<default-branch>` unless there is a real blocker such as dirty uncommitted work, conflicts, failing validation, or an explicit user instruction to stop before merge.
+Treat a user request such as “刷新 Skills” or “同步 ChatMemory/Skills” as one continuous refresh loop: publish local skill changes, squash them into `<default-branch>`, then reset the machine branch back to `origin/<default-branch>` unless there is a real blocker such as conflicts, failing validation, unclear ownership of pre-existing changes, or an explicit user instruction to stop before merge.
+
+A dirty Git worktree is a blocker to resolve, not a normal state to carry across completed tasks. At every meaningful milestone and before ending a task, review `git status`/`git diff`, validate, stage exact logical changes, commit them with a purpose-revealing message, and verify clean status. Never leave known agent-authored changes dirty for the next session or person to reconstruct. If ownership or intent is unclear, stop and ask rather than resetting or guessing.
 
 Before publishing, review the recent updates instead of only checking that Markdown parses. A refresh should catch stale instructions, accidental truncation artifacts, inconsistent templates, and missing index updates before they become shared memory.
 
@@ -32,7 +34,10 @@ Run this gate before staging or pushing local skill changes:
 1. Read branch state and split the scope into two buckets:
    - committed branch delta against `origin/<default-branch>`;
    - uncommitted dirty diff on `<machine-branch>`.
-2. Preserve unrelated dirty work. Do not reset, checkout, clean, or overwrite dirty files just to refresh the branch.
+2. Resolve dirty state instead of carrying it forward:
+   - review and commit known, completed, agent-authored changes in focused logical commits;
+   - preserve changes whose ownership or intent is unclear and stop for confirmation;
+   - never reset, checkout, clean, or overwrite files just to make status appear clean.
 3. Review changed `SKILL.md` files for:
    - broken placeholders or truncation artifacts such as `...` inside real keys or commands;
    - new requirements that are not reflected in scaffold/validation sections;
@@ -40,6 +45,7 @@ Run this gate before staging or pushing local skill changes:
    - machine-specific names, paths, tokens, chat IDs, message IDs, or Feishu/Lark document URLs in shared skill groups.
 4. If a blocker is found, patch the skill before committing. If the fix would change another person's unrelated work, stop and report the conflict instead.
 5. Stage only the files that belong to this refresh.
+6. Commit each coherent update promptly. Before declaring the refresh complete, `git status --short --branch` must show no uncommitted changes.
 
 ## Refresh rule
 

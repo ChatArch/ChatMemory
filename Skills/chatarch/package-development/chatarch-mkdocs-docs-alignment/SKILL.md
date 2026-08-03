@@ -1,7 +1,7 @@
 ---
 name: chatarch-mkdocs-docs-alignment
 description: "Align ChatArch package docs to the ChatArch MkDocs bilingual documentation standard, GitHub Pages previews, About URLs, package metadata, and verification flow."
-version: 0.1.13
+version: 0.1.15
 ---
 
 # ChatArch MkDocs Docs Alignment
@@ -74,6 +74,26 @@ Use the Chat-series tools by responsibility:
 - If a Chat-series CLI is missing a GitHub Pages capability, add or fix that interface first when feasible; otherwise use a short token-safe REST bridge for the immediate readback and record the missing command as a ChatGH capability gap.
 
 For non-package static content sites in ChatArch, such as Docusaurus-based ChatBlog, preserve the site's framework when it already fits the product goal. Do not convert Docusaurus to MkDocs solely to match this skill's package-docs examples. Instead apply the shared ChatArch Pages mechanics: canonical public-domain URL, PR preview under `/dev/`, merge deploy to `gh-pages`, GitHub Pages source/readback, About homepage sync, and HTTP verification. See `references/chatblog-docusaurus-pages-deploy.md` for the Docusaurus workflow shape.
+
+## New Package Release Handoff
+
+`python-package-release-with-chattool-pypi` must load this skill whenever a generated ChatArch package contains `mkdocs.yml` or docs workflows. This handoff is mandatory before the first `0.1.x` tag/release, not an optional documentation follow-up.
+
+For every newly created package repository, require all of these independent states:
+
+1. source/docs structure and `mkdocs build --strict` pass;
+2. Preview/Deploy workflows reach terminal success;
+3. GitHub Pages API/source reports `gh-pages` `/` (or an explicit private visibility/plan gate is recorded);
+4. GitHub About homepage is set to the canonical `https://arch.gh.wzhecnu.cn/<Repo>/` URL and read back;
+5. Preview root and representative pages return HTTP 200 before calling Preview live;
+6. default-branch root and `/en/` (when bilingual) return HTTP 200 before calling docs deployed;
+7. `[project.urls] Documentation`, README links, `site_url`, Preview comments, and About homepage agree.
+
+Actions success, a bot comment, or files on `gh-pages` are build/deploy evidence only. They are not proof that a reader can open the docs.
+
+For multiple packages created in one workflow, produce one matrix across every repo with at least: visibility, Pages API/source/status, About homepage, production HTTP, Preview HTTP, English HTTP, and package Documentation URL. Fix each permitted gap; do not declare the package foundation complete from Publisher/CI alone.
+
+If a repository is private and GitHub plan/visibility prevents public Pages, do not make it public without explicit approval. Mark the docs as visibility-gated, provide reviewable source/build evidence, and keep live URL claims false until the user resolves visibility.
 
 A standard package docs PR should usually align:
 
