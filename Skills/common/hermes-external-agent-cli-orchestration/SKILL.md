@@ -1,7 +1,7 @@
 ---
 name: hermes-external-agent-cli-orchestration
 description: Use when Hermes needs to call Codex, Cursor Agent, Claude Code, OpenCode, or another local coding-agent CLI; choose terminal/process vs delegate_task/plugin/ACP.
-version: 0.1.0
+version: 0.1.1
 tags:
   - Hermes
   - coding-agent
@@ -72,6 +72,13 @@ When the user asks Hermes to delegate a substantial task to an external CLI agen
    - If the one-shot process is still running but non-interactive and non-observable, ask before terminating it unless the user has already authorized restart/termination for this task. Then restart with an observable mode and a first-milestone prompt.
 5. **Do not take over implementation.**
    - If progress is bad, Hermes should prompt/resume/restart the external agent with clearer instructions or safety boundaries. Hermes may inspect for acceptance, but should not start editing the package itself when the user explicitly delegated development to the external agent.
+6. **Treat user steering as an executable follow-up.**
+   - If the user gives new authorization or narrows scope mid-run (for example “this repo can be public” or “this can stop now”), send that instruction into the live external-agent PTY promptly, and require the agent to record it in the active project before any side effect.
+   - Do not keep debating a blocker after the user has supplied the missing authorization; translate it into the next concrete agent instruction.
+7. **Separate completion from process liveness.**
+   - A task can be complete while the interactive agent is still waiting at an “add follow-up” prompt.
+   - When the user asks “还没好吗/可以结束了吗/收尾”, immediately verify the external artifacts yourself. If the acceptance readback passes, gracefully close the agent stdin with `process(action="close")`, capture its exit code and resume id, and report the final status.
+   - Do not continue polling for additional agent prose once the real deliverables are verified.
 
 ## Baseline workflow
 
@@ -179,6 +186,7 @@ terminal(command="opencode run 'Complete <task> and report tests.'", workdir="/p
 - Use `pty=true` for interactive terminal apps such as Codex, Claude Code TUI, OpenCode TUI, or an interactive Cursor session.
 - Use `process(action="poll")` for status and new output, `process(action="log")` for full output, and `process(action="wait")` when it is acceptable to block until completion.
 - Use `process(action="submit")` only for expected prompts. If a command expects EOF after stdin, send data with `process(action="write")` and then `process(action="close")`.
+- If an interactive agent has completed the real task and is only waiting for more follow-up, close stdin gracefully with `process(action="close")`; do not treat the still-open prompt as evidence that the task is unfinished.
 - Do not kill slow agent sessions by default; first inspect logs/progress. Use the tool/process manager or a graceful exit path, and follow the user's service/process safety preferences.
 
 ## Safety and verification rules
@@ -208,3 +216,4 @@ Copilot ACP is the built-in reference pattern for an external-process provider: 
 ## References
 
 - `references/hermes-official-external-agent-patterns.md` — source/docs evidence for this workflow and the current Cursor Agent gap.
+- `references/interactive-agent-supervision-and-closeout.md` — session-derived supervision loop: interactive PTY steering, mid-run authorization follow-up, independent acceptance readback, graceful EOF closeout, and avoiding over-watching after completion.
