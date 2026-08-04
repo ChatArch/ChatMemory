@@ -52,6 +52,27 @@ When using a persisted CLI session, store the external session id/name in the ac
 
 Even when resuming an external CLI conversation, the parent Hermes agent must still verify the result by reading the repo state, diff, tests, or external artifact handles. Do not trust the resumed agent's memory as the sole source of truth.
 
+## Progress following / watchdog duty
+
+When the user asks Hermes to delegate a substantial task to an external CLI agent, Hermes remains responsible for **watching the agent work**, not only for reporting the final result.
+
+1. **Make the agent read the governing rules itself.**
+   - The delegation prompt must explicitly name the workspace rules, task project files, and relevant skills/references the CLI agent must read before acting.
+   - If the task tests the external agent as executor, Hermes should not pre-summarize all norms as a substitute for the agent reading them.
+2. **Set a visible progress cadence.**
+   - Immediately report dispatch: command shape, workdir, process/session id, and the first expected milestone.
+   - For long-running tasks, check `process(action="poll")`, `process(action="log")`, and, when useful, a read-only process tree / repo status every few minutes or at user-requested cadence.
+   - User-facing updates should say what is known now: running/exited, latest output, active child command if visible, files/projects changed, and whether progress is healthy, blocked, or suspiciously silent.
+3. **Classify silence as a state, not as progress.**
+   - If the agent runs for an extended period with no new logs, no active child command, and no repo/task-file changes, report it as likely stalled or non-observable.
+   - Do not keep waiting silently until the final timeout.
+4. **Interrupt by conversation when needed.**
+   - If the same CLI process is interactive and under `pty=true`, send a corrective follow-up with `process(action="submit")`.
+   - If the one-shot process has exited, resume by explicit external session id when available (`--resume <id>`), otherwise `--continue`/tool-specific latest-session only with the risk stated.
+   - If the one-shot process is still running but non-interactive and non-observable, ask before terminating it unless the user has already authorized restart/termination for this task. Then restart with an observable mode and a first-milestone prompt.
+5. **Do not take over implementation.**
+   - If progress is bad, Hermes should prompt/resume/restart the external agent with clearer instructions or safety boundaries. Hermes may inspect for acceptance, but should not start editing the package itself when the user explicitly delegated development to the external agent.
+
 ## Baseline workflow
 
 1. **Resolve the target executable and auth state without exposing secrets.**
