@@ -1,7 +1,7 @@
 ---
 name: chatarch-mkdocs-docs-alignment
 description: "Align ChatArch package docs to the ChatArch MkDocs bilingual documentation standard, GitHub Pages previews, About URLs, package metadata, and verification flow."
-version: 0.1.15
+version: 0.1.16
 ---
 
 # ChatArch MkDocs Docs Alignment
@@ -104,7 +104,7 @@ A standard package docs PR should usually align:
 - For package scaffolding templates, placeholder content is expected and useful: the template should create correct structural slots that future model/project work fills with real package details. Keep only durable review surfaces by default: index/home, CLI tree, capability map, and interface tree. Do not default-generate development-plan/roadmap placeholders, generic `commands.md` replacements for the CLI tree, or per-repository domain ownership files. In the normal ChatArch Pages model, project docs live under the organization public-domain path `https://arch.gh.wzhecnu.cn/<Repo>/`, so scaffolds should generate URLs/badges/preview links from the docs domain + repo path and should not expose a `CNAME` file or `--with-docs-cname` option unless the user explicitly asks for a nonstandard custom-domain workflow.
 - If the repository is a scaffold/template generator, align both the generated scaffold output and the generator package's own docs. A generator whose template emits a standard CLI tree should also expose its own standard CLI tree in README/docs/nav.
 - `pyproject.toml`: `[project.urls] Documentation` when package metadata has docs URLs, plus a bounded `docs` extra that includes `mkdocs-static-i18n`.
-  - Default ChatArch compatibility windows are `mkdocs>=1.6,<2.0`, `mkdocs-material>=9.5,<9.7`, `mkdocs-static-i18n>=1.2,<2.0`, and `mike>=2.0,<3.0`.
+  - Default ChatArch compatibility windows are `mkdocs>=1.6,<2.0`, `mkdocs-material>=9.5,<10.0`, `mkdocs-static-i18n>=1.2,<2.0`, and `mike>=2.0,<3.0`. Use a broad Material upper bound to avoid unnecessary downgrades in the shared ChatArch environment while still blocking future major-version breakage.
   - Lower bounds alone are not acceptable: `mkdocs build --strict` can regress when a newly released MkDocs/Material version introduces warnings or compatibility changes.
   - Audit existing repositories as well as newly generated scaffolds; template correctness does not migrate old `pyproject.toml` files automatically.
 - GitHub repository About / homepage URL: use `chatgh repo edit <Owner>/<Repo> --homepage <site_url> --json-output` so the About panel points to the built docs site.
@@ -249,8 +249,19 @@ jobs:
       - run: |
           git fetch origin
           mike deploy dev -p --allow-empty
-          repo="${GITHUB_REPOSITORY#*/}"
-          preview_url="https://arch.gh.wzhecnu.cn/${repo}/dev/"
+          site_url=$(python - <<'PY'
+          from pathlib import Path
+
+          for line in Path("mkdocs.yml").read_text(encoding="utf-8").splitlines():
+              if line.startswith("site_url:"):
+                  print(line.split(":", 1)[1].strip().rstrip("/"))
+                  break
+          else:
+              raise SystemExit("mkdocs.yml is missing site_url")
+          PY
+          )
+          preview_url="${site_url}/dev/"
+          echo "CHATARCH_PREVIEW_URL=${preview_url}" >> "$GITHUB_ENV"
           echo "Preview URL: ${preview_url}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Comment PR with Preview Link
@@ -258,7 +269,7 @@ jobs:
         with:
           script: |
             const { payload, repo } = context;
-            const previewLink = `https://arch.gh.wzhecnu.cn/${repo.repo}/dev/`;
+            const previewLink = process.env.CHATARCH_PREVIEW_URL;
             const comments = await github.rest.issues.listComments({
               owner: repo.owner,
               repo: repo.repo,
