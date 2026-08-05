@@ -1,7 +1,7 @@
 ---
 name: feishu-inline-image-delivery
 description: Use when sending screenshots or generated images to Feishu, including files created on an active Hermes SSH target.
-version: 0.3.0
+version: 0.3.1
 reference:
   - hermes-platform-development: "Hermes gateway, Feishu delivery, deployment, and runtime verification boundaries"
   - hermes-ssh-target-configuration: "SSH registry aliases and session-bound target configuration"
@@ -24,8 +24,42 @@ Do **not** count these as acceptance:
 - sending a standalone image bubble after a text message;
 - sending through `lark-cli im +messages-send` as the delivery path;
 - sending to the parent/main chat when the user is in a thread/topic;
-- including `MEDIA:/path` in the final answer without verifying platform delivery;
+- including `MEDIA:/path`, `MEDIA:ssh://...`, or `[media attachment]` in the final answer without verifying platform delivery;
 - saying “image sent” without readback/log evidence.
+
+## MEDIA marker quick reference
+
+`MEDIA:` is a Hermes outbound directive, not Feishu/Lark syntax. It must be normal final-response text, outside code blocks/JSON/quotes, so Hermes can consume it before Feishu delivery.
+
+Correct SSH image delivery:
+
+```text
+Caption or short explanation.
+
+MEDIA:ssh://<current-target-alias>/absolute/remote/path/to/image.png
+```
+
+Correct gateway-local delivery:
+
+```text
+Caption or short explanation.
+
+MEDIA:file:///absolute/gateway/path/to/image.png
+```
+
+Display-only / not delivery:
+
+````text
+```text
+MEDIA:ssh://<current-target-alias>/absolute/remote/path/to/image.png
+```
+````
+
+Failure and success signals:
+
+- If the user sees literal `MEDIA:...` or `[media attachment]`, the directive was not consumed. Do not claim success.
+- Success means the user sees the image, or readback shows `msg_type=post` plus `img_v3_...` / `tag=img`.
+- Do not use `cronjob` as an immediate Feishu media sender; cron delivery does not run the same SSH URI materialization step as normal assistant final delivery.
 
 ## Normal Hermes output format
 
@@ -113,25 +147,9 @@ For Feishu thread/topic delivery, preserve a real reply anchor:
 - `reply_to_message_id` / `reply_to` must point to a real root/current message;
 - a bare `thread_id` create payload may fail validation for rich post/image delivery.
 
-## How the 2026-07-02 local acceptance was sent
+## Historical validation note
 
-The final local acceptance used the active Hermes Feishu normal final-response pipeline, not Lark CLI delivery and not a bare direct `send_image_file` call.
-
-High-level flow:
-
-1. Active Hermes install was switched to the fix branch and gateway was restarted/reconnected.
-2. A local validation script instantiated `FeishuAdapter` with a REST client only, so it did not start a second Feishu websocket.
-3. The script called `FeishuAdapter._process_message_background(...)` with a synthetic `MessageEvent` for the current Feishu thread/topic.
-4. The message handler returned normal final-response text ending with `MEDIA:/absolute/path/to/image.jpg`.
-5. Hermes' normal post-processing extracted the `MEDIA:` marker and sent one Feishu `msg_type=post` containing both the text and image.
-6. `lark-cli im +threads-messages-list` was used only for readback verification.
-
-Validated current-thread readback:
-
-- current thread: `<LOCAL_FEISHU_THREAD_ID>`;
-- message id: `<LOCAL_FEISHU_MESSAGE_ID>`;
-- readback `msg_type`: `post`;
-- readback content contained the text plus `[Image: img_v3_...]`.
+The validated local acceptance used the normal Hermes final-response pipeline: handler returns text plus `MEDIA:/absolute/path.jpg`; Hermes extracts the marker; Feishu readback shows the current thread, `msg_type=post`, explanatory text, and `[Image: img_v3_...]`. `lark-cli` was readback only, not delivery.
 
 ## Another-machine validation checklist
 
