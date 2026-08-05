@@ -183,8 +183,20 @@ lark-cli im +threads-messages-list \
 grep -i "Failed to send image\|field validation failed\|inline image delivery" <HERMES_HOME>/logs/gateway.log | tail -40
 ```
 
+## Short-lived QR and login images
+
+Authentication QR codes are live handoffs, not ordinary screenshots.
+
+1. Confirm the SSH binding and remote output path first.
+2. Generate the QR at the last responsible moment and keep the source browser/page alive.
+3. Send exactly one normal Hermes response with explanatory text and a typed `MEDIA:ssh://<current-target-alias>/absolute/path.png` marker.
+4. Do not route login QR delivery through unrelated public file sharing services, Markdown local-image syntax, or hand-written Feishu/Lark API calls unless the user explicitly asks for a separate fallback. Those paths bypass the Hermes inline-media capability being validated.
+5. After sending, verify by current-thread readback or explicit user confirmation before claiming success.
+6. If the user reports expiry or missing image, regenerate a fresh QR and repeat the Hermes image path; do not merely resend a cached PNG or an old image key.
+
 ## Troubleshooting
 
+- If the user sees the literal `MEDIA:ssh://...` text, Hermes did not consume the media directive. Treat this as a gateway final-response post-processing / SSH artifact materialization / Feishu inline-send failure, not as a successful image send.
 - If readback does not show the marker, retry readback with `--sort desc`; default ascending pagination may return old thread messages first.
 - If the message appears in the parent chat but not the thread/topic, the delivery metadata lost the thread/reply anchor.
 - If a text message appears but no image appears, inspect logs for Feishu upload/send failures before retrying.
