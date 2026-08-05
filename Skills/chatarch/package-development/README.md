@@ -49,7 +49,8 @@ package-development/
 1. 确认包名、仓库名、module 名、CLI 名、版本号和发布目标。
 2. 查询 PyPI latest / tags / CI，保持版本连续。
 3. 在现有仓库里准备版本、CHANGELOG、测试、build/check。
-4. 走 PR/MR、merge 后在默认分支 tag-driven publish，并回读 GitHub Actions / PyPI / clean install。
+4. 包含 MkDocs 时，在首个 `0.1.x` 或相关 release tag 前加载 `chatarch-mkdocs-docs-alignment`，完成 Pages source、About homepage、Preview/生产 HTTP 回读。
+5. 走 PR/MR、merge 后在默认分支 tag-driven publish，并回读 GitHub Actions / PyPI / clean install。
 
 **全新 PyPI project / “如果不在就注册”的新包**：
 1. 确认 exact PyPI project name、normalized name、module、CLI、初始版本。
@@ -57,6 +58,7 @@ package-development/
 3. 构建、`twine check`，并用受控 PyPI 账号实际上传 `0.0.1` placeholder。
 4. 只有 PyPI JSON 回读确认 project 已创建后，才创建/确认 GitHub `ChatArch/<Repo>`，再初始化 canonical `core/<ProjectName>`、设置 HTTPS remote/token、push。
 5. 配置/核对 PyPI Trusted Publisher，再进入后续正式 feature/release 流程。
+6. 如果 scaffold 含 MkDocs，首个 `0.1.x` tag 前必须完成 Pages/Preview/About gate；workflow 绿或 `gh-pages` 存在不能代替线上 HTTP 200。
 
 硬边界：新包 `0.0.1` placeholder 上传或回读失败时，停止；不得先创建 GitHub repo、不得先写 canonical `core/` 仓库、不得换名字绕过。
 
@@ -99,7 +101,7 @@ package-development/
 3. 回读 project Pages source/status/html_url，确认 source 为 `gh-pages` `/`；若 Pages API 404 但 `gh-pages` 存在，则启用 repo Pages。
 4. 用 `mkdocs build --strict`、domain scan、PR CI/Preview Docs、About homepage readback 和 HTTP 200 回读验证。
 
-什么时候用：用户要求对齐 ChatArch/MkDocs 文档规范、修文档站域名、检查 Pages/Preview Docs、补中英文文档或清理旧文档结构。
+什么时候用：用户要求对齐 ChatArch/MkDocs 文档规范、修文档站域名、检查 Pages/Preview Docs、补中英文文档或清理旧文档结构；以及任何包含 MkDocs 的新 ChatArch 包在首个 `0.1.x` 发版前。
 
 ### `chatpypi-publisher-management`
 

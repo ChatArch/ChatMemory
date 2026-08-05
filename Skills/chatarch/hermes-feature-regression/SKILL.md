@@ -20,7 +20,7 @@ Use this Playground skill whenever work touches ChatArch's Hermes fork or the li
 - Merging or syncing official/upstream Hermes into `ChatArch/hermes-agent`.
 - Reviewing, merging, or rolling out a Hermes PR.
 - Changing gateway routing, slash commands, Feishu/Lark behavior, SSH Mode, terminal/file tools, compression, model/provider selection, or packaging.
-- Updating a live ChatArch Hermes checkout or rolling a gateway/service process.
+- Updating the live checkout on an approved `<HERMES_SERVER>` or restarting its `hermes-gateway.service`.
 
 This is a ChatArch internal-version feature guarantee. It is feature-regression focused: each ChatArch-owned Hermes feature below must be checked by code path and by a real user-facing entrypoint when available. Compile-only validation is not enough.
 
@@ -78,7 +78,7 @@ Treat this list as the must-preserve inventory for every merge. If a feature is 
 
 ### Runtime, credentials, and rollout behavior
 
-- GitHub operations on remote targets must use the target's approved ChatGH operator environment; a bare shell `PATH` check is not sufficient.
+- GitHub operations on an approved SSH target must use that target's configured ChatGH venv, for example `<REMOTE_CHATGH_BIN>`; a bare shell `PATH` check is not sufficient.
 - GitHub/proxy credentials and provider tokens must never be printed. Compare token alignment by existence, validity, permission summary, expiration header, or private hash equality only.
 - Live checkout update and gateway process restart are separate rollout steps. A repo fast-forward is not complete until the new gateway PID/start time and reconnect logs are verified.
 
@@ -167,7 +167,7 @@ Use this shape in PR bodies or task `progress.md`:
 
 - Base: `<branch/SHA>`
 - Head: `<branch/SHA>`
-- Target machine: `<hostname/path>`
+- Target machine: `<approved-host/path>`
 - Live checkout updated: yes/no, `<SHA>`
 - Gateway restarted: yes/no, PID/start time
 
