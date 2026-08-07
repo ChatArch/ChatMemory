@@ -9,9 +9,12 @@ Keep these layers separate:
 1. **Hermes runtime**: the gateway/agent Python environment. Do not repoint this to project or ChatArch venvs.
 2. **Local terminal backend**: commands run on the local machine. Its first snapshot can be seeded by `terminal.shell_init_files`.
 3. **SSH terminal backend**: commands run on the selected remote SSH target. Its first snapshot is seeded by the remote user's login shell, not by the local `terminal.shell_init_files`.
-4. **Project Python**: repo-local `.venv`, ChatArch's shared `~/.chatarch/venv`, system Python, etc.
+4. **File tools**: `read_file`, `write_file`, `search_files`, and `patch` are Hermes Python tool handlers wrapping `ShellFileOperations`, but `ShellFileOperations` executes shell commands through the selected terminal backend (`env.execute`). They follow the backend/cwd and shell snapshot, not the model's local filesystem by default.
+5. **Project Python**: repo-local `.venv`, ChatArch's shared `~/.chatarch/venv`, system Python, etc.
 
 Hermes terminal environments are stateful by shell snapshot: a backend creates a snapshot once, each command sources it, then writes exports/aliases/functions/cwd back. Changing an init file affects newly-created backend snapshots; an already-running snapshot may need an explicit `source ...` or backend/session recreation.
+
+For ordinary file reads/writes/search/patch, the target backend and cwd matter more than which `python3` is first on `PATH`: the file operation wrapper runs in Hermes, while backend access uses commands such as `wc`, `head`, `sed`, `cat`, `mv`, `find`/`rg` through `env.execute`. The selected Python only matters when a validation/extraction/helper path actually invokes Python or Python libraries (for example `execute_code`, document extraction in the Hermes runtime, or extension-specific lint checks). Therefore diagnose file tools by checking backend/cwd first, and Python environment second.
 
 ## Local backend: default ChatArch terminal environment
 
