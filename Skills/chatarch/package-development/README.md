@@ -22,6 +22,7 @@ package-development/
   public-repo-and-default-branch-protection/
   chattool-capability-extraction/
   chatarch-org-pr-status/
+  chatpost-zhihu-login-management/
 ```
 
 ## 每个 skill 是什么
@@ -155,6 +156,22 @@ package-development/
 3. 输出 compact 表格或 JSON，作为后续 PR/CI 工作的入口。
 
 什么时候用：用户问 “ChatArch 现在有哪些 PR/MR 没处理”、“当前组织状态如何”。
+
+### `chatpost-zhihu-login-management`
+
+用途：ChatPost 的知乎账号 / browser Profile 登录基础层：`profiles` 发现、`status` 页面态检查、`login` page-owned URL handoff、`logout` browser-level 清理，以及 Feishu/Lark 授权卡片交互边界。
+
+覆盖流程：
+
+1. 区分 ChatPost `PROFILE` 是 browser-login 容器，不是知乎账号 ID、cookie 或 token。
+2. 保持 login-only CLI surface：`platforms`、`profiles`、`zhihu profiles/login/status/logout`。
+3. 验证 `status/login/logout` 不依赖 Wechatsync、extension bridge、publishing adapter auth 或 `WECHATSYNC_TOKEN`。
+4. 跑真实 `login --timeout ...`：先输出 `LOGIN_REQUIRED` + page-owned `login_url`，授权后同一命令输出 `LOGGED_IN`。
+5. 授权后再跑 `status`，确认同一 profile 持久态 `LOGGED_IN`。
+6. Feishu/Lark 卡片中 URL button 只跳转不回调；需要 agent 感知用户动作时，使用额外 callback 按钮（如“我已授权”/“取消”）并再跑 `status`。
+7. 把真实 command / exit / stdout / stderr 写入 MkDocs Quickstart 和项目报告；公开 docs 中 redact tokenized live login URLs。
+
+什么时候用：修改或验收 ChatPost 知乎登录、profile 管理、登录 Quickstart、授权卡片 handoff、或追查 `login/status` 是否错接发布适配器时。
 
 ## 相关主题
 
