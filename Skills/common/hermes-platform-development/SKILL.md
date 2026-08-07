@@ -59,6 +59,16 @@ Required baseline checks:
 
 Use `references/hermes-runtime-initialization-baseline.md` for the fixed-wait/activity-aware templates, context-length verification rules, rollback manifest, and smoke-test checklist.
 
+## Terminal environment profiles
+
+When configuring the default environment seen by Hermes `terminal`, distinguish local and SSH backends:
+
+- Local backend defaults are seeded by `terminal.shell_init_files`, typically a secret-free `~/.hermes/shell-init/chatarch-terminal.sh` selected through `hermes config set terminal.shell_init_files ...`.
+- SSH Mode backend defaults are seeded by the remote user's non-interactive login shell, not by the local init file. Put the remote ChatArch selector in a remote login path such as `~/.bash_profile`, outside interactive-only guards.
+- Verify both surfaces with real probes: local `terminal`, fresh remote `env -i ... bash -l -c`, and Hermes SSH Mode `terminal`/`execute_code` after `/ssh use <alias> --cwd ...`.
+
+Use `references/hermes-terminal-env-profile.md` for the command templates, source-file placement, and verification checklist.
+
 ## Feishu / Lark gateway admission configuration
 
 When configuring Hermes itself to let Feishu/Lark users wake the gateway, use the official Hermes config paths instead of direct file mutation. `~/.hermes/config.yaml` and `~/.hermes/.env` are protected runtime config/credential files; direct `patch`/`write_file` edits may be refused or overwritten by the verifier.
