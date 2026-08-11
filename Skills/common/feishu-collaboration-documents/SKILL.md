@@ -1,82 +1,99 @@
 ---
 name: feishu-collaboration-documents
-description: Playground workspace convention for Feishu collaboration documents and the human-AI main document.
-version: 0.1.0
+description: Shared workflow for Feishu/Lark collaboration documents without workspace-specific links. Put concrete document URLs and group conventions in a local skill.
+version: 0.2.0
 ---
 
 # Feishu Collaboration Documents
 
-## Main Document
+Use this public/shared skill when creating, updating, or verifying Feishu/Lark documents for human-AI collaboration.
 
-The Playground workspace's human-AI collaboration main document is:
+## Private Feishu/Lark Context Policy
 
-https://chatarch.feishu.cn/docx/HpiudaXjCoJ7vxxmiN2ccCMmnMe
+Shared ChatMemory skills are synchronized through GitHub and must be treated as content that could be read outside the current machine/workspace. Do **not** put real Feishu/Lark document URLs, wiki URLs, tenant domains, user open IDs, chat IDs, message IDs, app IDs, account names, or other machine/account-specific collaboration identifiers in shared skills.
 
-Title observed via `lark-cli docs +fetch`:
+Use placeholders in shared skills:
 
-`🤝 人机协作主文档`
+```text
+<LOCAL_FEISHU_MAIN_DOC_URL>
+<LOCAL_FEISHU_CHILD_DOC_URL>
+<LOCAL_FEISHU_DOC_TOKEN>
+<LOCAL_FEISHU_USER_OPEN_ID>
+<LOCAL_FEISHU_CHAT_ID>
+<LOCAL_FEISHU_MESSAGE_ID>
+```
 
-Use this document as the durable navigation entry for human-facing Feishu collaboration docs.
+Machine-specific Feishu/Lark context belongs in one of these local-only places:
 
-## Current Agent Infra Blueprint Document
+- the active machine's workspace-local skill, for example `<WORKSPACE_ROOT>/skills/local/feishu-collaboration-context/SKILL.md`;
+- the active machine's durable assistant memory, if it is small and operationally important;
+- a task-local project note under `projects/...`, if it is only relevant to that task.
 
-The current Agent Infra blueprint discussion document is:
+The shared workflow below describes **how** to create and link human-facing documents. It intentionally does not hard-code a real Feishu main document link or account identifier.
 
-https://chatarch.feishu.cn/docx/Z1G2duuoWoeoXexPHMBcKVTtnDh
+## Local Configuration Required
 
-Title:
+Before creating or linking collaboration docs, load or create a local skill that defines the local workspace conventions, for example:
 
-`Agent Infra 蓝图整理`
+- main collaboration document URL: `<LOCAL_MAIN_DOC_URL>`
+- section names for child links: `<LOCAL_SECTION_NAME>`
+- preferred chat/group for notifications: `<LOCAL_CHAT_ID_OR_NAME>`
+- local bot/app identity notes: `<LOCAL_APP_PROFILE_NOTES>`
 
-This doc was created from:
-
-`projects/06-18-agent-system-blueprint/playground/agent-infra-blueprint-doc.md`
-
-It is linked from the main document under the section `Agent Infra 蓝图整理`.
+If the local skill is missing, ask the user where links should be attached instead of guessing or writing a private URL into this shared skill.
 
 ## Daily Brainstorm Log Convention
 
-When the user is brainstorming broad, incomplete, or messy ideas, use a daily Feishu log document rather than creating many small docs.
+When the user is brainstorming broad, incomplete, or messy ideas, prefer a daily Feishu log document rather than creating many small docs. Keep this as a convention, while filling local destinations from the local skill.
 
-- Main document section: `每日思考 / Brainstorm 日志`
-- Naming pattern: `YYYY-MM-DD｜<short topic summary>`
+- Main document section: `<LOCAL_BRAINSTORM_SECTION>`
+- Naming pattern: `YYYY-MM-DD | <short topic summary>`
 - Purpose: capture and compress the day's conversation.
 - Main doc should keep only the dated link and a short note; details belong in the daily log.
-- Current first daily log:
-  - `2026-06-18｜ChatArch、人机协作与 TODO 体系 Brainstorm`
-  - https://chatarch.feishu.cn/docx/JaTpddW25o7TZ0xbWUtcLvUknze
 
 ## Workflow Convention
 
 When the user wants to discuss plans, TODOs, blueprints, or project review results collaboratively:
 
-1. Use `lark-cli` with **user identity** for human-facing Feishu docs.
+1. Load the local collaboration-documents skill or local project memory to get the current main doc URL and section conventions.
+2. Use `lark-cli` with **user identity** for human-facing Feishu docs.
    - Create docs as user: `lark-cli docs +create --api-version v2 --as user ...`
    - Update docs as user: `lark-cli docs +update --api-version v2 --as user ...`
    - Fetch/verify docs as user: `lark-cli docs +fetch --api-version v2 --as user ...`
-2. Use **bot identity** for sending Feishu chat notifications/messages after the document exists.
+3. Use **bot identity** for sending Feishu chat notifications/messages after the document exists.
    - Do not create collaboration docs as bot by default.
    - Do not use a bot-created doc as a fallback unless the user explicitly approves the identity change.
-3. Check user auth first:
+4. Check user auth first:
 
 ```bash
 lark-cli auth status
 ```
 
-4. If user identity is expired, blocked, or unavailable, stop before doc creation and report the exact auth/keychain boundary. Do not silently fall back to bot-created docs.
-5. Prefer creating a focused child doc for each substantial topic.
-6. Add the child doc link back to the main document.
-7. Fetch the doc back after create/update and verify:
+5. If user identity is expired, blocked, or unavailable, stop before doc creation and report the exact auth/keychain boundary. Do not silently fall back to bot-created docs.
+6. Prefer creating a focused child doc for each substantial topic.
+7. Add the child doc link back to the local main document if the local convention says to do so.
+8. For substantial reports, do not dump plain Markdown into Feishu. Use the current `lark-cli` embedded `lark-doc` skills first:
+   - `lark-cli skills read lark-doc references/lark-doc-create.md`
+   - `lark-cli skills read lark-doc references/lark-doc-xml.md`
+   - `lark-cli skills read lark-doc references/style/lark-doc-style.md`
+   - for updates: `lark-cli skills read lark-doc references/lark-doc-update.md`
+9. Prefer XML (`--doc-format xml`) for authored Feishu docs unless the user explicitly asks to import Markdown.
+   - Use chapters (`h1/h2`), callouts/highlight blocks, tables, grids, and diagrams/whiteboards when they help readability.
+   - Important mechanism reports should include at least one flow diagram when the process has multiple states or components.
+   - If a diagram block returns warnings/degradation, do not treat the doc as final; fix the diagram and republish.
+10. Fetch the doc back after create/update and verify:
    - title is correct
    - body contains intended structure
-   - main doc contains the child link when relevant
-8. Record final links in the active project `memory.md` and `progress.md`.
+   - rich blocks/diagrams did not degrade
+   - local main doc contains the child link when relevant
+11. If fetch/update/create hits missing user scopes, use the Common skill `lark-cli-permission-authorization` and generate a real `https://accounts.feishu.cn/oauth/v1/device/verify?...` link via `lark-cli auth login --scope ... --no-wait --json`; do not send developer-console `open.feishu.cn/app/.../auth` URLs as user-confirmable links.
+12. Record final links in durable project files immediately. Minimum: append the URL and document role to the active project's `progress.md`. For any task that creates Feishu docs or other external artifacts, maintain the Project root `links.md` as the primary explicit link index and, when report artifacts live under `reports/`, also mirror/update `reports/links.md` so future sessions can recover links without relying on chat context, compressed memory, or the Feishu hub alone. Do not add private document URLs back into shared/public skills.
 
 ## Known CLI Compatibility Note
 
 Installed `lark-cli` versions can differ. Check `lark-cli docs +create --help` when a command fails.
 
-Observed forms in this workspace:
+Observed forms across machines:
 
 ```bash
 # Some installed versions expose --markdown:
@@ -84,27 +101,15 @@ lark-cli docs +create --api-version v2 --as user --title 'Title' --markdown @fil
 
 # Older/other observed versions accepted --content:
 lark-cli docs +create --api-version v2 --as user --title 'Title' --content @file.md
-lark-cli docs +update --api-version v2 --as user --doc '<url>' --command append --content @file.md
-lark-cli docs +fetch --api-version v2 --as user --doc '<url>' --format pretty
+lark-cli docs +update --api-version v2 --as user --doc '<doc-url>' --command append --content @file.md
+lark-cli docs +fetch --api-version v2 --as user --doc '<doc-url>' --format pretty
 ```
 
 Use the form supported by the installed binary; prefer the help output for flags, but trust validation errors from the actual command over stale notes.
 
 ### Hermes tool environment vs user's global `lark-cli`
 
-The Playground user often runs global `lark-cli` from their normal shell, where `lark-cli config show` may report:
-
-```text
-workspace: local
-Config file path: /Users/rexwzh/.lark-cli/config.json
-```
-
-Inside a Hermes tool process, the same binary can auto-detect an Agent workspace and instead report:
-
-```text
-workspace: hermes
-Config file path: /Users/rexwzh/.lark-cli/hermes/config.json
-```
+The user's normal shell/global `lark-cli` and the `lark-cli` seen inside a Hermes tool process can intentionally resolve different workspace configs. A normal shell may report a local workspace config, while a Hermes tool process may auto-detect an Agent workspace and report a Hermes-specific config.
 
 Do not confuse these. When the user explicitly refers to their global/local `lark-cli`, first verify with:
 
@@ -113,16 +118,14 @@ which lark-cli
 lark-cli config show
 ```
 
-If Hermes workspace auto-detection is getting in the way and the task is to use the user's global/local CLI, run `lark-cli` under a minimal environment rather than opening Terminal.app or guessing config paths:
+If Hermes workspace auto-detection is getting in the way and the task is to use the user's global/local CLI, run `lark-cli` under a minimal environment tailored to the target machine instead of guessing config paths or opening a GUI terminal. Use placeholders for machine-specific env values in shared docs:
 
 ```bash
 /usr/bin/env -i \
-  HOME=/Users/rexwzh \
-  PATH=/Users/rexwzh/.nvm/versions/node/v24.14.1/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin \
+  HOME=<LOCAL_HOME> \
+  PATH=<LOCAL_NODE_OR_BIN_PATHS> \
   lark-cli config show
 ```
-
-This should show the local config path when the global CLI is intended.
 
 ### Keychain blocker
 

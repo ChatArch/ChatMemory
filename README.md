@@ -39,10 +39,15 @@ Group semantics:
 - `chatarch/`: stable ChatArch-specific repository, release, governance, and package workflows.
 - `common/`: stable skills intended to be available on every enabled workspace/machine, but not specific to ChatArch.
 - `agents/`: shared agent-created or agent-learned skills that emerge while agents work through PRD, project, archive, and review processes. This group is intentionally lightweight until usage patterns stabilize.
+- `local/`: optional machine-local skill templates. This group is tracked only so a new machine can copy and adapt a local workflow quickly; it is **not** default-linked and should not be treated as portable shared policy.
 
-Local workspace-only skills belong under `<workspace>/skills/local`. They are machine-specific or private to the current workspace and are not tracked by ChatMemory or linked from ChatMemory.
+Local workspace-only active skills belong under `<WORKSPACE_ROOT>/skills/local`. They are machine-specific or private to the current workspace and are not linked from ChatMemory by default. If a local workflow is useful as a future-machine template, it may be tracked under `Skills/local/` with clear copy-and-adapt boundaries.
 
-Do not place machine-specific, account-specific, or sensitive local-only skills in default-linked groups. Keep those in a non-default group or in the source project until a sharing policy is clear.
+Do not place machine-specific, account-specific, or sensitive local-only skills in default-linked groups. Keep those in `Skills/local/`, a non-default group, or the source project until a sharing policy is clear.
+
+### Public-safety rule for shared skills
+
+Treat every shared skill under `Skills/chatarch/`, `Skills/common/`, and `Skills/agents/` as if it may become visible outside the current machine. These files must not contain real Feishu/Lark document URLs, wiki URLs, tenant-specific links, user open IDs, chat IDs, message IDs, app IDs, access tokens, account names, machine paths that reveal private infrastructure, or other private identifiers. Use placeholders such as `<LOCAL_FEISHU_MAIN_DOC_URL>` in shared skills and put the real value in `<WORKSPACE_ROOT>/skills/local/` or machine memory.
 
 ## Workspace plugin model
 
@@ -54,19 +59,19 @@ Candidate behavior:
 2. If selected and missing locally, clone the private repository into:
 
    ```text
-   <workspace>/core/ChatMemory
+   <WORKSPACE_ROOT>/core/ChatMemory
    ```
 
 3. If already present, update it with a safe fetch + fast-forward when clean; skip update if local changes exist.
 4. Link only the default shared groups into the workspace:
 
    ```text
-   <workspace>/skills/agents   -> <workspace>/core/ChatMemory/Skills/agents
-   <workspace>/skills/common   -> <workspace>/core/ChatMemory/Skills/common
-   <workspace>/skills/chatarch -> <workspace>/core/ChatMemory/Skills/chatarch
+   <WORKSPACE_ROOT>/skills/agents   -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/agents
+   <WORKSPACE_ROOT>/skills/common   -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/common
+   <WORKSPACE_ROOT>/skills/chatarch -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/chatarch
    ```
 
-   Also create `<workspace>/skills/local/` as a local non-shared directory when missing. Do not link it.
+   Also create `<WORKSPACE_ROOT>/skills/local/` as a local non-shared directory when missing. Do not link it.
 
 5. Do not copy `SKILL.zh.md` variants into the candidate set. Each candidate skill should expose one standard `SKILL.md`.
 6. Do not link all of `ChatMemory/Skills` by default.
@@ -78,39 +83,43 @@ ChatMemory/
 ├── README.md
 ├── LICENSE
 └── Skills/
-    ├── agents/
-    │   └── README.md
-    ├── chatarch/
-    │   ├── chatarch-org-pr-status/
-    │   │   ├── SKILL.md
-    │   │   └── scripts/
-    │   ├── chatgh-pr-and-ci-workflow/
-    │   │   ├── SKILL.md
-    │   │   └── scripts/
-    │   ├── public-repo-and-default-branch-protection/
-    │   │   └── SKILL.md
-    │   └── python-package-release-with-chattool-pypi/
-    │       └── SKILL.md
-    └── common/
-        ├── feishu-collaboration-documents/
-        │   └── SKILL.md
-        ├── hermes-environment-notes/
-        │   └── SKILL.md
-        ├── hermes-slash-command-development/
-        │   └── SKILL.md
-        └── workspace-maintenance/
-            └── SKILL.md
+│   ├── agents/
+│   │   └── README.md
+│   ├── chatarch/
+│   │   ├── chatarch-org-pr-status/
+│   │   ├── chatenv-provider-workflow/
+│   │   ├── chatgh-pr-and-ci-workflow/
+│   │   ├── chatgh-repo-token-setup/
+│   │   ├── chatnet-ecnu-default-visitor/
+│   │   ├── chattool-capability-extraction/
+│   │   ├── module-archive-hardening/
+│   │   ├── public-repo-and-default-branch-protection/
+│   │   └── python-package-release-with-chattool-pypi/
+│   ├── common/
+│   │   ├── feishu-collaboration-documents/
+│   │   ├── hermes-environment-notes/
+│   │   ├── hermes-lark-cli-binding/
+│   │   ├── hermes-slash-command-development/
+│   │   └── workspace-maintenance/
+│   └── local/
+│       ├── README.md
+│       └── chatmemory-local-branch-loop/
+│           └── SKILL.md
 ```
 
 ## Current shared skills
 
 ### `common/feishu-collaboration-documents`
 
-Feishu collaboration-document convention and human-AI main document navigation.
+Shared Feishu collaboration-document workflow. Concrete workspace links and group conventions belong in local skills, not this shared skill.
 
 ### `common/hermes-environment-notes`
 
 Hermes tool-session environment notes for interpreter, virtualenv, CLI config namespace, and package upload pitfalls.
+
+### `common/hermes-lark-cli-binding`
+
+Install Lark CLI, bind it to the same Feishu/Lark app used by Hermes Agent on a machine, and query group bot IDs without blind mention tests.
 
 ### `common/hermes-slash-command-development`
 
@@ -132,6 +141,14 @@ Quick ChatGH-based organization status workflow for finding which ChatArch repos
 
 ChatGH-based PR readiness, CI triage, repository inventory, protection readback, and token-capability workflows for ChatArch repositories. Includes reusable scripts for PR readiness and repository inventory/protection snapshots.
 
+### `chatarch/chatnet-ecnu-default-visitor`
+
+Set or refresh ECNU default visitor accounts through ChatNet safely, including login fallback and secret redaction.
+
+### `chatarch/chattool-capability-extraction`
+
+Split a useful ChatTool interface into a standalone ChatArch package with explicit ownership, safety, parent-reconnection, and release boundaries.
+
 ### `chatarch/public-repo-and-default-branch-protection`
 
 ChatArch repository visibility and default-branch protection workflow.
@@ -140,20 +157,30 @@ ChatArch repository visibility and default-branch protection workflow.
 
 ChatArch Python package creation, release, and PyPI verification workflow.
 
+## Current local templates
+
+### `local/chatmemory-local-branch-loop`
+
+Machine-local ChatMemory PR/merge/reset loop template. It is tracked so a new machine can copy and adapt the local branch/path policy, but it is not a default linked shared skill.
+
+### `local/feishu-collaboration-local-conventions`
+
+Template for machine- or tenant-specific Feishu collaboration document URLs, chat conventions, and app-scoped bot ID mappings. Copy and fill locally; do not treat it as portable shared policy.
+
 ## Local workspace link convention
 
 A workspace that enables ChatMemory should link shared groups from this repository instead of copying individual skill directories:
 
 ```text
-<workspace>/skills/common   -> <workspace>/core/ChatMemory/Skills/common
-<workspace>/skills/chatarch -> <workspace>/core/ChatMemory/Skills/chatarch
-<workspace>/skills/agents   -> <workspace>/core/ChatMemory/Skills/agents
+<WORKSPACE_ROOT>/skills/common   -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/common
+<WORKSPACE_ROOT>/skills/chatarch -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/chatarch
+<WORKSPACE_ROOT>/skills/agents   -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/agents
 ```
 
 The workspace may also have a local non-shared directory:
 
 ```text
-<workspace>/skills/local
+<WORKSPACE_ROOT>/skills/local
 ```
 
 Existing standalone local links may be migrated to the grouped layout when convenient.

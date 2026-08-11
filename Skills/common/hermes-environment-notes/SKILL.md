@@ -14,6 +14,8 @@ Do not assume a command invoked from Hermes uses the same interpreter, virtualen
 
 Before relying on an installed CLI or helper, verify the live execution context and choose the environment intentionally.
 
+For the reusable procedure to configure Hermes `terminal` tool subprocesses to default to ChatArch's venv without changing Hermes runtime/source, see the `hermes-terminal-env-profile` skill.
+
 ## Checklist
 
 1. Confirm workspace root and project/repo root first.
@@ -46,7 +48,7 @@ python -m twine check dist/*
 In the observed macOS Hermes setup, `chattool` can resolve to a binary under Hermes' runtime venv, for example:
 
 ```text
-~/.hermes/hermes-agent/venv/bin/chattool
+<HERMES_HOME>/hermes-agent/venv/bin/chattool
 ```
 
 That means:
@@ -71,8 +73,8 @@ This keeps the upload using the same environment that installed and verified `tw
 
 In ChatArch workspaces, common command sources can include:
 
-- Hermes runtime venv, e.g. `~/.hermes/hermes-agent/venv/bin/...`
-- ChatArch development venv, e.g. `~/.chatarch/venv/bin/...`
+- Hermes runtime venv, e.g. `<HERMES_HOME>/hermes-agent/venv/bin/...`
+- ChatArch development venv, e.g. `<CHATARCH_HOME>/venv/bin/...`
 - A repo-local `.venv/bin/...`
 - A user-global shell install
 
