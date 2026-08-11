@@ -15,7 +15,7 @@ version: 0.1.0
 - 可以并行使用多个 subagent，但必须遵守“一名 subagent 只 review 一个 Project”。
 - 不要用 `chatboard catalog --ensure` 批量生成正式卡片；它只能作为临时扫描/调试工具，不能替代 review。
 - 正式 `card.md` 默认用中文书写，方便用户和后续模型复核。
-- 路径负责结构归属：`projects/`、`discussion/`、`archive/YYYY-MM-DD/`、`discard/`；frontmatter 负责语义元数据。
+- 路径负责结构归属：`projects/`、`discussion/`、`archive/YYYY-MM-DD/`、`.trash/`；frontmatter 负责语义元数据。
 - 不再使用 `card.json`；不要恢复 JSON 兼容层。
 
 ## 推荐 frontmatter
@@ -46,8 +46,8 @@ links:
 
 - `id`：按 workspace 相对路径 slug 化，稳定即可。
 - `title`：用中文写清任务名，不要只复制目录名。
-- `area`：Project 下写 `project`；Discussion 写 `discussion`；Archive/Discard 由路径表达。
-- `stage`：常用 `scaffold`、`prd`、`development`、`validation`、`complete`、`archived`、`discarded`。
+- `area`：Project 下写 `project`；Discussion 写 `discussion`；Archive / `.trash` 由路径表达。
+- `stage`：常用 `scaffold`、`prd`、`development`、`validation`、`complete`、`archived`、`paused`。
 - `priority`：只在确实需要突出时填写；当前活跃任务可用 `1`。
 - `tags`：少而准，优先写产品/系统/能力域。
 - `assets`：指向项目内稳定文档。

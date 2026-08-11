@@ -20,7 +20,7 @@ Do not use this skill as the primary task execution workflow. Project authors sh
 - Review the item before writing: read `PRD.md`, current `progress.md`, key files under `reports/`, and `Items/` when present.
 - Default to Chinese for title, summary, current status, and next action unless the project itself is clearly English-only.
 - Do not batch-generate final cards blindly. Bulk template creation is acceptable only as a temporary initialization step; final cards require per-item review.
-- Do not change task lifecycle placement while writing a card. Moving to `discussion/`, `archive/`, or `discard/` is a separate explicit action.
+- Do not change task lifecycle placement while writing a card. Moving to `discussion/`, `archive/`, or `.trash/` is a separate explicit action.
 
 ## When To Create Or Update
 
