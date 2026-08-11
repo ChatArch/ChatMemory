@@ -1,154 +1,127 @@
 ---
 name: feishu-inline-image-delivery
-description: Send screenshots/images to Feishu as text-with-inline-image post messages through Hermes normal conversation delivery; verify current thread/topic readback instead of using PDF/file/Lark CLI workarounds.
-version: 0.2.0
+description: Use when sending screenshots or generated images to Feishu, including files created on an active Hermes SSH target.
+version: 0.3.2
+reference:
+  - hermes-platform-development: "Hermes gateway, Feishu delivery, deployment, and runtime verification boundaries"
+  - hermes-ssh-target-configuration: "SSH registry aliases and session-bound target configuration"
 ---
 
 # Feishu Inline Image Delivery
 
-Use this skill when a task needs to send a screenshot, prototype image, chart, or generated image into the current Feishu/Lark conversation and the user expects the image to appear inline with explanatory text.
+Use when the user expects an image to appear inline in the current Feishu/Lark conversation or thread. Keep this simple: produce the image, verify the file exists, then send normal text plus one `MEDIA:` directive in the final response.
 
-## Acceptance rule
+## Core contract
 
-The accepted result is one Feishu rich/post message in the **current conversation thread/topic** containing both:
+Accepted delivery means the current Feishu thread/topic contains the image inline. Acceptance evidence is either user confirmation or readback showing `msg_type=post` plus `tag=img` / `img_v3_...`.
 
-- visible explanatory text; and
-- an embedded image in the same message body.
+Not accepted:
 
-Do **not** count these as acceptance:
+- the user sees literal `MEDIA:...` or `[media attachment]`;
+- only a local/remote path is listed;
+- text and image go to the wrong parent chat/thread;
+- a file/PDF fallback is sent without the user asking for one;
+- the assistant says it sent an image without readback or user-visible image evidence.
 
-- sending a PDF/file fallback;
-- sending a standalone image bubble after a text message;
-- sending through `lark-cli im +messages-send` as the delivery path;
-- sending to the parent/main chat when the user is in a thread/topic;
-- including `MEDIA:/path` in the final answer without verifying platform delivery;
-- saying “image sent” without readback/log evidence.
+## The normal way to send one image
 
-## Normal Hermes output format
-
-For normal Hermes conversation delivery, the assistant should output ordinary text plus a local media marker:
+Gateway-local file:
 
 ```text
-Here is the summary or explanation.
+Short caption or explanation.
 
-MEDIA:/absolute/path/to/image.png
+MEDIA:file:///absolute/gateway/path/to/image.png
 ```
 
-Important details:
-
-- Use an absolute local path that exists on the machine running Hermes.
-- Do not use Markdown local image syntax such as `![x](./image.png)` for Feishu inline delivery.
-- Do not pre-convert to PDF or send a file attachment unless the user explicitly asks for a fallback.
-- After the Hermes Feishu inline-media fix, a single image plus non-empty text is routed through Feishu `send_image_file(..., caption=...)`, producing a single rich `post` instead of a detached image.
-
-## Correct Feishu/Lark wire format
-
-The platform-level inline image flow is:
-
-1. Upload the image to Feishu IM image API with `image_type=message`.
-2. Get an `image_key` such as `img_v3_...`.
-3. Send a `msg_type=post` message whose content contains both text and an image element.
-
-Canonical post payload shape:
-
-```json
-{
-  "zh_cn": {
-    "content": [
-      [{"tag": "md", "text": "Caption or explanation"}],
-      [{"tag": "img", "image_key": "img_v3_xxx"}]
-    ]
-  }
-}
-```
-
-Lark CLI's source/skills confirm this pattern, but Lark CLI is only a reference/readback tool here. Local image paths inside Markdown such as `![x](./a.png)` are not auto-uploaded reliably; the reliable Markdown form is `![x](img_v3_xxx)` after pre-uploading.
-
-## Hermes-specific implementation notes
-
-Hermes' Feishu adapter supports the correct post shape when `send_image_file(..., caption=...)` is used: it uploads the image and sends a rich `post` payload with `tag=img`.
-
-The bug class to avoid is the generic gateway `MEDIA:` path splitting text and image:
-
-- text is sent first;
-- image is sent later through `send_multiple_images()` with empty captions;
-- in Feishu thread/topic contexts this can fail with `[99992402] field validation failed`, or deliver a detached image;
-- if the failure is only logged, the assistant may falsely believe the image was visible.
-
-For Feishu thread/topic delivery, preserve a real reply anchor:
-
-- `thread_id` identifies the topic/thread;
-- `reply_to_message_id` / `reply_to` must point to a real root/current message;
-- a bare `thread_id` create payload may fail validation for rich post/image delivery.
-
-## How the 2026-07-02 local acceptance was sent
-
-The final local acceptance used the active Hermes Feishu normal final-response pipeline, not Lark CLI delivery and not a bare direct `send_image_file` call.
-
-High-level flow:
-
-1. Active Hermes install was switched to the fix branch and gateway was restarted/reconnected.
-2. A local validation script instantiated `FeishuAdapter` with a REST client only, so it did not start a second Feishu websocket.
-3. The script called `FeishuAdapter._process_message_background(...)` with a synthetic `MessageEvent` for the current Feishu thread/topic.
-4. The message handler returned normal final-response text ending with `MEDIA:/absolute/path/to/image.jpg`.
-5. Hermes' normal post-processing extracted the `MEDIA:` marker and sent one Feishu `msg_type=post` containing both the text and image.
-6. `lark-cli im +threads-messages-list` was used only for readback verification.
-
-Validated current-thread readback:
-
-- current thread: `<LOCAL_FEISHU_THREAD_ID>`;
-- message id: `<LOCAL_FEISHU_MESSAGE_ID>`;
-- readback `msg_type`: `post`;
-- readback content contained the text plus `[Image: img_v3_...]`.
-
-## Another-machine validation checklist
-
-On another machine, first ensure the Hermes version includes the Feishu inline-media fix, then validate in a real Feishu thread/topic.
-
-1. Confirm the image exists locally on that machine:
-
-```bash
-python3 - <<'PY'
-from pathlib import Path
-p = Path('/absolute/path/to/image.png')
-print('exists', p.exists(), 'bytes', p.stat().st_size if p.exists() else None)
-PY
-```
-
-2. In a normal Hermes conversation, ask it to send a final answer containing text and:
+File created on the active SSH target:
 
 ```text
-MEDIA:/absolute/path/to/image.png
+Short caption or explanation.
+
+MEDIA:ssh://<current-target-alias>/absolute/remote/path/to/image.png
 ```
 
-3. Read back the current Feishu thread/topic. With Lark CLI, use readback only:
+Media-only is also valid when the user asked for only the image:
 
-```bash
-lark-cli im +threads-messages-list \
-  --as bot \
-  --thread omt_xxx \
-  --page-size 50 \
-  --sort desc \
-  --no-reactions
+```text
+MEDIA:ssh://<current-target-alias>/absolute/remote/path/to/image.png
 ```
 
-4. Acceptance signs:
+Rules:
 
-- the target message is in the same `thread_id` as the current conversation;
-- `msg_type` is `post`;
-- content includes the explanatory text;
-- content includes `[Image: img_v3_...]` or the raw post contains `{"tag":"img","image_key":"img_v3_..."}`.
+1. Use the exact current SSH alias from Hermes SSH Mode; do not guess hostnames or switch to `file://` for a remote-only path.
+2. The path must be absolute and the file must exist with non-zero size before the final response.
+3. Keep user-clickable URLs as plain text or normal Markdown links. A common valid shape is a bare URL line followed by a `MEDIA:ssh://...` line; the URL remains visible/clickable, and only the `MEDIA:` line is consumed.
+4. Do not wrap user-clickable URLs in backticks, fenced code blocks, JSON snippets, table code cells, or angle brackets.
+5. Do not use Markdown image syntax like `![x](./image.png)` for local files.
+6. Do not use `cronjob` as an immediate image sender.
 
-5. If the image is missing, do not claim success. Inspect Hermes logs first:
+## Parser behavior to rely on
 
-```bash
-grep -i "Failed to send image\|field validation failed\|inline image delivery" <HERMES_HOME>/logs/gateway.log | tail -40
+Hermes treats `MEDIA:` as an internal outbound directive, not as Feishu text.
+
+Expected pipeline:
+
+1. `MEDIA:ssh://<alias>/...` is verified against the current session binding.
+2. Hermes copies only that artifact into a bounded gateway-local cache.
+3. The marker is rewritten to a local `MEDIA:/...` path.
+4. `extract_media()` consumes the marker and removes it from user-visible text.
+5. Feishu uploads the file and sends an inline image message, using `send_image_file(..., caption=...)` for a single image. Empty caption/media-only should still use the direct single-image path.
+
+Display-only examples must stay examples and must not trigger upload:
+
+````text
+```text
+MEDIA:ssh://<alias>/path/image.png
 ```
 
-## Troubleshooting
+> MEDIA:ssh://<alias>/path/image.png
 
-- If readback does not show the marker, retry readback with `--sort desc`; default ascending pagination may return old thread messages first.
-- If the message appears in the parent chat but not the thread/topic, the delivery metadata lost the thread/reply anchor.
-- If a text message appears but no image appears, inspect logs for Feishu upload/send failures before retrying.
-- If the output is two messages (text plus detached image), the Hermes instance is likely missing the inline-media fix or did not use the `caption` path.
-- Keep secrets out of logs and reports. Redact app ids, tenant keys, tokens, and user identifiers when storing readback artifacts.
+{"example":"MEDIA:ssh://<alias>/path/image.png"}
+````
+
+## Failure handling
+
+If a media resource cannot be materialized, Hermes should fail closed: remove the raw directive from visible text and report a generic attachment failure instead of leaking `MEDIA:ssh://...`.
+
+When an image did not arrive:
+
+1. Do not repeat the same `MEDIA:` line as proof.
+2. Check whether the final output path exists on the owning machine.
+3. Check the current SSH alias/session binding if using `MEDIA:ssh://...`.
+4. Inspect/read back the current Feishu thread. Success requires inline image evidence (`img_v3_...` / `tag=img`).
+5. If readback lacks the image, inspect Hermes/Feishu send logs for materialization, upload, reply-anchor, or thread metadata errors before retrying.
+
+## Short-lived QR/login images
+
+For expiring QR codes, delivery is the active blocker:
+
+1. Prepare output path and thread context before generating the QR.
+2. Generate the QR at the last responsible moment and keep the source browser/page alive.
+3. Send the fresh image immediately with the normal `MEDIA:ssh://...` or `MEDIA:file://...` form.
+4. Verify quickly by readback or user confirmation, then stop and wait for scan/login confirmation.
+5. If it expires or did not arrive, regenerate a fresh QR and send a new image; do not reuse old PNGs, old image keys, or old tokenized links.
+
+## Minimal verification checklist
+
+Before claiming success:
+
+- file exists on the correct owner machine;
+- the final response uses a parser-visible `MEDIA:` line, not code/quote/JSON;
+- raw `MEDIA:` / `[media attachment]` is not visible to the user;
+- readback/user confirmation shows inline image in the current thread/topic.
+
+Relevant implementation tests in Hermes:
+
+- `tests/gateway/test_media_resource_delivery_safety.py` covers URL+MEDIA, media-only SSH resources, fail-closed unresolved resources, protected examples, and streamed delivery materialization.
+- `tests/gateway/test_feishu_inline_media_delivery.py` covers Feishu single-image dispatch, including media-only.
+- `tests/gateway/test_background_command.py` covers background task SSH media materialization before extraction.
+
+## References
+
+- `references/media-marker-visible-vs-consumed.md` — distinguish consumed media delivery from visible marker text.
+- `references/2026-08-url-plus-ssh-media-content-contract.md` — URL plus `MEDIA:ssh://...` contract.
+- `references/2026-08-hermes-media-resource-runtime-rollout.md` — runtime rollout and restart boundary.
+- `references/media-parser-paths-and-cron-boundary.md` — normal final vs protected examples vs cron boundary.
+- `references/short-lived-qr-delivery.md` — expiring QR handoff rules.
+- `scripts/validate_feishu_inline_media.py` — optional explicit validation script for authorized contexts.

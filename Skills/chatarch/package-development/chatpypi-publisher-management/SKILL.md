@@ -1,7 +1,7 @@
 ---
 name: chatpypi-publisher-management
 description: "Manage PyPI Trusted Publishers with ChatPyPI 0.2.3+: list projects/publishers, inspect details, add GitHub active publishers, and keep pending scoped to true pre-registration cases."
-version: 0.1.1
+version: 0.1.2
 ---
 
 # ChatPyPI Publisher Management
@@ -17,7 +17,7 @@ Use this skill when the user asks to view, add, update, clean, or verify PyPI pu
 - "给 ChatArch/<Repo> 配 PyPI 发布"
 - "查看 pending publisher / active publisher"
 
-This skill covers PyPI-side publisher configuration. Pair it with `python-package-release-with-chattool-pypi` / `python-package-publishing` for release gates and with `chatgh-pr-and-ci-workflow` when repository PRs/tags/workflows are involved.
+This skill covers PyPI-side publisher configuration. Pair it with `python-package-release-with-chattool-pypi` / `python-package-publishing` for release gates, `chatarch-mkdocs-docs-alignment` for Pages/Preview/About acceptance when the package has MkDocs, and `chatgh-pr-and-ci-workflow` when repository PRs/tags/workflows are involved.
 
 ## Core Rule
 
@@ -82,6 +82,10 @@ For this user's ChatArch packages, Publisher setup normally happens **after** th
 4. Confirm `publisher detail` shows the exact owner/repo/workflow/environment and `pending_count=0`.
 5. Only then use the repository's tag-driven GitHub Actions workflow for the real feature release.
 
+Publisher closure is not repository-foundation closure. Before the first `0.1.x` tag for a package that contains MkDocs/docs workflows, hand off to `chatarch-mkdocs-docs-alignment` and require Pages source/readback, GitHub About homepage, and live HTTP checks (or an explicit private visibility gate). Do not summarize active Publisher + green CI/Deploy Docs as a fully configured package when the docs URL still returns 404.
+
+When several packages are created or reviewed together, pair the Publisher matrix with one docs matrix across the same repository allowlist: visibility, Pages API/source/status, About homepage, production/Preview HTTP, and PyPI Documentation URL. This skill owns only the Publisher columns; route Pages/About mutations and acceptance to the MkDocs skill.
+
 Pending publishers for nonexistent projects are supported by PyPI, but in this user's workflow they are an exception/recovery path, not the default. Do not summarize a pending publisher as “the project exists,” and do not proceed as if ownership is proven until the real PyPI project or active publisher readback is verified.
 
 ## What Counts As Pending
@@ -105,6 +109,8 @@ If an operation can be directly implemented, fix or use ChatPyPI instead of inve
 
 ## Safe Workflow For Existing Projects
 
+For existing ChatArch packages, the normal operation is **readback first**, not adding. Most existing packages already have an active Publisher. Refresh the PyPI web session token if it has gone stale, then run `publisher detail` and proceed if the expected active Publisher is already present. Only call `publisher add-github` when detail/readback proves the active Publisher is genuinely missing or wrong. Do not treat "we are about to release an existing package" as a reason to add Publisher again.
+
 ```bash
 BIN=$(command -v chatpypi || true)
 if [ -z "$BIN" ] || ! "$BIN" --version >/dev/null 2>&1; then
@@ -118,6 +124,7 @@ WORKFLOW=publish.yml
 $BIN auth login -e RexWzh --format json
 $BIN auth whoami -e RexWzh --format json
 $BIN publisher detail "$PROJECT" -e RexWzh --format json
+# Only if detail shows the expected active Publisher is missing/wrong:
 $BIN publisher add-github "$PROJECT" --owner "$OWNER" --repo "$REPO" --workflow "$WORKFLOW" --environment "" -e RexWzh --format json
 $BIN publisher pending-list -e RexWzh --format json
 ```
@@ -127,6 +134,7 @@ Interpretation:
 - `posted=false` and `already_active_before=true` means the command found the correct active Publisher and did not mutate PyPI.
 - `environment=(Any)` is the expected summary when the PyPI page environment is blank.
 - `pending_count=0` is expected for normal existing-project Publisher setup.
+- For known existing ChatArch packages, a successful `publisher detail` readback with the expected repository/workflow/environment is sufficient; do not call `add-github` just because a release is starting.
 
 ## Safe Workflow For Stale Pending Cleanup
 
@@ -152,6 +160,9 @@ If a matching pending exists and PyPI exposes a matching remove form, ChatPyPI 0
 - Use a named ChatEnv profile such as `-e RexWzh` for account-specific PyPI management.
 - Before writing to PyPI, confirm the logged-in account with `auth whoami -e <profile>`.
 - If `auth whoami`, `publisher detail`, or `publisher add-github` says the PyPI session is not logged in / redirected to login, refresh it with `auth login -e <profile> --format json`, then retry the same Publisher command. Session expiry is not a release blocker and must not trigger Twine/token/manual upload fallback.
+- PyPI web-session tokens can expire after long idle periods. For Publisher readback/management, refreshing with `chatpypi auth login -e RexWzh --format json` is the expected first step, not a sign that Publisher is missing.
+- PyPI can let `auth whoami` succeed while redirecting only the sensitive project publishing page to `/account/reauthenticate/`. In affected ChatPyPI versions, `publisher detail` may misleadingly report `active_count: 0`, while `publisher add-github` reports a missing active-publisher form. Treat both as unknown, refresh with `auth login`, then rerun detail/add and require project-page readback. An idempotent existing row reports `already_active_before: true` and `posted: false`.
+- Keep Publisher web-session auth separate from package upload auth. A missing `PYPI_API_TOKEN` env var or expired `auth whoami` session does not by itself prove a `0.0.1` placeholder upload is impossible; `chatpypi pkg upload` follows Twine credential lookup, including `.pypirc`, when no explicit env token is supplied.
 - Treat adding/removing/updating Trusted Publishers as real remote mutations.
 - For real ChatArch releases after the initial `0.0.1` placeholder/name-claim, active Publisher readback is a hard gate: no active Publisher readback means no tag and no publish attempt.
 - Prefer blank environment for the current ChatArch baseline when existing similar projects show `(Any)`. Use `environment: pypi` only when the GitHub workflow and PyPI publisher are both explicitly configured for that environment.

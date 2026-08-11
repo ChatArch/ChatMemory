@@ -16,10 +16,17 @@
 ### Feishu / Lark collaboration
 
 - `feishu-collaboration-documents/` — Feishu 协作文档和人机协作主文档流程。
+- `feishu-document-writing/` — 飞书分析报告的信息设计、截图/图表、来源引用与发布后质量验证。
 - `feishu-inline-image-delivery/` — Hermes 正常会话路径里发送/验证 Feishu inline image。
 - `lark-cli-permission-authorization/` — lark-cli 权限申请、授权和 completion 流程。
 
+### Research / exploration
+
+- `technical-exploration-workflow/` — 技术、产品、仓库与生态调研的静态优先流程：广泛发现、候选认知卡片、证据台账、矩阵过滤、shortlist 和独立 runtime gate。
+
 ### Workspace
 
-- `workspace-maintenance/` — outer workspace 结构维护、Project/Discussion item 生命周期、Discard/Archive 路由、文件移动与协议对齐。
+- `workspace-task-kickoff/` — 稍复杂的调研、报告、设计、实现和外部交付在实质工作前创建规范 Project。
+- `workspace-maintenance/` — outer workspace 结构维护、Project/Discussion item 生命周期、Archive 路由、`.trash` 安全缓冲、文件移动与协议对齐。
 - `workspace-structure-alignment/` — 将旧机器/旧 workspace 对齐到最新 `chatup workspace` 模板、ChatMemory shared skill 布局、Project/Discussion item 协议和项目 Markdown 规范。
+- `local-public-service-entry-pattern/` — 共享模板：新增本机服务时只配 local nginx，public 入口由既有自动机制接入，避免逐服务 DNS/证书漂移。

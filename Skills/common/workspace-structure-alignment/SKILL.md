@@ -3,7 +3,7 @@ name: workspace-structure-alignment
 description: Align an older human-AI collaboration workspace to the latest ChatUp workspace scaffold, shared ChatMemory skill layout, and Markdown conventions.
 version: 0.2.2
 reference:
-  - workspace-maintenance: "outer workspace cleanup, discussion/discard routing, archive review, and .trash safety-buffer rules"
+  - workspace-maintenance: "outer workspace cleanup, discussion routing, archive review, and .trash safety-buffer rules"
 ---
 
 # Workspace Structure Alignment
@@ -16,7 +16,7 @@ Typical triggers:
 - root files such as `AGENTS.md`, `ARCHIVE.md`, `TODO.md`, or `projects/README.md` are stale
 - `projects/` contains old task/case Markdown that no longer follows the current roles for `PRD.md`, `progress.md`, `memory.md`, `reports/`, `scripts/`, or `playground/`
 - `skills/` still uses old copied or topic-level skill folders instead of the current ChatMemory shared groups
-- `public/`, `discussion/`, `discard/`, `archive/`, `.trash/`, or `core/` are missing or inconsistent
+- `public/`, `discussion/`, `archive/`, `.trash/`, or `core/` are missing or inconsistent
 - after using this workflow, the latest workspace template itself changed and this skill must be updated
 
 ## Core principle
@@ -66,7 +66,6 @@ The current base workspace is a wrapper around source repositories and human-fac
   archive/
     index.md
     YYYY-MM-DD/
-  discard/
   core/
   scripts/
     README.md
@@ -86,7 +85,7 @@ Important current conventions:
 - `projects/` holds active work. Old inactive work goes to `archive/YYYY-MM-DD/`, where `YYYY-MM-DD` is the date when archiving happens, and `archive/index.md` records what moved.
 - The directory protocol has two basic project-like item types: Project items and Discussion items. `discussion/` holds Discussion items; use `discussion/MM-DD-<topic>/Items/` when a Discussion item temporarily absorbs other items for correction, routing, or synthesis.
 - A completed Discussion should handle and clear its concrete `Items/`, then keep `progress.md` or reports as the record instead of nesting Discussions recursively.
-- `discard/` is the soft-delete/recycle area for tasks explicitly deleted by the user or judged no longer valuable. `.trash/` remains a low-level safety buffer, not a main lifecycle area.
+- `.trash/` is the safety buffer for reviewed cleanup. Archive inactive projects through `archive/YYYY-MM-DD/` after model review and `archive/index.md` updates.
 - `core/` holds source repositories. Do not copy source repos into individual projects.
 - `scripts/` is for reusable workspace-level maintenance scripts. Task-specific scripts belong under the task project.
 - `public/` is for public-facing publish artifacts or links. With ChatBlog enabled, `public/chatblog` links to `core/ChatBlog/docs`.
@@ -129,7 +128,7 @@ The topic directory is an index layer, not an execution project. Do not scatter 
 1. Confirm the active backend and target workspace root.
 2. Read target `AGENTS.md` first if it exists.
 3. Read target `projects/README.md`, `ARCHIVE.md`, and `archive/index.md` if present.
-4. Check whether the target already has `discussion/` and `discard/`; older workspaces may not.
+4. Check whether the target already has `discussion/`; older workspaces may not.
 5. Locate the current ChatUp implementation or installed `chatup` command.
 6. Run a dry-run plan for the target when possible:
 
@@ -154,7 +153,7 @@ root = Path('.').resolve()
 for rel in ['AGENTS.md','TODO.md','ARCHIVE.md','projects/README.md','discussion/README.md','archive/index.md','scripts/README.md','public/README.md','skills/README.md']:
     p = root / rel
     print(rel, 'exists=' + str(p.exists()), 'symlink=' + str(p.is_symlink()))
-for rel in ['.trash','projects','discussion','archive','discard','core','scripts','skills','public','skills/local']:
+for rel in ['.trash','projects','discussion','archive','core','scripts','skills','public','skills/local']:
     p = root / rel
     print(rel, 'exists=' + str(p.exists()), 'dir=' + str(p.is_dir()), 'symlink=' + str(p.is_symlink()))
 for rel in ['skills/agents','skills/chatarch','skills/common','public/chatblog']:
@@ -174,7 +173,6 @@ Create missing base directories:
 projects/
 discussion/
 archive/
-discard/
 core/
 scripts/
 skills/
@@ -239,7 +237,7 @@ For each active project/case:
 6. Preserve user-written history. Prefer small patches and move-first cleanup over regenerated Markdown.
 7. If several projects need to be digested together or user correction should become a reusable decision sample, create or update a `discussion/MM-DD-<topic>/` node and move absorbed projects into `Items/` after review.
 8. When the Discussion completes, handle and clear `Items/`, then update `progress.md` or reports with the result.
-9. If a task is explicitly deleted or judged no longer valuable, move it to `discard/` rather than physical deletion.
+9. If a task is explicitly deleted or judged no longer valuable, move only the reviewed files into the nearest `.trash/` safety buffer; do not reorganize unrelated task directories.
 10. When an inactive project is truly old, follow the archive flow: collect candidates, model-review, move to `archive/YYYY-MM-DD/` using the date when archiving happens, then update `archive/index.md`.
 
 ### 7. Verify the final shape
@@ -251,7 +249,7 @@ cd <workspace-root>
 python3 - <<'PY'
 from pathlib import Path
 root = Path('.').resolve()
-required_dirs = ['.trash','projects','discussion','archive','discard','core','scripts','skills','public']
+required_dirs = ['.trash','projects','discussion','archive','core','scripts','skills','public']
 required_files = ['AGENTS.md','TODO.md','ARCHIVE.md','projects/README.md','discussion/README.md','archive/index.md','scripts/README.md','public/README.md']
 missing = [p for p in required_dirs if not (root/p).is_dir()]
 missing += [p for p in required_files if not (root/p).exists()]
@@ -271,7 +269,7 @@ Also run any project-specific validation that the alignment touched, for example
 This skill must be updated whenever the latest scaffold changes. During each alignment pass:
 
 1. Compare this skill against current ChatUp implementation/templates and ChatMemory `Skills/README.md`.
-2. If `BASE_DIRS`, root files, linked skill groups, optional modules, or project Markdown roles changed, patch this `SKILL.md` in the same branch.
+2. If base directories, root files, linked skill groups, optional modules, or project Markdown roles changed, patch this `SKILL.md` in the same branch.
 3. Update `Skills/common/README.md` if the skill name, purpose, or grouping changes.
 4. Run a frontmatter/name/reference validation for changed skills.
 5. Keep examples generic: use `<workspace-root>`, `<chatmemory-repo>`, `<source-repo>`, and placeholders. Do not write machine-private paths, tenant IDs, app IDs, tokens, chat IDs, or real private document links into shared skills.

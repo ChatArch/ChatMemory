@@ -1,9 +1,12 @@
 ---
 name: chatenv-provider-workflow
 description: Add, review, or debug a ChatEnv typed-config provider. Use when a package exposes `chatenv.configs` entry points, when `chatenv cat/test/use` behavior is missing or confusing, when provider discovery fails after install, or when a config class needs a safe `test()` implementation and clearer docs.
+version: 0.1.0
 ---
 
 # Chatenv Provider Workflow
+
+Use this skill when a package should integrate with ChatEnv and the question is whether the provider is discoverable, testable, and understandable from the CLI.
 
 ## Workflow
 

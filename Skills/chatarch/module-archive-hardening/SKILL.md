@@ -1,6 +1,7 @@
 ---
 name: module-archive-hardening
 description: Review completed project modules before archiving and harden the canonical package implementation. Use when Codex is asked to archive project modules, decide whether functionality belongs in a maintained package or a skill, trim redundant CLI exposure, verify docs/tests/config integration, or open follow-up tasks and PRs from archived module output.
+version: 0.1.0
 ---
 
 # Module Archive Hardening

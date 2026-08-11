@@ -1,12 +1,13 @@
 ---
 name: hermes-platform-development
 description: Hermes 作为智能体载体的平台开发、配置、gateway、Feishu 卡片、SSH Mode 与运行验证入口。
-version: 0.1.0
+version: 0.1.2
 reference:
   - hermes-slash-command-development: "Hermes slash/gateway command、Feishu thread/card、/ssh command 开发模式"
   - hermes-ssh-target-configuration: "Hermes SSH target registry、bindings、known_hosts 与安全配置"
   - hermes-terminal-env-profile: "Hermes terminal tool 环境隔离与项目/dev profile 配置"
   - hermes-environment-notes: "Hermes 会话内运行 workspace 工具的通用环境注意事项"
+  - hermes-external-agent-cli-orchestration: "Hermes 通过 terminal/process 调用 Codex、Cursor Agent、Claude Code、OpenCode 等外部 coding-agent CLI 的模式"
   - feishu-inline-image-delivery: "Feishu/Hermes 正常消息投递路径与线程内验证经验"
 ---
 
@@ -39,9 +40,68 @@ Normalize voice/transcription variants that refer to the agent runtime to **Herm
 For active Hermes work, load or consult the relevant Hermes runtime skills/docs in the active Hermes profile when available:
 
 - `hermes-agent` — authoritative Hermes CLI/config/source contributor reference; official docs are the final source of truth.
+- `hermes-external-agent-cli-orchestration` — calling Codex, Cursor Agent, Claude Code, OpenCode, or other local coding-agent CLIs from Hermes via `terminal/process`, and when to choose `delegate_task`, plugin, MCP, or ACP/provider instead.
 - `hermes-slash-command-development` — slash command, gateway command, Feishu thread/card, `/ssh`, and session-scoped backend command patterns.
 - `test-driven-development` — production behavior changes should start with RED tests.
 - Local machine-only SSH operations may have a separate `local/hermes-ssh-mode-operations` skill; do not promote machine-specific hosts, key paths, or branches into this shared skill.
+
+## New-machine runtime baseline
+
+When provisioning a new Hermes machine or changing its primary model, do not copy one machine's `config.yaml` wholesale. Build a redacted baseline through Hermes's supported configuration surface and verify the provider's real wire behavior.
+
+Required baseline checks:
+
+1. Record the installed Hermes version and whether gateway hygiene uses a fixed wait or activity-aware waiting.
+2. Verify the selected provider, API mode, model ID, reasoning effort, and the provider's real context limit. A catalog/UI value is not proof that a custom endpoint accepts that many tokens.
+3. Keep the model context length, compression trigger threshold, auxiliary request timeout, gateway hygiene timeout, total ceiling, message-count safety valve, and failure cooldown internally consistent.
+4. Use `hermes config set` or `hermes_cli.config.load_config()/save_config()`; never patch protected runtime config directly.
+5. Re-read the persisted values without printing credentials, then restart only when authorized and verify the new process plus a normal turn.
+
+Use `references/hermes-runtime-initialization-baseline.md` for the fixed-wait/activity-aware templates, context-length verification rules, rollback manifest, and smoke-test checklist.
+
+## Terminal environment profiles
+
+When configuring the default environment seen by Hermes `terminal`, distinguish local and SSH backends:
+
+- Local backend defaults are seeded by `terminal.shell_init_files`, typically a secret-free `~/.hermes/shell-init/chatarch-terminal.sh` selected through `hermes config set terminal.shell_init_files ...`.
+- SSH Mode backend defaults are seeded by the remote user's non-interactive login shell, not by the local init file. Put the remote ChatArch selector in a remote login path such as `~/.bash_profile`, outside interactive-only guards.
+- Verify both surfaces with real probes: local `terminal`, fresh remote `env -i ... bash -l -c`, and Hermes SSH Mode `terminal`/`execute_code` after `/ssh use <alias> --cwd ...`.
+
+Use `references/hermes-terminal-env-profile.md` for the command templates, source-file placement, and verification checklist.
+
+## Feishu / Lark gateway admission configuration
+
+When configuring Hermes itself to let Feishu/Lark users wake the gateway, use the official Hermes config paths instead of direct file mutation. `~/.hermes/config.yaml` and `~/.hermes/.env` are protected runtime config/credential files; direct `patch`/`write_file` edits may be refused or overwritten by the verifier.
+
+Keep the gates separate:
+
+1. Adapter group intake: `FEISHU_GROUP_POLICY=open` or `platforms.feishu.extra.default_group_policy=open` admits group messages at the Feishu adapter layer.
+2. Final gateway authorization: `FEISHU_ALLOW_ALL_USERS=true` is the current Feishu-wide allow-all switch; `FEISHU_ALLOWED_USERS=<open_id,...>` is the narrower per-user allowlist. Avoid `GATEWAY_ALLOW_ALL_USERS=true` unless the user explicitly wants all platforms open.
+3. Group wake rule: `FEISHU_REQUIRE_MENTION=true` or `platforms.feishu.extra.require_mention=true` keeps groups intentional: users must @mention the bot.
+4. DM impact: `FEISHU_ALLOW_ALL_USERS=true` also opens Feishu DMs; if the user asks for group-only access, state that current final authz is not group-scoped unless a code/config enhancement exists.
+
+For the common request "allow all Feishu users who can reach the bot, but still require @mention in groups", use Hermes commands/config helpers, not raw file edits. Run the Python helper from an environment that can import `hermes_cli` (for example the active Hermes CLI venv):
+
+```bash
+python - <<'PY'
+from hermes_cli.config import save_env_value
+save_env_value("FEISHU_ALLOW_ALL_USERS", "true")
+save_env_value("FEISHU_ALLOWED_USERS", "")
+save_env_value("FEISHU_GROUP_POLICY", "open")
+save_env_value("FEISHU_REQUIRE_MENTION", "true")
+PY
+
+hermes config set platforms.feishu.extra.default_group_policy open
+hermes config set platforms.feishu.extra.require_mention true
+```
+
+This mirrors the official Feishu setup surface: `hermes gateway setup` writes the Feishu env settings through Hermes config helpers; `hermes config set` is the safe command path for YAML `platforms.feishu.extra.*`. After changing persisted settings, restart the gateway before testing:
+
+```bash
+hermes gateway restart
+```
+
+Before reporting success, verify redacted persisted values and gateway state: Feishu connected, `FEISHU_ALLOW_ALL_USERS=true`, `FEISHU_GROUP_POLICY=open`, `FEISHU_REQUIRE_MENTION=true`, and whether `FEISHU_ALLOWED_USERS` is intentionally empty.
 
 ## Development workflow
 
