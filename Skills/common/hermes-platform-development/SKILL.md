@@ -1,12 +1,13 @@
 ---
 name: hermes-platform-development
 description: Hermes 作为智能体载体的平台开发、配置、gateway、Feishu 卡片、SSH Mode 与运行验证入口。
-version: 0.1.1
+version: 0.1.2
 reference:
   - hermes-slash-command-development: "Hermes slash/gateway command、Feishu thread/card、/ssh command 开发模式"
   - hermes-ssh-target-configuration: "Hermes SSH target registry、bindings、known_hosts 与安全配置"
   - hermes-terminal-env-profile: "Hermes terminal tool 环境隔离与项目/dev profile 配置"
   - hermes-environment-notes: "Hermes 会话内运行 workspace 工具的通用环境注意事项"
+  - hermes-external-agent-cli-orchestration: "Hermes 通过 terminal/process 调用 Codex、Cursor Agent、Claude Code、OpenCode 等外部 coding-agent CLI 的模式"
   - feishu-inline-image-delivery: "Feishu/Hermes 正常消息投递路径与线程内验证经验"
 ---
 
@@ -39,6 +40,7 @@ Normalize voice/transcription variants that refer to the agent runtime to **Herm
 For active Hermes work, load or consult the relevant Hermes runtime skills/docs in the active Hermes profile when available:
 
 - `hermes-agent` — authoritative Hermes CLI/config/source contributor reference; official docs are the final source of truth.
+- `hermes-external-agent-cli-orchestration` — calling Codex, Cursor Agent, Claude Code, OpenCode, or other local coding-agent CLIs from Hermes via `terminal/process`, and when to choose `delegate_task`, plugin, MCP, or ACP/provider instead.
 - `hermes-slash-command-development` — slash command, gateway command, Feishu thread/card, `/ssh`, and session-scoped backend command patterns.
 - `test-driven-development` — production behavior changes should start with RED tests.
 - Local machine-only SSH operations may have a separate `local/hermes-ssh-mode-operations` skill; do not promote machine-specific hosts, key paths, or branches into this shared skill.
@@ -56,6 +58,16 @@ Required baseline checks:
 5. Re-read the persisted values without printing credentials, then restart only when authorized and verify the new process plus a normal turn.
 
 Use `references/hermes-runtime-initialization-baseline.md` for the fixed-wait/activity-aware templates, context-length verification rules, rollback manifest, and smoke-test checklist.
+
+## Terminal environment profiles
+
+When configuring the default environment seen by Hermes `terminal`, distinguish local and SSH backends:
+
+- Local backend defaults are seeded by `terminal.shell_init_files`, typically a secret-free `~/.hermes/shell-init/chatarch-terminal.sh` selected through `hermes config set terminal.shell_init_files ...`.
+- SSH Mode backend defaults are seeded by the remote user's non-interactive login shell, not by the local init file. Put the remote ChatArch selector in a remote login path such as `~/.bash_profile`, outside interactive-only guards.
+- Verify both surfaces with real probes: local `terminal`, fresh remote `env -i ... bash -l -c`, and Hermes SSH Mode `terminal`/`execute_code` after `/ssh use <alias> --cwd ...`.
+
+Use `references/hermes-terminal-env-profile.md` for the command templates, source-file placement, and verification checklist.
 
 ## Feishu / Lark gateway admission configuration
 

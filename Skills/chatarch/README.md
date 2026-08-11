@@ -6,6 +6,7 @@ ChatArch-series organization, package, review, operations, collaboration, and pr
 
 - `package-development/` — package creation, repository bootstrap, documentation, Publisher, PR, CI, release, and capability-extraction workflows.
 - `package-review/` — ChatArch package and CLI review workflows.
+- `operations/` — ChatArch service operations, including ChatDNS certificate installation and server exposure workflows.
 
 ## Direct skills
 
