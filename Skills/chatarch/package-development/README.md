@@ -159,19 +159,20 @@ package-development/
 
 ### `chatpost-zhihu-login-management`
 
-用途：ChatPost 的知乎账号 / browser Profile 登录基础层：`profiles` 发现、`status` 页面态检查、`login` page-owned URL handoff、`logout` browser-level 清理，以及 Feishu/Lark 授权卡片交互边界。
+用途：ChatPost 的知乎 login/profile/draft 验收：ChatUp / ChatBrowser / ChatPost 三层职责，`profiles/status/login/logout/draft` 边界，page-owned `login_url`/QR live handoff，Feishu/Lark 登录卡片，以及一篇草稿的 receipt 验证。
 
 覆盖流程：
 
-1. 区分 ChatPost `PROFILE` 是 browser-login 容器，不是知乎账号 ID、cookie 或 token。
-2. 保持 login-only CLI surface：`platforms`、`profiles`、`zhihu profiles/login/status/logout`。
+1. 区分 ChatPost `PROFILE` 是 browser-login/workflow 容器，不是知乎账号 ID、cookie、token 或安装 profile；`test`/`product` 是逻辑 profile。
+2. 保持职责分层：ChatUp 做安装底座，ChatBrowser 管 browser Profile/CDP metadata，ChatPost 只做平台 profile -> 登录态 -> draft/post 编排。
 3. 验证 `status/login/logout` 不依赖 Wechatsync、extension bridge、publishing adapter auth 或 `WECHATSYNC_TOKEN`。
-4. 跑真实 `login --timeout ...`：先输出 `LOGIN_REQUIRED` + page-owned `login_url`，授权后同一命令输出 `LOGGED_IN`。
+4. 跑真实 `login --timeout ...`：先输出 `LOGIN_REQUIRED` + page-owned `login_url`，立刻发 live Feishu/Lark 卡片，授权后同一命令输出 `LOGGED_IN`；进程/浏览器失效后必须重新生成 fresh card，不能重发旧链接。
 5. 授权后再跑 `status`，确认同一 profile 持久态 `LOGGED_IN`。
-6. Feishu/Lark 卡片中 URL button 只跳转不回调；需要 agent 感知用户动作时，使用额外 callback 按钮（如“我已授权”/“取消”）并再跑 `status`。
-7. 把真实 command / exit / stdout / stderr 写入 MkDocs Quickstart 和项目报告；公开 docs 中 redact tokenized live login URLs。
+6. 发草稿前先 dry-run；真实 `draft` 只执行一次，要求 `DRAFT_CREATED`、receipt `0600`、locator present、cleanup closed；写路径不明确时不能自动重试。
+7. Feishu/Lark URL button 只跳转不回调；需要 agent 感知用户动作时，使用额外 callback 按钮（如“我已授权”/“取消”）并再跑 `status`。
+8. 公开 docs / shared skills / progress 中 redact tokenized live login URLs、QR payload、账号名/主页、cookie/session/token；知乎 skill 不混入其他平台流程。
 
-什么时候用：修改或验收 ChatPost 知乎登录、profile 管理、登录 Quickstart、授权卡片 handoff、或追查 `login/status` 是否错接发布适配器时。
+什么时候用：修改或验收 ChatPost 知乎登录、profile 管理、登录 Quickstart、授权卡片 handoff、QR/link 交付、知乎草稿创建，或追查 `login/status/draft` 是否错接安装层、浏览器层或发布适配器时。
 
 ## 相关主题
 
