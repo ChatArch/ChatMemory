@@ -24,6 +24,10 @@
 
 - `technical-exploration-workflow/` — 技术、产品、仓库与生态调研的静态优先流程：广泛发现、候选认知卡片、证据台账、矩阵过滤、shortlist 和独立 runtime gate。
 
+### CLI / tool interface
+
+- `cli-tree-contract/` — 设计或 review CLI 时要求真实注册命令树、leaf 目的、side effect 和输出边界。
+
 ### Workspace
 
 - `workspace-task-kickoff/` — 稍复杂的调研、报告、设计、实现和外部交付在实质工作前创建规范 Project。
