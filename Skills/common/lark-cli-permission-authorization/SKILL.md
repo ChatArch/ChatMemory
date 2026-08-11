@@ -1,7 +1,7 @@
 ---
 name: lark-cli-permission-authorization
-version: 0.1.0
-description: Request Feishu/Lark permissions with lark-cli correctly: user-scope device verify links, QR codes, bot/app-scope boundaries, and post-authorization completion.
+version: 0.1.2
+description: "Request Feishu/Lark permissions with lark-cli correctly: user-scope device verify links, QR codes, Hermes authorization cards with completion/cancel feedback, bot/app-scope boundaries, and post-authorization completion."
 ---
 
 # Lark CLI Permission Authorization
@@ -53,11 +53,34 @@ lark-cli auth login --scope "<scope1> <scope2>" --no-wait --json
 lark-cli auth qrcode "<verification_url>" --output "reports/<task>-verify-qr.png"
 ```
 
-6. Send the user:
+6. Send the user an authorization prompt. In a live Feishu/Hermes conversation with `feishu_card`, use a Hermes authorization card by default; send the raw URL and QR only as fallback.
+
+Hermes card option:
+
+```json
+{
+  "action": "request_authorization",
+  "title": "需要飞书权限授权",
+  "body": "我需要你授权以下能力：<scope summary>。请点击按钮打开验证页面；浏览器里完成授权后，回到这里点击“我已完成授权”。如果不同意，请点“取消”。",
+  "verification_url": "<verification_url>",
+  "flow_id": "<task-or-flow-id>"
+}
+```
+
+Card behavior:
+
+- The open-link button navigates to `verification_url`.
+- A terminal `我已完成授权` button tells Hermes to continue with step 7.
+- A terminal `取消` button stops the privileged action.
+- The click is feedback about the user's choice, not proof that OAuth succeeded.
+
+Raw fallback, only when cards are unavailable:
 
 - raw clickable verify URL, not wrapped in backticks/code formatting
 - the QR image
 - instruction: after authorization, come back and say it is done
+
+For either delivery mode, do not treat opening/clicking the authorization button as proof that OAuth finished. The click only means the user started or acknowledged the flow. After the user completes the browser-side approval, run the completion command in step 7 and verify success.
 
 7. After the user confirms, complete the flow yourself:
 
@@ -84,9 +107,34 @@ Rules:
 - If the CLI/platform returns a permission URL, preserve it exactly. Do not URL-decode, URL-encode, reassemble, or simplify it.
 - If the user expects a `verify?` link, they are asking for the User Scope Flow, not a bot/app console URL.
 
-## Link Formatting For This User
+## Link And Card Formatting For This User
 
-Send URLs as raw links, not as inline code or fenced code blocks. The user's client cannot click code-highlighted links reliably.
+- Plain URLs are fallback only when a card cannot be sent. If fallback is needed, send raw links, not inline code or fenced code blocks. The user's client cannot click code-highlighted links reliably.
+- When Hermes `feishu_card` is available, prefer `request_authorization` for authorization prompts because it provides an open-link button plus terminal feedback buttons.
+- The card body must say what capability or scopes are being requested before the user opens the link.
+- Include a deny/cancel path. If the user denies, do not continue the privileged action.
+- Card interaction feedback is separate from OAuth completion. A button click can tell the agent whether the user chose `completed` or `cancelled`, but the underlying permission is only available after the completion/check command succeeds.
+
+## Hermes Authorization Card Pattern
+
+Use this pattern after generating a valid user-facing verification URL:
+
+```json
+{
+  "action": "request_authorization",
+  "title": "需要飞书权限授权",
+  "body": "我需要你授权以下能力：<scope summary>。请点击按钮打开验证页面；浏览器里完成授权后，回到这里点击“我已完成授权”。如果不同意，请点“取消”。",
+  "verification_url": "<verification_url>",
+  "flow_id": "<task-or-flow-id>"
+}
+```
+
+Expected behavior:
+
+- The open-link button opens `verification_url`.
+- The completion button (`我已完成授权`) tells the agent to run the completion/check command.
+- The cancel button lets the user decline without continuing the privileged action.
+- Do not save `flow_id`, authorization URLs, or device codes in durable memory.
 
 ## Example: Doc Creation + Verification
 

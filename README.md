@@ -41,9 +41,13 @@ Group semantics:
 - `agents/`: shared agent-created or agent-learned skills that emerge while agents work through PRD, project, archive, and review processes. This group is intentionally lightweight until usage patterns stabilize.
 - `local/`: optional machine-local skill templates. This group is tracked only so a new machine can copy and adapt a local workflow quickly; it is **not** default-linked and should not be treated as portable shared policy.
 
-Local workspace-only active skills belong under `<workspace>/skills/local`. They are machine-specific or private to the current workspace and are not linked from ChatMemory by default. If a local workflow is useful as a future-machine template, it may be tracked under `Skills/local/` with clear copy-and-adapt boundaries.
+Local workspace-only active skills belong under `<WORKSPACE_ROOT>/skills/local`. They are machine-specific or private to the current workspace and are not linked from ChatMemory by default. If a local workflow is useful as a future-machine template, it may be tracked under `Skills/local/` with clear copy-and-adapt boundaries.
 
 Do not place machine-specific, account-specific, or sensitive local-only skills in default-linked groups. Keep those in `Skills/local/`, a non-default group, or the source project until a sharing policy is clear.
+
+### Public-safety rule for shared skills
+
+Treat every shared skill under `Skills/chatarch/`, `Skills/common/`, and `Skills/agents/` as if it may become visible outside the current machine. These files must not contain real Feishu/Lark document URLs, wiki URLs, tenant-specific links, user open IDs, chat IDs, message IDs, app IDs, access tokens, account names, machine paths that reveal private infrastructure, or other private identifiers. Use placeholders such as `<LOCAL_FEISHU_MAIN_DOC_URL>` in shared skills and put the real value in `<WORKSPACE_ROOT>/skills/local/` or machine memory.
 
 ## Workspace plugin model
 
@@ -55,19 +59,19 @@ Candidate behavior:
 2. If selected and missing locally, clone the private repository into:
 
    ```text
-   <workspace>/core/ChatMemory
+   <WORKSPACE_ROOT>/core/ChatMemory
    ```
 
 3. If already present, update it with a safe fetch + fast-forward when clean; skip update if local changes exist.
 4. Link only the default shared groups into the workspace:
 
    ```text
-   <workspace>/skills/agents   -> <workspace>/core/ChatMemory/Skills/agents
-   <workspace>/skills/common   -> <workspace>/core/ChatMemory/Skills/common
-   <workspace>/skills/chatarch -> <workspace>/core/ChatMemory/Skills/chatarch
+   <WORKSPACE_ROOT>/skills/agents   -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/agents
+   <WORKSPACE_ROOT>/skills/common   -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/common
+   <WORKSPACE_ROOT>/skills/chatarch -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/chatarch
    ```
 
-   Also create `<workspace>/skills/local/` as a local non-shared directory when missing. Do not link it.
+   Also create `<WORKSPACE_ROOT>/skills/local/` as a local non-shared directory when missing. Do not link it.
 
 5. Do not copy `SKILL.zh.md` variants into the candidate set. Each candidate skill should expose one standard `SKILL.md`.
 6. Do not link all of `ChatMemory/Skills` by default.
@@ -168,15 +172,15 @@ Template for machine- or tenant-specific Feishu collaboration document URLs, cha
 A workspace that enables ChatMemory should link shared groups from this repository instead of copying individual skill directories:
 
 ```text
-<workspace>/skills/common   -> <workspace>/core/ChatMemory/Skills/common
-<workspace>/skills/chatarch -> <workspace>/core/ChatMemory/Skills/chatarch
-<workspace>/skills/agents   -> <workspace>/core/ChatMemory/Skills/agents
+<WORKSPACE_ROOT>/skills/common   -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/common
+<WORKSPACE_ROOT>/skills/chatarch -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/chatarch
+<WORKSPACE_ROOT>/skills/agents   -> <WORKSPACE_ROOT>/core/ChatMemory/Skills/agents
 ```
 
 The workspace may also have a local non-shared directory:
 
 ```text
-<workspace>/skills/local
+<WORKSPACE_ROOT>/skills/local
 ```
 
 Existing standalone local links may be migrated to the grouped layout when convenient.

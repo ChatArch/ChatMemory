@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.4
+version: 0.1.5
 tags:
   - ChatArch
   - Python
@@ -13,6 +13,7 @@ reference:
   - chatarch-cli-package-conventions: "ChatArch CLI/package 模板、ChatEnv/ChatStyle 与 dependency 规范"
   - chatgh-repo-token-setup: "新仓库或首次 checkout 后配置 HTTPS repo-local git token"
   - chatpypi-publisher-management: "首次发布前配置/核对 PyPI Trusted Publisher"
+  - chatarch-mkdocs-docs-alignment: "包含 MkDocs 的包在首个 0.1.x tag 前配置/回读 Pages、Preview 与 GitHub About URL"
   - chatgh-pr-and-ci-workflow: "PR、CI、Actions 与 review/merge 前状态检查"
 ---
 
@@ -26,14 +27,17 @@ reference:
 2. 在当前 workspace task 的 `playground/` 下创建**临时本地 package scaffold**，先验证 PyPI 占位发布可行性。
 3. 对新 PyPI project，先构建并上传真实 `0.0.1` placeholder 到 PyPI；只有 PyPI 回读确认项目存在后，才允许创建 GitHub 仓库。
 4. PyPI 占位成功后，再在 GitHub `ChatArch` 组织下创建远程仓库、初始化 canonical `core/<ProjectName>`、配置 remote/token 并 push。
-5. 配置/验证 PyPI Trusted Publisher，确认 `ChatArch/<Repo>` + `publish.yml` + environment `(Any)`。
-6. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、tag-driven publish 后回读 GitHub 与 PyPI。
+5. 配置/验证 PyPI Trusted Publisher，确认 `ChatArch/<Repo>` + `publish.yml` + environment `(Any)`；如果 PyPI session 过期，先 `chatpypi auth login -e RexWzh --format json` 刷新再继续 Publisher 操作。
+6. 如果模板包含 MkDocs，在首个 `0.1.x` tag 前必须加载 `chatarch-mkdocs-docs-alignment`，配置并读回 Pages source、GitHub About homepage、PR Preview 与正式文档 URL；Actions success 或 `gh-pages` branch 存在都不能替代 HTTP 200 回读。
+7. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、Publisher/Pages readback 后，再根据任务目标决定是否 tag-driven publish；如果用户只是要“注册/占名一个新包”，到 `0.0.1` placeholder + GitHub repo + active Publisher + canonical main placeholder 即可停止，不要自动 bump/tag `0.1.0`，但完成报告必须准确写明 docs 是 live、visibility-gated 还是尚未配置。
 
 ## 两种流程必须分开
 
 ### 已有 PyPI project / 已发过版的包
 
 如果 PyPI project 已存在，并且本次是在现有仓库上做 feature/release，按正常 repo/PR/tag 流程推进：查 PyPI latest、准备连续版本、跑本地 gate、合并后在默认分支 tag-driven publish。这个场景不需要重新证明“能否创建 PyPI project”。
+
+已有 ChatArch 包通常已经配置过 active Trusted Publisher。发布前应先刷新 PyPI web session（久未使用时 `chatpypi auth login -e RexWzh --format json`），再 `chatpypi publisher detail <ProjectName> -e RexWzh --format json` 读回确认 repository/workflow/environment/pending_count。只有 detail 证明 active Publisher 缺失或配置错误时才 `publisher add-github`；不要像新包一样默认新增 Publisher。
 
 ### 全新 PyPI project / 用户说“如果不在就注册”的新包
 
@@ -49,7 +53,9 @@ reference:
 4. 使用受控 PyPI 账号实际上传 `0.0.1` placeholder。
 5. 回读 PyPI JSON，确认 `info.name`、version `0.0.1`、normalized name 符合预期。
 6. 只有第 4-5 步成功后，才创建 GitHub `ChatArch/<ProjectName>`、初始化/复制 canonical `core/<ProjectName>`、commit/push、配置 Publisher。
-7. 如果 placeholder 上传失败，停止；不要创建 repo，不要换名字绕过，不要继续写一堆 scaffold。把 PyPI 错误和候选相近项目报告给用户，让用户决定下一步。
+7. 如果 scaffold 包含 MkDocs，在首个 `0.1.x` release 前必须进入 `chatarch-mkdocs-docs-alignment`：启用/读回 `gh-pages:/`、设置/读回 About homepage、验证 root/`dev/`/`en/`（如适用）HTTP 200。private repo 若受 plan/visibility 限制，禁止擅自改 public；记录 visibility gate，并且不得声称 docs live。
+8. 如果本次任务只是注册包名，canonical `core/<ProjectName>` 应保持 `0.0.1` placeholder 状态；不要因为“first real version”惯例而立即改成 `0.1.0`、推 tag 或触发 release workflow。`0.1.0` 留给后续真实功能发布。
+9. 如果 placeholder 上传失败，停止；不要创建 repo，不要换名字绕过，不要继续写一堆 scaffold。把 PyPI 错误和候选相近项目报告给用户，让用户决定下一步。
 
 ## 硬性安全门槛
 
@@ -60,7 +66,7 @@ reference:
 - PyPI normalized name，例如 `chatnpm`。
 - Python import module，例如 `chatnpm` 或 `chat_npm`。
 - CLI 入口，例如 `chatnpm`。
-- 版本号，例如 `0.1.0`。
+- 版本目标：全新包占名任务使用 `0.0.1` placeholder；已有包或真实功能发布才使用连续 release 版本，例如 next patch。
 - GitHub 目标仓库，例如 `ChatArch/ChatNPM`。
 - GitHub visibility：默认 `private`；只有用户明确点名批准 public 时才改 public。
 
@@ -113,10 +119,10 @@ PY
 
 ### 1. 建立 workspace 与任务记录
 
-从 `~/Playground` 开始：
+从 `<WORKSPACE_ROOT>` 开始：
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 sed -n '1,140p' AGENTS.md
 sed -n '1,180p' projects/README.md
 ```
@@ -153,7 +159,7 @@ done
 推荐直接使用最终品牌名作为模板 name，避免生成错误的 kebab-case 分发名；但目标目录必须是 task-local playground，不是 `core/`：
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 PREFLIGHT="projects/<task>/playground/<ProjectName>-pypi-preflight"
 chatpypi pkg init <ProjectName> \
   -t chatarch \
@@ -188,11 +194,17 @@ print(data['info']['name'], data['info']['version'])
 PY
 ```
 
+`--token-env PYPI_API_TOKEN` is only the explicit-token path. Before concluding a placeholder upload cannot proceed, inspect the actual `chatpypi pkg upload --help` behavior and the normal PyPI credential sources available in the selected environment. In Hermes sessions especially, do all of the following safely: verify the active `chatpypi` path/version, use the project `.venv` that has `twine`, check only whether `PYPI_API_TOKEN` / `TWINE_PASSWORD` / `TWINE_USERNAME` are set, and check only whether `~/.pypirc` exists and contains expected section/key markers. Do not print `.pypirc` contents. `chatpypi pkg upload --project-dir .` uses Twine's default credential lookup, so a missing env var alone is not a blocker when `.pypirc` or another Twine-supported credential source is present. If ChatPyPI is stale or shadowed, use the project venv fallback `python -m twine upload dist/*` after build/check has passed.
+
+Keep the two credential surfaces separate: Twine upload credentials create the initial `0.0.1` placeholder, while `chatpypi auth whoami/login -e RexWzh` is the PyPI web-session path used later for Publisher management. An expired web session does not prove Twine upload is impossible; refresh it before Publisher commands, not before deciding whether package upload credentials exist.
+
 If upload or readback fails, stop. Do not create a GitHub repo, do not initialize `core/<ProjectName>`, do not pick a workaround name silently. Report the blocker and wait for the user.
 
 ### 4. 只有 PyPI `0.0.1` project 存在后，创建 GitHub 仓库
 
 检查或创建 GitHub 仓库。优先用 ChatGH：
+
+注意：这里说的 ChatGH 是 ChatArch 的 GitHub 工具，不是官方 GitHub CLI 语义。部分机器上可执行文件可能叫 `gh`，但 `--version` 显示 `chatgh`；这种情况下仍按 ChatGH 处理。不要套用官方 `gh auth status`、`gh api` 或官方 `--json` 字段名（如 `nameWithOwner`、`url`）。ChatGH repo readback 使用 `full_name`、`html_url`、`private`、`visibility` 等字段；不确定时先看 `chatgh --help` / `gh --version`，确认实际是 ChatGH 后再执行。
 
 ```bash
 chatgh repo list --owner ChatArch --limit 20
@@ -210,7 +222,7 @@ chatgh repo create \
 最小形状：
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 git remote add origin https://github.com/ChatArch/<ProjectName>.git 2>/dev/null || \
   git remote set-url origin https://github.com/ChatArch/<ProjectName>.git
 git remote set-url --push origin https://github.com/ChatArch/<ProjectName>.git
@@ -243,13 +255,13 @@ Upgrade to GitHub Pro or make this repository public to enable this feature.
 
 ### 5. 初始化 canonical `core/<ProjectName>`
 
-PyPI `0.0.1` 成功后，可以把 preflight scaffold 复制/重建为 canonical repo；正式后续 feature release 再使用连续版本号。示例：
+PyPI `0.0.1` 成功后，可以把 preflight scaffold 复制/重建为 canonical repo；如果当前任务只是注册/占名，canonical repo 仍应是 `0.0.1` placeholder。不要在此步把版本改成 `0.1.0`；正式后续 feature release 再使用连续版本号。示例：
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 chatpypi pkg init <ProjectName> \
   -t chatarch \
-  --project-dir ~/Playground/core/<ProjectName> \
+  --project-dir <WORKSPACE_ROOT>/core/<ProjectName> \
   --description '<ProjectName>: <short description>' \
   --author 'ChatArch' \
   --email '1073853456@qq.com' \
@@ -262,13 +274,13 @@ chatpypi pkg init <ProjectName> \
 Legacy shortcut form may still work when the first argument is not a known subcommand, but shared docs should prefer the explicit `pkg init` tree:
 
 ```bash
-chatpypi <ProjectName> -t chatarch --project-dir ~/Playground/core/<ProjectName> -I
+chatpypi <ProjectName> -t chatarch --project-dir <WORKSPACE_ROOT>/core/<ProjectName> -I
 ```
 
 生成后核对：
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 python3 - <<'PY'
 import tomllib, pathlib, json
 p=tomllib.loads(pathlib.Path('pyproject.toml').read_text())
@@ -295,12 +307,14 @@ ChatArch 模板应包含：
 
 ChatArch 模板的 CLI skeleton 细节按 ChatArch CLI/package conventions 检查；这里不重复展开模板内部命令形态。初始化后检查真实 package command skeleton、ChatEnv/ChatStyle wiring、tests、build/check、publish workflow，不把示例/demo 命令当作发布验收点。
 
+如果本次 scaffold 明确使用了 `--without-mkdocs`，初次 push 前必须检查 `.github/workflows/ci.yml`，确保没有残留 `mkdocs build --strict`。如果 CI 已经因为 `mkdocs: command not found` 失败，先删除该步骤、提交修复、等待 main CI 绿灯，再打 release tag；不要在 CI 红灯状态下继续 tag/publish。
+
 ### 4. 本地验证
 
 使用项目本地 venv，不全局安装：
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 uv venv .venv
 . .venv/bin/activate
 uv pip install -e '.[dev]'
@@ -323,7 +337,7 @@ chatpypi pkg check --project-dir .
 ### 5. 初始化 git、commit、push
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 git init -b main
 git add .
 git commit -m 'Initial <ProjectName> package scaffold'
@@ -343,7 +357,22 @@ git ls-remote --heads origin main
 
 Use the HTTPS remote plus `chatgh set-token` repo-local credential setup by default. Avoid embedding tokens in `remote.origin.url`, avoid command-line PAT arguments, and never print raw `.git/config` auth header values.
 
-### 6. 首次发布前 PyPI project / Publisher 检查
+### 6. 首个 `0.1.x` 发版前 MkDocs / Pages / About 硬门禁
+
+只要 scaffold 包含 `mkdocs.yml` 或 docs workflows，就必须在首个 `0.1.x` tag 前加载并执行 `chatarch-mkdocs-docs-alignment`。这不是可选文档美化步骤，而是新仓库基础设施验收。
+
+最低要求：
+
+1. `mkdocs build --strict` 与中英文/source-language gate 通过；
+2. GitHub Pages API/source 读回为 `gh-pages` `/`；若 public repo 的 Pages API 404 但 `gh-pages` 已存在，启用 Pages 后再读回；
+3. 用 `chatgh repo edit ChatArch/<ProjectName> --homepage https://arch.gh.wzhecnu.cn/<ProjectName>/ --json-output` 设置 About homepage，并用 repo view 读回；
+4. PR Preview root 和关键页面返回 HTTP 200；默认分支部署后正式 root 与 `/en/`（如适用）返回 HTTP 200；
+5. 只有 workflow success、`gh-pages` 文件或 Preview bot comment，而 HTTP 仍为 404 时，必须记录为 docs 未上线，不能写成“Docs/Preview 已验证”；
+6. private repo 若无法公开提供 Pages，保持 private 并记录 visibility/plan gate，等待用户明确决定是否 public；不得为了文档擅自修改 visibility。
+
+批量新建多个包时，发版收尾必须输出统一矩阵，至少包含：repo visibility、Pages source/status、About homepage、root HTTP、Preview HTTP、PyPI Documentation URL。不能只逐包核对 Publisher。
+
+### 7. 首次发布前 PyPI project / Publisher 检查
 
 对新 ChatArch 包，默认不是 pending Publisher 路径：
 
@@ -365,12 +394,12 @@ chatpypi publisher pending-list -e RexWzh --format json
 
 只在明确使用 PyPI 官方 pre-registration pending feature 或清理 stale pending 时，才使用 `publisher pending-add` / `publisher pending-remove`。
 
-### 7. Tag-driven PyPI 发布与回读验证
+### 8. Tag-driven PyPI 发布与回读验证
 
-发布前再次打印安全 metadata，但不要打印凭据。常规发布必须走 PR -> merge -> 默认分支 tag -> GitHub Actions publish；不要用本地 Twine 当正常发版路径：
+发布前再次打印安全 metadata，但不要打印凭据。常规发布必须走 PR -> merge -> 默认分支 tag -> GitHub Actions publish；不要用本地 Twine 当正常发版路径。如果本次任务只是注册/占名新包，不进入本节，不创建 `v0.1.0` tag：
 
 ```bash
-cd ~/Playground/core/<ProjectName>
+cd <WORKSPACE_ROOT>/core/<ProjectName>
 . .venv/bin/activate
 python -m pytest -q
 rm -rf dist build *.egg-info src/*.egg-info
@@ -401,8 +430,8 @@ PY
 再做隔离安装验证：
 
 ```bash
-uv venv ~/Playground/projects/<task>/playground/install-check
-. ~/Playground/projects/<task>/playground/install-check/bin/activate
+uv venv <WORKSPACE_ROOT>/projects/<task>/playground/install-check
+. <WORKSPACE_ROOT>/projects/<task>/playground/install-check/bin/activate
 uv pip install '<ProjectName>==<version>'
 <cli-command> --help
 ```
@@ -426,14 +455,19 @@ git log -1 --oneline --decorate
 ## 常见坑
 
 - 不要把品牌名 `ChatNPM` 自动改成 `chat-npm`；PyPI 会规范化显示文件名，但 `[project].name` 应使用确认过的 exact name。
+- 新包注册任务不要在 `0.0.1` placeholder 后立刻把 canonical repo 改成 `0.1.0` 或推 `v0.1.0`；除非用户明确要求做真实功能首发，否则停止在 `0.0.1` + GitHub repo + active Publisher + canonical main placeholder。
+- GitHub 侧不要按官方 GitHub CLI 猜命令和字段。即使命令名是 `gh`，只要版本/帮助显示 ChatGH，就必须按 ChatGH 的命令树和 JSON 字段执行；官方 `gh` 只能作为接口参考，不能作为 ChatArch 发布流程 fallback。
 - PyPI 的 normalized name 与显示名可能不同：`ChatNPM` 会归一到 `chatnpm`。
 - 删除错误 PyPI 项目不能靠 `twine`；`twine` 只有 `check/register/upload`。删除通常需要 PyPI Web UI，且不保证立即释放相似名限制。
-- 如果全局 `chatgh` 没有某个子命令，先检查 `~/Playground/core/ChatGH` 的源码版，不要绕过 ChatGH 流程。
+- 如果全局 `chatgh` 没有某个子命令，先检查 `<WORKSPACE_ROOT>/core/ChatGH` 的源码版，不要绕过 ChatGH 流程。
+- 不要因为 `PYPI_API_TOKEN` / `TWINE_PASSWORD` 环境变量为空就说“不能上传”。先检查 ChatPyPI 实际命令面、项目 venv 的 Twine、以及 `.pypirc`/keyring 等 Twine 常规凭据路径；只记录存在性和使用的工具路径，绝不打印凭据内容。
+- 不要把 PyPI Web session 和 Twine upload credential 混为一谈。`auth whoami` 过期时，Publisher 前先 `chatpypi auth login -e RexWzh --format json` 刷新；这不是 placeholder upload 的失败证据。
 - `.pypirc`、GitHub token、ChatEnv token 都不能输出内容；日志只记录凭据是否存在和使用的工具路径。
 - 新建 ChatArch 仓库后，默认把 local `origin` 设为 HTTPS，并通过 `chatgh set-token` 配置 repo-local git transport credential。不要手写或展示 raw auth header；不要把 token 放进 remote URL；写完后必须用 `chatgh repo-perms`、`git ls-remote --heads origin main` 和 `git push --dry-run origin main` 验证。
 - Trusted Publishing 的 `environment` 必须与 PyPI Publisher 配置完全一致。不要在 publish workflow 中默认写 `environment: pypi`；只有确认 PyPI Trusted Publisher 的 claim 包含 `environment:pypi` 时才加。若 PyPI 配置是无 environment 的 publisher，workflow 必须移除 `environment`，否则会失败为 `invalid-publisher`，claim 类似 `repo:OWNER/REPO:environment:pypi`。
 - 正式发版必须走标准链路：PR 绿灯 -> merge 到默认分支 -> 在默认分支 merge commit 上打 `vX.Y.Z` tag -> GitHub Actions publish -> PyPI JSON/simple index -> clean install。不要为了省事用本地 Twine key 代替 tag workflow；本地 Twine 只能作为已明确记录的异常救援，并且之后必须修复标准 workflow。
-- build/pytest 会产生 `.venv`、`dist`、`.pytest_cache`、`*.egg-info` 等中间产物；commit 前确认 `.gitignore` 生效，必要时清理或保持未跟踪文件不入库。
+- build/pytest/docs 会产生 `.venv`、`dist`、`.pytest_cache`、`*.egg-info`、`site/` 等中间产物；commit 前确认 `.gitignore` 生效，必要时清理或保持未跟踪文件不入库。尤其是对新生成的 MkDocs 包，本地跑过 `mkdocs build --strict` 后要确认 `site/` 没有被 `git add .` 带进初始提交；如果模板缺少规则，先把 `site/` 加入 `.gitignore` 再提交。
+- `--without-mkdocs` 包不应保留 CI 的 `mkdocs build --strict` 步骤。若 workflow 模板仍包含该步骤，这是模板/生成物错配，先修 workflow 并等 CI 绿灯，再继续 tag-driven publish。
 
 ## 完成汇报模板
 
@@ -442,9 +476,11 @@ git log -1 --oneline --decorate
 ```text
 - GitHub: https://github.com/ChatArch/<ProjectName>
 - PyPI: https://pypi.org/project/<ProjectName>/<version>/
-- Local source: ~/Playground/core/<ProjectName>
+- Local source: <WORKSPACE_ROOT>/core/<ProjectName>
 - Tests: python -m pytest -q -> ... passed
 - Build: `chatpypi pkg build --project-dir .` -> wheel + sdist
 - Check: `chatpypi pkg check --project-dir .` -> PASSED
 - Install check: uv pip install '<ProjectName>==<version>' + <cli-command> --help OK
+- Docs Pages: source/status + root/preview HTTP readback（或明确的 private visibility gate）
+- GitHub About: homepage = https://arch.gh.wzhecnu.cn/<ProjectName>/
 ```

@@ -31,10 +31,10 @@ reference:
 
 ## 工作区记录
 
-从 `~/Playground` 开始，读取 workspace 规则，并复用当前项目目录；如果没有对应任务，再创建 `projects/<topic>/<task>/`：
+从 `<WORKSPACE_ROOT>` 开始，读取 workspace 规则，并复用当前项目目录；如果没有对应任务，再创建 `projects/<topic>/<task>/`：
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 sed -n '1,140p' AGENTS.md
 sed -n '1,180p' projects/README.md
 ```
@@ -54,7 +54,7 @@ sed -n '1,180p' projects/README.md
 ```bash
 python -m pip install -U ChatGH
 # or, when using the local checkout:
-python -m pip install -U ~/Playground/core/ChatGH
+python -m pip install -U <WORKSPACE_ROOT>/core/ChatGH
 ```
 
 然后继续使用 `chatgh`：

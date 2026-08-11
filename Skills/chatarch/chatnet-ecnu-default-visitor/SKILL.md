@@ -25,7 +25,7 @@ Use this skill when the user asks to create, set, refresh, or sync the default E
 
 ## Procedure
 
-1. Establish the workspace first if working in `~/Playground`:
+1. Establish the workspace first if working in `<WORKSPACE_ROOT>`:
    - read `AGENTS.md`
    - read `projects/README.md`
    - create or update a small task project when this is a real operation

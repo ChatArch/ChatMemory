@@ -10,7 +10,7 @@ Use this skill when configuring HERMES SSH targets, creating or importing `targe
 
 ## Workspace Rule
 
-Default work must stay inside `/home/zhihong/Playground`. Source repos belong under `/home/zhihong/Playground/core`. Do not create random sibling directories outside Playground. If a spoken instruction sounds like `Call`, interpret it as `Core` unless context clearly says otherwise.
+Default work must stay inside `<WORKSPACE_ROOT>`. Source repos belong under `<WORKSPACE_ROOT>/core`. Do not create random sibling directories outside Playground. If a spoken instruction sounds like `Call`, interpret it as `Core` unless context clearly says otherwise.
 
 ## Current Mechanism
 
@@ -64,8 +64,8 @@ ssh:
       host: example.internal
       user: cubebot
       port: 22
-      identity_file: ~/.hermes/ssh/keys/cubebot
-      cwd: /home/cubebot/Playground
+      identity_file: <HERMES_HOME>/ssh/keys/cubebot
+      cwd: <WORKSPACE_ROOT>
 ```
 
 4. Pre-warm HERMES known_hosts:

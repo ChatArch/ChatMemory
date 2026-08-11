@@ -88,7 +88,7 @@ When extracting `chattool dns` or similarly operational capabilities, add an exp
 
 ### Phase 0 — task and isolated workspace
 
-1. Start at `~/Playground`; read `AGENTS.md` and `projects/README.md`.
+1. Start at `<WORKSPACE_ROOT>`; read `AGENTS.md` and `projects/README.md`.
 2. Create a task under the active extraction topic, for example:
 
 ```text
@@ -102,7 +102,7 @@ projects/chatup-setup-split/05-chatpypi-extraction/
 3. To avoid polluting long-lived checkouts and tracker state, clone or copy fresh working repos under the task `playground/` before exploratory migration/removal work:
 
 ```bash
-git clone ~/Playground/core/ChatTool playground/ChatTool-parent-update
+git clone <WORKSPACE_ROOT>/core/ChatTool playground/ChatTool-parent-update
 # Create or clone the standalone package repo/scaffold under playground/<PackageName> for the extraction spike.
 ```
 
@@ -110,7 +110,7 @@ Rules:
 
 - Treat the task-local copy as the default scratchpad for tracker-style capability separation, especially when removing modules from a parent repo.
 - Record the copy source, remote, base branch, and HEAD in `progress.md` before editing it.
-- Do not modify `~/Playground/core/ChatTool` directly during early extraction practice or while its canonical checkout is already on another feature/release branch.
+- Do not modify `<WORKSPACE_ROOT>/core/ChatTool` directly during early extraction practice or while its canonical checkout is already on another feature/release branch.
 - After the copy proves the migration and tests, apply the reviewed delta to canonical `core/ChatTool` only on a fresh feature branch from the updated default branch.
 
 ### Phase 1 — bootstrap or prepare standalone package
@@ -151,6 +151,7 @@ Only after the standalone package is working and, if needed, published:
 ## ChatPyPI Practice Notes
 
 - Use `chatpypi pkg ...` as the canonical package-operation tree in shared docs. Root `chatpypi init/build/check/upload/probe` commands are compatibility shortcuts and should not be the primary examples.
+- `chatpypi pkg upload` / Twine upload is only for the initial `0.0.1` placeholder/name-claim or explicit non-ChatArch manual cases. For ChatArch real releases after the project exists, do not use upload fallback; release through GitHub Actions + active PyPI Trusted Publisher.
 - Treat PyPI Publisher state as a tree with separate active and pending branches. Existing project operations are active (`publisher detail`, `publisher add-github`); only PyPI pre-registration or stale cleanup uses `pending-*`.
-- After releasing an operator tool such as ChatPyPI, upgrade `/Users/rexwzh/.chatarch/venv` to the published version and run installed-command smoke without `PYTHONPATH` before updating parent skills.
+- After releasing an operator tool such as ChatPyPI, upgrade `<CHATARCH_HOME>/venv` to the published version and run installed-command smoke without `PYTHONPATH` before updating parent skills.
 - Parent ChatTool cleanup remains part of extraction done-ness unless the user scopes it out: remove duplicated implementation, update dependencies/extras/docs/tests, and only release ChatTool after the standalone package is published and clean-install verified.

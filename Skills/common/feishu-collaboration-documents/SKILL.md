@@ -8,7 +8,28 @@ version: 0.2.0
 
 Use this public/shared skill when creating, updating, or verifying Feishu/Lark documents for human-AI collaboration.
 
-Do not store tenant-specific Feishu document URLs, group chat IDs, app IDs, bot IDs, or private collaboration conventions in this shared skill. Keep those in a local/private skill for the target machine or tenant.
+## Private Feishu/Lark Context Policy
+
+Shared ChatMemory skills are synchronized through GitHub and must be treated as content that could be read outside the current machine/workspace. Do **not** put real Feishu/Lark document URLs, wiki URLs, tenant domains, user open IDs, chat IDs, message IDs, app IDs, account names, or other machine/account-specific collaboration identifiers in shared skills.
+
+Use placeholders in shared skills:
+
+```text
+<LOCAL_FEISHU_MAIN_DOC_URL>
+<LOCAL_FEISHU_CHILD_DOC_URL>
+<LOCAL_FEISHU_DOC_TOKEN>
+<LOCAL_FEISHU_USER_OPEN_ID>
+<LOCAL_FEISHU_CHAT_ID>
+<LOCAL_FEISHU_MESSAGE_ID>
+```
+
+Machine-specific Feishu/Lark context belongs in one of these local-only places:
+
+- the active machine's workspace-local skill, for example `<WORKSPACE_ROOT>/skills/local/feishu-collaboration-context/SKILL.md`;
+- the active machine's durable assistant memory, if it is small and operationally important;
+- a task-local project note under `projects/...`, if it is only relevant to that task.
+
+The shared workflow below describes **how** to create and link human-facing documents. It intentionally does not hard-code a real Feishu main document link or account identifier.
 
 ## Local Configuration Required
 
@@ -66,7 +87,7 @@ lark-cli auth status
    - rich blocks/diagrams did not degrade
    - local main doc contains the child link when relevant
 11. If fetch/update/create hits missing user scopes, use the Common skill `lark-cli-permission-authorization` and generate a real `https://accounts.feishu.cn/oauth/v1/device/verify?...` link via `lark-cli auth login --scope ... --no-wait --json`; do not send developer-console `open.feishu.cn/app/.../auth` URLs as user-confirmable links.
-12. Record final links in the active project `memory.md` and `progress.md`; do not add private document URLs back into shared/public skills.
+12. Record final links in durable project files immediately. Minimum: append the URL and document role to the active project's `progress.md`. For any task that creates Feishu docs or other external artifacts, maintain the Project root `links.md` as the primary explicit link index and, when report artifacts live under `reports/`, also mirror/update `reports/links.md` so future sessions can recover links without relying on chat context, compressed memory, or the Feishu hub alone. Do not add private document URLs back into shared/public skills.
 
 ## Known CLI Compatibility Note
 
@@ -88,14 +109,23 @@ Use the form supported by the installed binary; prefer the help output for flags
 
 ### Hermes tool environment vs user's global `lark-cli`
 
-Inside a Hermes tool process, `lark-cli` can auto-detect an Agent workspace and use a Hermes-specific config path rather than the user's normal shell/global config path. Do not confuse these. When the user explicitly refers to their global/local `lark-cli`, first verify with:
+The user's normal shell/global `lark-cli` and the `lark-cli` seen inside a Hermes tool process can intentionally resolve different workspace configs. A normal shell may report a local workspace config, while a Hermes tool process may auto-detect an Agent workspace and report a Hermes-specific config.
+
+Do not confuse these. When the user explicitly refers to their global/local `lark-cli`, first verify with:
 
 ```bash
 which lark-cli
 lark-cli config show
 ```
 
-If Hermes workspace auto-detection is getting in the way and the task is to use the user's global/local CLI, run `lark-cli` under a minimal environment tailored to the target machine instead of guessing config paths.
+If Hermes workspace auto-detection is getting in the way and the task is to use the user's global/local CLI, run `lark-cli` under a minimal environment tailored to the target machine instead of guessing config paths or opening a GUI terminal. Use placeholders for machine-specific env values in shared docs:
+
+```bash
+/usr/bin/env -i \
+  HOME=<LOCAL_HOME> \
+  PATH=<LOCAL_NODE_OR_BIN_PATHS> \
+  lark-cli config show
+```
 
 ### Keychain blocker
 

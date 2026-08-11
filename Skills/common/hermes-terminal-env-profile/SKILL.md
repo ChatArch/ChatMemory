@@ -8,7 +8,7 @@ version: 0.1.0
 
 Use this skill when the user wants Hermes Agent itself to remain a stable core runtime, but wants `terminal` tool commands such as `python3`, `pip`, `pytest`, `chatgh`, or project CLIs to default to a project/dev environment.
 
-Canonical example: make Hermes `terminal` tool default to the ChatArch venv at `~/.chatarch/venv`, while Hermes gateway/agent runtime stays in its own `~/.hermes/hermes-agent/venv`.
+Canonical example: make Hermes `terminal` tool default to the ChatArch venv at `<CHATARCH_HOME>/venv`, while Hermes gateway/agent runtime stays in its own `<HERMES_HOME>/hermes-agent/venv`.
 
 ## Key principle
 
@@ -19,7 +19,7 @@ Use Hermes' supported terminal config layer:
 ```yaml
 terminal:
   shell_init_files:
-    - ~/.hermes/shell-init/chatarch-terminal.sh
+    - <HERMES_HOME>/shell-init/chatarch-terminal.sh
   auto_source_bashrc: false
 ```
 
@@ -35,8 +35,8 @@ Hermes supports this through official terminal configuration keys:
 Useful source references in a local Hermes checkout:
 
 ```text
-~/.hermes/hermes-agent/tools/environments/local.py
-~/.hermes/hermes-agent/tests/tools/test_local_shell_init.py
+<HERMES_HOME>/hermes-agent/tools/environments/local.py
+<HERMES_HOME>/hermes-agent/tests/tools/test_local_shell_init.py
 ```
 
 The implementation resolves configured init files, expands `~` and `${VAR}`, skips missing files safely, and prepends guarded `source` lines while building the local backend shell snapshot.
@@ -48,7 +48,7 @@ The implementation resolves configured init files, expands `~` and `${VAR}`, ski
 Create:
 
 ```text
-~/.hermes/shell-init/chatarch-terminal.sh
+<HERMES_HOME>/shell-init/chatarch-terminal.sh
 ```
 
 Recommended content:
@@ -56,7 +56,7 @@ Recommended content:
 ```bash
 # Hermes terminal-tool shell profile for ChatArch development.
 # This file is sourced only by terminal tool shell snapshots when listed in
-# ~/.hermes/config.yaml under terminal.shell_init_files. It does not change the
+# <HERMES_HOME>/config.yaml under terminal.shell_init_files. It does not change the
 # Hermes gateway/agent runtime interpreter.
 
 CHATARCH_VENV="${CHATARCH_VENV:-$HOME/.chatarch/venv}"
@@ -88,7 +88,7 @@ Preferred manual config shape:
 ```yaml
 terminal:
   shell_init_files:
-    - ~/.hermes/shell-init/chatarch-terminal.sh
+    - <HERMES_HOME>/shell-init/chatarch-terminal.sh
   auto_source_bashrc: false
 ```
 
@@ -104,7 +104,7 @@ python3 - <<'PY'
 from hermes_cli.config import read_raw_config, save_config
 cfg = read_raw_config() or {}
 terminal = cfg.setdefault('terminal', {})
-terminal['shell_init_files'] = ['~/.hermes/shell-init/chatarch-terminal.sh']
+terminal['shell_init_files'] = ['<HERMES_HOME>/shell-init/chatarch-terminal.sh']
 terminal['auto_source_bashrc'] = False
 save_config(cfg)
 PY
@@ -116,7 +116,7 @@ PY
 python3 - <<'PY'
 import yaml
 from pathlib import Path
-cfg = yaml.safe_load(Path('~/.hermes/config.yaml').expanduser().read_text())
+cfg = yaml.safe_load(Path('<HERMES_HOME>/config.yaml').expanduser().read_text())
 print(type(cfg['terminal']['shell_init_files']).__name__)
 print(cfg['terminal']['shell_init_files'])
 print(cfg['terminal']['auto_source_bashrc'])
@@ -127,7 +127,7 @@ Expected:
 
 ```text
 list
-['~/.hermes/shell-init/chatarch-terminal.sh']
+['<HERMES_HOME>/shell-init/chatarch-terminal.sh']
 False
 ```
 
@@ -213,7 +213,7 @@ terminal:
   auto_source_bashrc: true
 ```
 
-or delete/rename `~/.hermes/shell-init/chatarch-terminal.sh`. Missing init files are skipped safely, but an explicit clean config is preferred.
+or delete/rename `<HERMES_HOME>/shell-init/chatarch-terminal.sh`. Missing init files are skipped safely, but an explicit clean config is preferred.
 
 ## Safety boundaries
 

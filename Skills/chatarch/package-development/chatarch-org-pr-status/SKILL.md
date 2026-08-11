@@ -43,7 +43,7 @@ GitHub permissions can legitimately make some fields unavailable. Missing fields
 From the workspace root:
 
 ```bash
-cd ~/Playground
+cd <WORKSPACE_ROOT>
 python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
 ```
 
@@ -69,7 +69,7 @@ Keep the installed `chatgh` command current. If the command is missing or stale,
 ```bash
 python -m pip install -U ChatGH
 # or, when using the local checkout:
-python -m pip install -U ~/Playground/core/ChatGH
+python -m pip install -U <WORKSPACE_ROOT>/core/ChatGH
 
 python Skills/chatarch/package-development/chatarch-org-pr-status/scripts/org_pr_status.py --owner ChatArch
 ```
@@ -119,7 +119,7 @@ python Skills/chatarch/package-development/chatgh-pr-and-ci-workflow/scripts/pr_
 
 ## Common pitfalls
 
-- Looking only at local checkouts under `~/Playground/core`; that misses repositories not cloned locally.
+- Looking only at local checkouts under `<WORKSPACE_ROOT>/core`; that misses repositories not cloned locally.
 - Treating `open_issues_count` as issues only; GitHub counts PRs inside the issues count, so use ChatGH’s separated `open_prs` field.
 - Assuming all active work is in the `ChatArch` organization. Some related repos may live under another owner, such as `cubenlp`; run the script again with `--owner <owner>` when needed.
 - Treating a status report as merge authorization. It is only an observation step.
