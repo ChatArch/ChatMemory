@@ -29,14 +29,14 @@ if [ -z "$BIN" ] || ! "$BIN" --version >/dev/null 2>&1; then
   BIN="$HOME/Playground/core/ChatPyPI/.venv/bin/chatpypi"
 fi
 $BIN --version                    # should be 0.2.3 or newer for direct publisher writes
-$BIN auth login -e RexWzh --format json
-$BIN auth whoami -e RexWzh --format json
-$BIN publisher detail <ProjectName> -e RexWzh --format json
-$BIN publisher add-github <ProjectName> --owner ChatArch --repo <Repo> --workflow publish.yml --environment "" -e RexWzh --format json
-$BIN publisher pending-list -e RexWzh --format json
+$BIN auth login -e <pypi-profile> --format json
+$BIN auth whoami -e <pypi-profile> --format json
+$BIN publisher detail <ProjectName> -e <pypi-profile> --format json
+$BIN publisher add-github <ProjectName> --owner ChatArch --repo <Repo> --workflow publish.yml --environment "" -e <pypi-profile> --format json
+$BIN publisher pending-list -e <pypi-profile> --format json
 ```
 
-Do not guess the GitHub owner/repository from the PyPI username or session profile. For ChatArch packages, the Trusted Publisher owner is normally `ChatArch`, not `RexWzh` and not the PyPI project name as an owner.
+Do not guess the GitHub owner/repository from the PyPI username or session profile. For ChatArch packages, the Trusted Publisher owner is normally `ChatArch`, not `<pypi-profile>` and not the PyPI project name as an owner.
 
 ```text
 PyPI project: ChatSage / chatsage
@@ -46,7 +46,7 @@ Workflow filename: publish.yml
 Environment: blank / (Any), unless the existing project/workflow explicitly uses an environment
 ```
 
-`RexWzh/askchat` is an existing exception, not the pattern to copy to ChatArch packages.
+`<legacy-owner>/<legacy-project>` is an existing exception, not the pattern to copy to ChatArch packages.
 
 ## Current ChatPyPI 0.2.3 Publisher Tree
 
@@ -121,12 +121,12 @@ OWNER=ChatArch
 REPO=ChatECNU
 WORKFLOW=publish.yml
 
-$BIN auth login -e RexWzh --format json
-$BIN auth whoami -e RexWzh --format json
-$BIN publisher detail "$PROJECT" -e RexWzh --format json
+$BIN auth login -e <pypi-profile> --format json
+$BIN auth whoami -e <pypi-profile> --format json
+$BIN publisher detail "$PROJECT" -e <pypi-profile> --format json
 # Only if detail shows the expected active Publisher is missing/wrong:
-$BIN publisher add-github "$PROJECT" --owner "$OWNER" --repo "$REPO" --workflow "$WORKFLOW" --environment "" -e RexWzh --format json
-$BIN publisher pending-list -e RexWzh --format json
+$BIN publisher add-github "$PROJECT" --owner "$OWNER" --repo "$REPO" --workflow "$WORKFLOW" --environment "" -e <pypi-profile> --format json
+$BIN publisher pending-list -e <pypi-profile> --format json
 ```
 
 Interpretation:
@@ -141,7 +141,7 @@ Interpretation:
 Only run this when a previous wrong path may have left a pending Publisher:
 
 ```bash
-$BIN publisher pending-remove "$PROJECT" --owner "$OWNER" --repo "$REPO" --workflow "$WORKFLOW" --environment "" -e RexWzh --format json
+$BIN publisher pending-remove "$PROJECT" --owner "$OWNER" --repo "$REPO" --workflow "$WORKFLOW" --environment "" -e <pypi-profile> --format json
 ```
 
 Expected no-op shape when no stale pending exists:
@@ -157,10 +157,10 @@ If a matching pending exists and PyPI exposes a matching remove form, ChatPyPI 0
 ## Safety Rules
 
 - Never print `PYPI_SESSION_TOKEN`, cookies, CSRF token values, passwords, TOTP secrets, or API tokens.
-- Use a named ChatEnv profile such as `-e RexWzh` for account-specific PyPI management.
+- Use a named ChatEnv profile such as `-e <pypi-profile>` for account-specific PyPI management.
 - Before writing to PyPI, confirm the logged-in account with `auth whoami -e <profile>`.
 - If `auth whoami`, `publisher detail`, or `publisher add-github` says the PyPI session is not logged in / redirected to login, refresh it with `auth login -e <profile> --format json`, then retry the same Publisher command. Session expiry is not a release blocker and must not trigger Twine/token/manual upload fallback.
-- PyPI web-session tokens can expire after long idle periods. For Publisher readback/management, refreshing with `chatpypi auth login -e RexWzh --format json` is the expected first step, not a sign that Publisher is missing.
+- PyPI web-session tokens can expire after long idle periods. For Publisher readback/management, refreshing with `chatpypi auth login -e <pypi-profile> --format json` is the expected first step, not a sign that Publisher is missing.
 - PyPI can let `auth whoami` succeed while redirecting only the sensitive project publishing page to `/account/reauthenticate/`. In affected ChatPyPI versions, `publisher detail` may misleadingly report `active_count: 0`, while `publisher add-github` reports a missing active-publisher form. Treat both as unknown, refresh with `auth login`, then rerun detail/add and require project-page readback. An idempotent existing row reports `already_active_before: true` and `posted: false`.
 - Keep Publisher web-session auth separate from package upload auth. A missing `PYPI_API_TOKEN` env var or expired `auth whoami` session does not by itself prove a `0.0.1` placeholder upload is impossible; `chatpypi pkg upload` follows Twine credential lookup, including `.pypirc`, when no explicit env token is supplied.
 - Treat adding/removing/updating Trusted Publishers as real remote mutations.
@@ -179,7 +179,7 @@ This workflow was corrected after the ChatECNU release:
 
 ## Common Pitfalls
 
-- Copying `RexWzh/askchat` as a pattern for ChatArch packages. It is an exception.
+- Copying `<legacy-owner>/<legacy-project>` as a pattern for ChatArch packages. It is an exception.
 - Treating the PyPI username/profile as the GitHub owner.
 - Assuming the overview page includes repository/workflow/environment details; use `publisher detail <project>` for project-level details.
 - Treating `#errors` in old web-form experiments as failure without inspecting readback.

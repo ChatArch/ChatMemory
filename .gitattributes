@@ -1,0 +1,7 @@
+# Suppress textual diffs for this cleanup PR so removed environment-specific details are not reprinted in public review UI.
+Skills/common/hermes-external-agent-cli-orchestration/SKILL.md -diff
+Skills/common/cursor-agent-worker-orchestration/SKILL.md -diff
+Skills/chatarch/package-development/chatarch-cli-tree-rollout/SKILL.md -diff
+Skills/chatarch/package-development/python-package-release-with-chattool-pypi/SKILL.md -diff
+Skills/chatarch/package-development/chatpypi-publisher-management/SKILL.md -diff
+Skills/local/README.md -diff

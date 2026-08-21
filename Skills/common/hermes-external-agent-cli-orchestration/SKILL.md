@@ -25,6 +25,10 @@ Hermes should act as a scheduler/reviewer for this workflow: break the work into
 
 If the worker backend is Cursor Agent, load `cursor-agent-worker-orchestration` for the exact `agent create-chat` / `agent --resume <chat_id>` pattern. This skill stays backend-general: Cursor, Codex, Claude Code, OpenCode, custom agents, and future ACP/MCP/plugin backends are all worker options.
 
+Shared/public skills must stay host-neutral. Do not write concrete server aliases, usernames, home directories, chat ids, private proxy helper paths, or organization-internal machine names into this skill. Use placeholders such as `<workspace>`, `<node-bin-dir>`, `<proxy-helper>`, `<worker-host>`, and `<agent-command>`. Keep machine-specific command paths in the active workspace-local skill, task project notes, or run JSON that is not promoted as shared memory.
+
+Treat SSH aliases and worker-host nicknames as relative to the current execution environment. A name that works from the operator machine may not exist on the target machine or inside the worker's shell. Shared skills should say to resolve the worker host/executable from current local notes and verify with `hostname`, `pwd`, and `command -v <agent-command>` rather than naming a concrete alias.
+
 ## Decision model
 
 | Need | Preferred Hermes pattern |
@@ -48,7 +52,7 @@ Yes, many coding-agent CLIs can continue from earlier context, but there are two
    - It only lasts while that process/session is alive; do not treat a Hermes process session ID as a durable project record.
 
 2. **Use the CLI's own persisted conversation/session store.**
-   - Cursor Agent on `zhihong.oray` should use the top-level `agent` executable, not the minimal `cursor agent` wrapper, for durable workers. The verified pattern is `CHAT_ID=$(agent create-chat | tr -d '\r' | tail -n 1)` followed by `PATH="$NODE_BIN:$PATH" agent --print --resume "$CHAT_ID" --force --trust "$prompt"`; store that `chat_id` in the run JSON and reuse it for every continuation. `cursor agent` may work for tiny one-shot probes, but do not use it for resumable release workers.
+   - Cursor Agent durable workers should use the verified full worker executable for the current host, often a top-level `agent` wrapper, not an unverified lightweight wrapper. The portable pattern is `CHAT_ID=$(<agent-command> create-chat | tr -d '\r' | tail -n 1)` followed by `<agent-command> --print --resume "$CHAT_ID" ...`; store that `chat_id` in the run JSON and reuse it for every continuation. A small wrapper such as `cursor agent` may work for tiny one-shot probes, but do not use it for resumable release workers until its resume behavior is verified on that host.
    - Cursor Agent supports `--continue`, `--resume [chatId]`, `ls`, and `resume` on the installed CLI checked on 2026-08-05; verify the active binary because help/output differs between `cursor-agent`, `cursor agent`, and top-level `agent`.
    - Codex supports `codex resume`; current help also exposes `codex exec resume` for resuming a previous exec session by id or latest session.
    - Claude Code supports `--continue`, `--resume`, `--session-id`, and `--fork-session`; session persistence can be disabled with `--no-session-persistence`.
@@ -111,7 +115,7 @@ When the user asks Hermes to delegate a substantial task to an external CLI agen
 
 Codex is interactive enough that Hermes should generally call it with `pty=true`. Codex also requires a Git repo for execution tasks.
 
-Do not assume Codex is installed just because it is a possible fallback. Verify `command -v codex`, `codex --help` or `codex --version`, auth/status, and one bounded smoke before assigning work. On `zhihong.oray`, Codex CLI was observed absent during the Chat-series rollout; use Cursor `agent` or another verified external agent instead of promising a Codex lane there.
+Do not assume Codex is installed just because it is a possible fallback. Verify `command -v codex`, `codex --help` or `codex --version`, auth/status, and one bounded smoke before assigning work. If Codex is absent on the current host, use another verified external agent instead of promising a Codex lane there.
 
 ```python
 terminal(
@@ -140,10 +144,10 @@ Current Codex CLI guidance prefers `--sandbox workspace-write`; legacy `--full-a
 
 Hermes does not currently have a first-class Cursor Agent tool/provider in the official docs/source. Treat Cursor Agent as an external CLI unless a project supplies a plugin/MCP/ACP wrapper.
 
-On `zhihong.oray`, use this durable worker pattern for long tasks:
+On a host where Cursor Agent is the verified durable backend, use this host-neutral worker pattern for long tasks and fill placeholders from workspace-local notes:
 
 ```bash
-NODE_BIN=/home/zhihong/Playground/projects/08-06-manim-exploration/playground/tools/node-v20.19.0-linux-x64/bin
+NODE_BIN=<node-bin-dir>
 CHAT_ID=$(agent create-chat | tr -d '\r' | tail -n 1)
 PROMPT=/path/to/prompt.txt
 prompt=$(PROMPT="$PROMPT" python - <<'PY'
@@ -152,8 +156,8 @@ from pathlib import Path
 print(Path(os.environ["PROMPT"]).read_text())
 PY
 )
-source /home/zhihong/Playground/.env
-source /home/zhihong/Playground/projects/devops/08-15-proxy-on-bin-scripts/scripts/proxy_on
+source <workspace>/.env
+source <proxy-helper-if-needed>
 PATH="$NODE_BIN:$PATH" agent --print --resume "$CHAT_ID" --force --trust "$prompt"
 ```
 
