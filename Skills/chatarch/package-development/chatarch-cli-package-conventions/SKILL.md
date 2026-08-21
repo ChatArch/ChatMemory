@@ -1,7 +1,7 @@
 ---
 name: chatarch-cli-package-conventions
 description: "ChatArch Python CLI package conventions: ChatEnv, ChatStyle tree/interactive UX, dependency bounds, and release gates."
-version: 0.1.2
+version: 0.1.3
 ---
 
 # ChatArch CLI Package Conventions
@@ -29,15 +29,17 @@ If a desired behavior is missing from ChatEnv or ChatStyle, stop and classify it
 
 ## Template expectations
 
-ChatArch package templates should generate a usable package skeleton with the expected command surface, tests, README, and release workflow hooks.
+ChatArch package templates should generate a usable package skeleton that already conforms to the current ChatArch CLI/runtime standard. Do not create a package first and plan to add ChatStyle tree support later; new packages should start aligned.
 
 Generated ChatArch CLI packages should include:
 
 - top-level `--version`
-- top-level `--tree` and `--tree-brief` for real console-script CLIs; Click CLIs should use ChatStyle `add_tree_option()` from `chatstyle>=0.2.0,<0.3.0` instead of package-local tree renderers
+- mandatory `chatstyle>=0.2.0,<0.3.0` for real console-script CLIs
+- top-level `--tree` and `--tree-brief` for real console-script CLIs; Click CLIs should use ChatStyle `add_tree_option()` from that dependency instead of package-local tree renderers
 - help text for the actual package command surface
 - tests for the real command skeleton, version output, `--tree`, and `--tree-brief`
-- ChatEnv/ChatStyle wiring when the package defines config or interactive input
+- ChatEnv wiring from the start when the package defines config/profile/env behavior, using `chatenv>=0.2.10,<0.3.0` and ChatEnv typed profile/storage paths
+- ChatStyle interactive helpers for prompts, confirmations, selections, and tree output rather than raw local prompt/tree implementations
 - build/check/publish workflow files that match the intended release path
 - when MkDocs is enabled: bounded docs dependencies, `mkdocs.yml`, bilingual source slots, CI/Preview/Deploy workflows, package Documentation URL, and ignored `site/` output
 

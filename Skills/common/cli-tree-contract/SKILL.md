@@ -88,7 +88,7 @@ When asked to align a CLI:
 
 ## Template Requirement
 
-ChatPyPI / ChatArch package templates that create a ChatStyle CLI must include:
+ChatPyPI / ChatArch package templates that create a ChatStyle CLI must include the tree contract from the first generated commit. Do not scaffold a CLI without the shared ChatStyle tree runtime and treat `--tree` / `--tree-brief` as later cleanup.
 
 1. A top-level `--version`.
 2. A top-level `--help`.

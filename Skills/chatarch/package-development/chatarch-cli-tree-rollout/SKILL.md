@@ -15,20 +15,28 @@ Use this skill when standardizing Chat-series Python CLI packages on the shared 
 
 ## Target Inventory
 
-Do not use an old touched-repo ledger as the universe. Build the target list from ChatGlance / GitHub org inventory first.
+Do not use an old touched-repo ledger as the universe. Build the target list from ChatGlance / GitHub org inventory first. Inventory is only for discovering repositories that must be brought up to the standard; it must not weaken or redefine the standard.
 
 Default target class:
 
 1. Start from ChatArch org inventory, preferably `/home/zhihong/.chatarch/glance/data/chatarch-projects.json` when present.
 2. Remove forks and archived repositories.
 3. Keep Python packages with detected console-script CLI commands.
-4. For Chat-series scope, keep repos whose names start with `Chat` even if they do not depend on ChatEnv.
-5. Treat `chatenv` as metadata for dependency-bound updates, not as a target filter.
+4. For Chat-series scope, keep repos whose names start with `Chat` and then audit them against the current creation-time package standard.
+5. Treat missing or stale ChatStyle/ChatEnv integration as a compliance gap in the repository or template. Fix the package/template to match the standard rather than recording the gap as a new exception.
 6. List non-Chat Python CLIs such as `TermCap` or `hermes-agent` separately and include them only when the user explicitly expands scope.
 
-Correction example: `ChatEvent` is in scope. It is a Python CLI (`chatevent`) with no `chatenv` dependency and an argparse/local `--tree`; it still needs the rollout because the goal is Chat-series CLI tree standardization, not only ChatEnv packages.
-
 Maintain separate machine-readable ledgers for completed full-gate repos, remaining Chat-series CLI targets, excluded forks/non-CLI/non-Python/non-Chat repos, and special cases.
+
+## Creation-Time Standard
+
+New Chat-series Python CLI packages should be created from a template that already includes the current CLI/runtime standard:
+
+- `chatstyle>=0.2.0,<0.3.0` is the required ChatArch CLI tree/runtime dependency for real console-script CLIs.
+- The root CLI exposes `--version`, `--tree`, and `--tree-brief` from day one.
+- Click CLIs use ChatStyle `add_tree_option()` / registered tree renderer; local tree renderers are not copied into the package.
+- Packages with env/profile/config behavior register with ChatEnv and use `chatenv>=0.2.10,<0.3.0` plus ChatEnv's typed profile/storage paths from the start.
+- README, DEVELOP/CONTRIBUTING, tests, CHANGELOG, and release workflow are generated or updated with the same baseline; do not defer tree/runtime alignment until after the first release.
 
 ## CLI Runtime Standard
 
@@ -113,7 +121,7 @@ Worker prompts must include:
 ## Pitfalls
 
 - Counting a repo complete from local diff/tests only.
-- Filtering targets by `chatenv` and accidentally dropping valid Chat CLIs like `ChatEvent`.
+- Leaving repository/template drift in place after the current creation-time standard is known. Update the repository or template to the current ChatStyle/ChatEnv baseline.
 - Blindly retrying a timed-out Cursor worker and creating duplicate PRs/tags.
 - Trusting worker self-report without external readback.
 - Using a PATH `chatgh` that is older than the source checkout.

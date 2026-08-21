@@ -31,7 +31,7 @@ reference:
 6. 如果模板包含 MkDocs，在首个 `0.1.x` tag 前必须加载 `chatarch-mkdocs-docs-alignment`，配置并读回 Pages source、GitHub About homepage、PR Preview 与正式文档 URL；Actions success 或 `gh-pages` branch 存在都不能替代 HTTP 200 回读。
 7. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、Publisher/Pages readback 后，再根据任务目标决定是否 tag-driven publish；如果用户只是要“注册/占名一个新包”，到 `0.0.1` placeholder + GitHub repo + active Publisher + canonical main placeholder 即可停止，不要自动 bump/tag `0.1.0`，但完成报告必须准确写明 docs 是 live、visibility-gated 还是尚未配置。
 
-当任务是给现有 Chat-series CLI 包补齐 `--tree` / `--tree-brief` 时，同时加载 `chatarch-cli-tree-rollout` 和 `cli-tree-contract`。这种任务默认是 patch release，不是只发 diff：必须用 ChatStyle `chatstyle>=0.2.0,<0.3.0` 的共享 tree runtime；若包依赖 ChatEnv，则使用 `chatenv>=0.2.10,<0.3.0`；最终完成必须有 PR、green checks、merge、默认分支 tag、publish workflow success、PyPI wheel+sdist、clean install、发布态 CLI `--version` / `--tree` / `--tree-brief` 回读。不要用 `chatenv` 依赖过滤 Chat-series 目标；`ChatEvent` 这类无 ChatEnv 依赖但有 CLI 的包也属于 tree rollout 范围。
+当任务是给现有 Chat-series CLI 包补齐 `--tree` / `--tree-brief` 时，同时加载 `chatarch-cli-tree-rollout` 和 `cli-tree-contract`。这种任务默认是 patch release，不是只发 diff：必须用 ChatStyle `chatstyle>=0.2.0,<0.3.0` 的共享 tree runtime；若包有 ChatEnv/profile/config 行为，则使用 `chatenv>=0.2.10,<0.3.0` 并注册 ChatEnv typed profile/storage 路径；最终完成必须有 PR、green checks、merge、默认分支 tag、publish workflow success、PyPI wheel+sdist、clean install、发布态 CLI `--version` / `--tree` / `--tree-brief` 回读。新项目创建时就应满足这些规范；已有仓库缺少 ChatStyle/ChatEnv 对齐时，应修仓库或模板，使它回到当前标准。
 
 ## 两种流程必须分开
 
