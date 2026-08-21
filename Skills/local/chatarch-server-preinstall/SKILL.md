@@ -28,6 +28,8 @@ chatup inside ~/.chatarch/venv
 
 Do not install task-specific packages directly into system Python. Do not create one-off venvs under `~/.chatarch/venvs/<tool>` unless the user explicitly wants isolated tool venvs. If an ad-hoc venv was already created, move it to the nearest `.trash/` and restart from this preinstall flow.
 
+All ChatArch-managed service configuration, runtime state, secrets, token stores, and backups should live under `$CHATARCH_HOME` / `~/.chatarch`. ChatEnv profiles live under `~/.chatarch/envs/<Service>/`, and generated runtime tokens live under `~/.chatarch/tokens/<Service>/`. Do not put durable `Chat.env`, tokens, passwords, backend registries, or service state under `~/.config/<service>`, source checkouts, workspace project directories, or `/tmp`; system unit files may remain in OS-mandated locations only as thin launch wrappers that reference `~/.chatarch`.
+
 ## Remote inventory first
 
 Run a redacted inventory before writes:
