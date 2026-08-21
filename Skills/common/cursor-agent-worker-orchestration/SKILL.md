@@ -10,6 +10,8 @@ related_skills:
 
 Use this skill when Hermes needs to call Cursor Agent as a worker rather than perform the work directly. Hermes is the dispatcher/reviewer; Cursor is the executor.
 
+Shared/public copies of this skill must be host-neutral. Do not include concrete server aliases, usernames, home directories, private proxy helper paths, chat ids, or organization-internal machine names. Use placeholders such as `<workspace>`, `<node-bin-dir>`, `<proxy-helper>`, `<agent-command>`, and `<worker-host>`. Store concrete values only in workspace-local skills, task project notes, or private run JSON.
+
 ## Role Boundary
 
 - Hermes defines the task, repo/worktree, allowed side effects, report contract, and acceptance gates.
@@ -19,12 +21,12 @@ Use this skill when Hermes needs to call Cursor Agent as a worker rather than pe
 
 ## Active Binary Rule
 
-Resolve the active Cursor Agent executable before running a task. On `zhihong.oray`, long-running workers should use the top-level `agent` executable with the known Node path, not the small `cursor agent` smoke wrapper.
+Resolve the active Cursor Agent executable before running a task. On each worker host, long-running workers should use the verified full worker executable, often a top-level `agent` wrapper with a host-local Node path, not an unverified small `cursor agent` smoke wrapper.
 
 Smoke:
 
 ```bash
-NODE_BIN=/home/zhihong/Playground/projects/08-06-manim-exploration/playground/tools/node-v20.19.0-linux-x64/bin
+NODE_BIN=<node-bin-dir>
 PATH="$NODE_BIN:$PATH" agent --version
 PATH="$NODE_BIN:$PATH" agent --print --trust 'Reply exactly: CURSOR_AGENT_SMOKE_OK'
 ```
@@ -36,7 +38,7 @@ If a machine only has `cursor-agent` or `cursor agent`, verify a real `--print` 
 For each repo or lane, create one Cursor chat and persist it:
 
 ```bash
-NODE_BIN=/home/zhihong/Playground/projects/08-06-manim-exploration/playground/tools/node-v20.19.0-linux-x64/bin
+NODE_BIN=<node-bin-dir>
 CHAT_ID=$(agent create-chat | tr -d '\r' | tail -n 1)
 ```
 
@@ -50,8 +52,8 @@ from pathlib import Path
 print(Path(os.environ["PROMPT"]).read_text())
 PY
 )
-source /home/zhihong/Playground/.env
-source /home/zhihong/Playground/projects/devops/08-15-proxy-on-bin-scripts/scripts/proxy_on
+source <workspace>/.env
+source <proxy-helper-if-needed>
 PATH="$NODE_BIN:$PATH" agent --print --resume "$CHAT_ID" --force --trust "$prompt"
 ```
 

@@ -19,7 +19,7 @@ Do not use an old touched-repo ledger as the universe. Build the target list fro
 
 Default target class:
 
-1. Start from ChatArch org inventory, preferably `/home/zhihong/.chatarch/glance/data/chatarch-projects.json` when present.
+1. Start from ChatArch org inventory, preferably the current host's ChatGlance/ChatArch project inventory path when present, recorded in workspace-local notes as `<chatarch-projects-inventory>`.
 2. Remove forks and archived repositories.
 3. Keep Python packages with detected console-script CLI commands.
 4. For Chat-series scope, keep repos whose names start with `Chat` and then audit them against the current creation-time package standard.
@@ -78,10 +78,10 @@ If any item is missing, report `BLOCKED`, not `PASS`.
 
 ## Worker Pattern
 
-Use `hermes-external-agent-cli-orchestration` for exact agent invocation. On `zhihong.oray`, Cursor durable workers use top-level `agent`, not one-shot `cursor agent`:
+Use `hermes-external-agent-cli-orchestration` for exact agent invocation. For Cursor durable workers, use the current host's verified full worker executable, not an unverified one-shot wrapper:
 
 ```bash
-NODE_BIN=/home/zhihong/Playground/projects/08-06-manim-exploration/playground/tools/node-v20.19.0-linux-x64/bin
+NODE_BIN=<node-bin-dir>
 CHAT_ID=$(agent create-chat | tr -d '\r' | tail -n 1)
 PROMPT=/path/to/prompt.txt
 prompt=$(PROMPT="$PROMPT" python - <<'PY'
@@ -90,8 +90,8 @@ from pathlib import Path
 print(Path(os.environ["PROMPT"]).read_text())
 PY
 )
-source /home/zhihong/Playground/.env
-source /home/zhihong/Playground/projects/devops/08-15-proxy-on-bin-scripts/scripts/proxy_on
+source <workspace>/.env
+source <proxy-helper-if-needed>
 PATH="$NODE_BIN:$PATH" agent --print --resume "$CHAT_ID" --force --trust "$prompt"
 ```
 
@@ -114,8 +114,8 @@ Worker prompts must include:
 
 ## GitHub/PyPI Tooling
 
-- Use source/current ChatGH for PR/run/merge operations when installed `chatgh` may be stale: `PYTHONPATH=/home/zhihong/Playground/core/ChatGH/src python -m chatgh.cli ...`.
-- Load proxy for GitHub/PyPI network operations on `zhihong.oray` with the full helper path shown above.
+- Use source/current ChatGH for PR/run/merge operations when installed `chatgh` may be stale: `PYTHONPATH=<workspace>/core/ChatGH/src python -m chatgh.cli ...`.
+- Load the current host's approved proxy helper for GitHub/PyPI network operations when needed; keep concrete proxy helper paths in workspace-local notes, not shared skills.
 - Never print tokens, PyPI sessions, git extraHeaders, proxy credentials, passwords, cookies, or raw auth files.
 
 ## Pitfalls
