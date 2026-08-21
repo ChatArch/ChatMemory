@@ -12,6 +12,8 @@ Use this skill when Hermes needs to call Cursor Agent as a worker rather than pe
 
 Shared/public copies of this skill must be host-neutral. Do not include concrete server aliases, usernames, home directories, private proxy helper paths, chat ids, or organization-internal machine names. Use placeholders such as `<workspace>`, `<node-bin-dir>`, `<proxy-helper>`, `<agent-command>`, and `<worker-host>`. Store concrete values only in workspace-local skills, task project notes, or private run JSON.
 
+Worker host labels and SSH aliases are relative to the shell that runs the worker. Before launching Cursor Agent, resolve the executable and paths in the current execution context with `hostname`, `pwd`, and `command -v <agent-command>`; do not assume an alias copied from another machine exists here.
+
 ## Role Boundary
 
 - Hermes defines the task, repo/worktree, allowed side effects, report contract, and acceptance gates.

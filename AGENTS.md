@@ -7,6 +7,7 @@ This repository is shared ChatArch knowledge memory. Treat every tracked file, c
 - Do not write concrete server aliases, usernames, home directories, private workspace paths, chat ids, thread ids, internal hostnames, private proxy helper paths, tokens, cookies, API keys, passwords, or account-specific URLs into shared skills or public repo notes.
 - Use placeholders such as `<workspace>`, `<user>`, `<worker-host>`, `<machine-branch>`, `<proxy-helper>`, `<node-bin-dir>`, and `<chat-id>`.
 - Keep concrete machine values only in workspace-local non-shared skills, private project run JSON, or user-provided local config files that are not committed to this repo.
+- Treat SSH aliases and server nicknames as execution-context-relative. An alias that works from one operator machine may be meaningless or wrong when a worker runs on another host, so shared skills must describe the resolution step instead of naming the alias.
 - When cleaning already-committed environment-specific details, do not repeat those details in the new commit message, PR title/body, review comment, report, or public diff summary.
 - Before opening a PR, scan the staged diff and PR text for private names/paths. If the cleanup itself would reprint sensitive removed lines in a public review UI, use an approved redaction/diff-suppression path rather than quoting them.
 

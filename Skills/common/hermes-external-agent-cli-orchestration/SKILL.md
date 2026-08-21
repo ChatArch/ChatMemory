@@ -27,6 +27,8 @@ If the worker backend is Cursor Agent, load `cursor-agent-worker-orchestration` 
 
 Shared/public skills must stay host-neutral. Do not write concrete server aliases, usernames, home directories, chat ids, private proxy helper paths, or organization-internal machine names into this skill. Use placeholders such as `<workspace>`, `<node-bin-dir>`, `<proxy-helper>`, `<worker-host>`, and `<agent-command>`. Keep machine-specific command paths in the active workspace-local skill, task project notes, or run JSON that is not promoted as shared memory.
 
+Treat SSH aliases and worker-host nicknames as relative to the current execution environment. A name that works from the operator machine may not exist on the target machine or inside the worker's shell. Shared skills should say to resolve the worker host/executable from current local notes and verify with `hostname`, `pwd`, and `command -v <agent-command>` rather than naming a concrete alias.
+
 ## Decision model
 
 | Need | Preferred Hermes pattern |
