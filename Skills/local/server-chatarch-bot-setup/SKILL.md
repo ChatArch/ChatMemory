@@ -17,6 +17,7 @@ This is a copy-and-adapt local Skill template. Keep machine-specific hosts, Feis
 - Use remote `~/Playground` with capital `P` unless the target explicitly uses another workspace.
 - Use ordinary local `ssh <alias> ...` and `scp` for cross-machine setup; do not switch the Hermes thread into SSH Mode unless the user explicitly asks.
 - Start with redacted inventory before writes: host/user/home, `~/Playground`, `chatup`, Node.js, `cc-connect`, existing config paths, existing Feishu credentials, and service state.
+- Keep ChatArch install/config/runtime ownership under `$CHATARCH_HOME` / `~/.chatarch`: service env files, token profiles, password files, registries, state, logs, and backups belong under `~/.chatarch/<service>/` or ChatEnv `~/.chatarch/envs/<Service>/`. Do not create new durable `Chat.env`, token, password, registry, or state files under `~/.config/<service>`; systemd user unit files may live in `~/.config/systemd/user` only as OS-required thin wrappers that point to `~/.chatarch` paths.
 - Preserve existing Feishu `app_id`/`app_secret` if present; never overwrite a working bot binding just to normalize the config.
 - Do not hardcode proxy credentials, model API keys, Feishu secrets, or provider tokens into reusable scripts or reports.
 - For any remote config rewrite, first make a timestamped backup on the target and record only the backup path.
