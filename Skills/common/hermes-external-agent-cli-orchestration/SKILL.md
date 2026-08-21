@@ -1,7 +1,7 @@
 ---
 name: hermes-external-agent-cli-orchestration
 description: Use when Hermes needs to call Codex, Cursor Agent, Claude Code, OpenCode, or another local coding-agent CLI; choose terminal/process vs delegate_task/plugin/ACP.
-version: 0.1.1
+version: 0.1.3
 tags:
   - Hermes
   - coding-agent
@@ -12,6 +12,7 @@ tags:
 related_skills:
   - hermes-platform-development
   - server-chatarch-bot-setup
+  - cursor-agent-worker-orchestration
 ---
 
 # Hermes External Agent CLI Orchestration
@@ -19,6 +20,10 @@ related_skills:
 Use this skill when a Hermes session needs to invoke or design integration with an external coding-agent CLI such as Codex, Cursor Agent, Claude Code, OpenCode, or a similar local agent executable.
 
 This skill is about **Hermes orchestrating another agent process**. For normal Hermes subagents, use `delegate_task`; for server bot deployment, also load `server-chatarch-bot-setup`.
+
+Hermes should act as a scheduler/reviewer for this workflow: break the work into lanes, choose the right worker backend, provide self-contained prompts, supervise progress, handle resume/timeout, and independently verify outputs. Do not let a worker's self-report replace Hermes-side acceptance checks.
+
+If the worker backend is Cursor Agent, load `cursor-agent-worker-orchestration` for the exact `agent create-chat` / `agent --resume <chat_id>` pattern. This skill stays backend-general: Cursor, Codex, Claude Code, OpenCode, custom agents, and future ACP/MCP/plugin backends are all worker options.
 
 ## Decision model
 
@@ -43,7 +48,8 @@ Yes, many coding-agent CLIs can continue from earlier context, but there are two
    - It only lasts while that process/session is alive; do not treat a Hermes process session ID as a durable project record.
 
 2. **Use the CLI's own persisted conversation/session store.**
-   - Cursor Agent supports `--continue`, `--resume [chatId]`, `ls`, and `resume` on the installed CLI checked on 2026-08-05.
+   - Cursor Agent on `zhihong.oray` should use the top-level `agent` executable, not the minimal `cursor agent` wrapper, for durable workers. The verified pattern is `CHAT_ID=$(agent create-chat | tr -d '\r' | tail -n 1)` followed by `PATH="$NODE_BIN:$PATH" agent --print --resume "$CHAT_ID" --force --trust "$prompt"`; store that `chat_id` in the run JSON and reuse it for every continuation. `cursor agent` may work for tiny one-shot probes, but do not use it for resumable release workers.
+   - Cursor Agent supports `--continue`, `--resume [chatId]`, `ls`, and `resume` on the installed CLI checked on 2026-08-05; verify the active binary because help/output differs between `cursor-agent`, `cursor agent`, and top-level `agent`.
    - Codex supports `codex resume`; current help also exposes `codex exec resume` for resuming a previous exec session by id or latest session.
    - Claude Code supports `--continue`, `--resume`, `--session-id`, and `--fork-session`; session persistence can be disabled with `--no-session-persistence`.
    - OpenCode supports `--continue` / `-c`, `--session` / `-s`, `--fork`, `opencode session`, `opencode export`, and `opencode import`.
@@ -105,6 +111,8 @@ When the user asks Hermes to delegate a substantial task to an external CLI agen
 
 Codex is interactive enough that Hermes should generally call it with `pty=true`. Codex also requires a Git repo for execution tasks.
 
+Do not assume Codex is installed just because it is a possible fallback. Verify `command -v codex`, `codex --help` or `codex --version`, auth/status, and one bounded smoke before assigning work. On `zhihong.oray`, Codex CLI was observed absent during the Chat-series rollout; use Cursor `agent` or another verified external agent instead of promising a Codex lane there.
+
 ```python
 terminal(
     command="codex exec --sandbox workspace-write 'Implement <task>. Report changed files and tests.'",
@@ -132,11 +140,30 @@ Current Codex CLI guidance prefers `--sandbox workspace-write`; legacy `--full-a
 
 Hermes does not currently have a first-class Cursor Agent tool/provider in the official docs/source. Treat Cursor Agent as an external CLI unless a project supplies a plugin/MCP/ACP wrapper.
 
+On `zhihong.oray`, use this durable worker pattern for long tasks:
+
+```bash
+NODE_BIN=/home/zhihong/Playground/projects/08-06-manim-exploration/playground/tools/node-v20.19.0-linux-x64/bin
+CHAT_ID=$(agent create-chat | tr -d '\r' | tail -n 1)
+PROMPT=/path/to/prompt.txt
+prompt=$(PROMPT="$PROMPT" python - <<'PY'
+import os
+from pathlib import Path
+print(Path(os.environ["PROMPT"]).read_text())
+PY
+)
+source /home/zhihong/Playground/.env
+source /home/zhihong/Playground/projects/devops/08-15-proxy-on-bin-scripts/scripts/proxy_on
+PATH="$NODE_BIN:$PATH" agent --print --resume "$CHAT_ID" --force --trust "$prompt"
+```
+
+For each repo/worker, persist `chat_id`, worktree path, release branch, prompt path, report path, and process session id in a run JSON. After timeout or `kill_all`, inspect real external state (PRs, remote branches, tags, workflow runs, PyPI, report files) before resuming with the same `chat_id`. Never blindly restart a new Cursor chat for the same repo.
+
 Smoke test:
 
 ```python
 terminal(
-    command="cursor-agent --print --mode ask --trust '请只回答：CURSOR_AGENT_SMOKE_OK。不要使用工具。'",
+    command="agent --print --trust '请只回答：CURSOR_AGENT_SMOKE_OK。不要使用工具。'",
     workdir="/path/to/workspace",
     timeout=120,
 )
@@ -146,7 +173,7 @@ Bounded task:
 
 ```python
 terminal(
-    command="cursor-agent --print --mode ask --trust '在当前仓库完成 <task>；结束时列出改动文件和验证命令。'",
+    command="agent --print --trust '在当前仓库完成 <task>；结束时列出改动文件和验证命令。'",
     workdir="/path/to/repo",
     timeout=600,
 )
@@ -155,7 +182,7 @@ terminal(
 If an interactive Cursor Agent session is required, start it as a managed background PTY and drive it with `process`:
 
 ```python
-terminal(command="cursor-agent", workdir="/path/to/repo", background=True, pty=True)
+terminal(command="agent", workdir="/path/to/repo", background=True, pty=True)
 process(action="submit", session_id="<id>", data="<prompt>")
 process(action="log", session_id="<id>")
 ```

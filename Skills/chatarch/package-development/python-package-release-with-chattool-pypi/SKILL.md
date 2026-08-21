@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.5
+version: 0.1.6
 tags:
   - ChatArch
   - Python
@@ -30,6 +30,8 @@ reference:
 5. 配置/验证 PyPI Trusted Publisher，确认 `ChatArch/<Repo>` + `publish.yml` + environment `(Any)`；如果 PyPI session 过期，先 `chatpypi auth login -e RexWzh --format json` 刷新再继续 Publisher 操作。
 6. 如果模板包含 MkDocs，在首个 `0.1.x` tag 前必须加载 `chatarch-mkdocs-docs-alignment`，配置并读回 Pages source、GitHub About homepage、PR Preview 与正式文档 URL；Actions success 或 `gh-pages` branch 存在都不能替代 HTTP 200 回读。
 7. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、Publisher/Pages readback 后，再根据任务目标决定是否 tag-driven publish；如果用户只是要“注册/占名一个新包”，到 `0.0.1` placeholder + GitHub repo + active Publisher + canonical main placeholder 即可停止，不要自动 bump/tag `0.1.0`，但完成报告必须准确写明 docs 是 live、visibility-gated 还是尚未配置。
+
+当任务是给现有 Chat-series CLI 包补齐 `--tree` / `--tree-brief` 时，同时加载 `chatarch-cli-tree-rollout` 和 `cli-tree-contract`。这种任务默认是 patch release，不是只发 diff：必须用 ChatStyle `chatstyle>=0.2.0,<0.3.0` 的共享 tree runtime；若包依赖 ChatEnv，则使用 `chatenv>=0.2.10,<0.3.0`；最终完成必须有 PR、green checks、merge、默认分支 tag、publish workflow success、PyPI wheel+sdist、clean install、发布态 CLI `--version` / `--tree` / `--tree-brief` 回读。不要用 `chatenv` 依赖过滤 Chat-series 目标；`ChatEvent` 这类无 ChatEnv 依赖但有 CLI 的包也属于 tree rollout 范围。
 
 ## 两种流程必须分开
 
@@ -302,7 +304,7 @@ ChatArch 模板应包含：
 - `DEVELOP.md`
 - `CHANGELOG.md`
 - `.github/workflows/*`
-- 依赖 `chatstyle>=0.1.0,<0.2.0` 与 `chatenv>=0.2.0,<0.3.0`
+- 依赖 `chatstyle>=0.2.0,<0.3.0`；如果包使用 ChatEnv，则依赖 `chatenv>=0.2.10,<0.3.0`
 - 默认 publish workflow 不应包含 `environment: pypi`，除非 PyPI Trusted Publisher 明确配置了同名 environment。
 
 ChatArch 模板的 CLI skeleton 细节按 ChatArch CLI/package conventions 检查；这里不重复展开模板内部命令形态。初始化后检查真实 package command skeleton、ChatEnv/ChatStyle wiring、tests、build/check、publish workflow，不把示例/demo 命令当作发布验收点。
@@ -323,6 +325,8 @@ rm -rf dist build *.egg-info src/*.egg-info
 chatpypi pkg build --project-dir .
 chatpypi pkg check --project-dir .
 <cli-command> --help
+<cli-command> --tree
+<cli-command> --tree-brief
 ```
 
 `chatpypi pkg build/check` wrap `python -m build` and `twine check`; the active venv still needs those tools installed, usually through `.[dev]`.
@@ -332,7 +336,7 @@ chatpypi pkg check --project-dir .
 - pytest 全部通过。
 - `chatpypi pkg build` 生成 sdist 和 wheel。
 - `chatpypi pkg check` 对所有 dist 文件 `PASSED`。
-- CLI help 正常显示。
+- CLI help、`--tree`、`--tree-brief` 正常显示。
 
 ### 5. 初始化 git、commit、push
 
@@ -434,6 +438,9 @@ uv venv <WORKSPACE_ROOT>/projects/<task>/playground/install-check
 . <WORKSPACE_ROOT>/projects/<task>/playground/install-check/bin/activate
 uv pip install '<ProjectName>==<version>'
 <cli-command> --help
+<cli-command> --version
+<cli-command> --tree
+<cli-command> --tree-brief
 ```
 
 ## 结束同步硬门槛
@@ -480,7 +487,7 @@ git log -1 --oneline --decorate
 - Tests: python -m pytest -q -> ... passed
 - Build: `chatpypi pkg build --project-dir .` -> wheel + sdist
 - Check: `chatpypi pkg check --project-dir .` -> PASSED
-- Install check: uv pip install '<ProjectName>==<version>' + <cli-command> --help OK
+- Install check: uv pip install '<ProjectName>==<version>' + <cli-command> --help/--version/--tree/--tree-brief OK
 - Docs Pages: source/status + root/preview HTTP readback（或明确的 private visibility gate）
 - GitHub About: homepage = https://arch.gh.wzhecnu.cn/<ProjectName>/
 ```

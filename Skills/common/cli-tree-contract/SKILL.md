@@ -1,7 +1,7 @@
 ---
 name: cli-tree-contract
-description: "Use when designing or reviewing CLI tools: require --tree and a real registered command tree with leaf purposes."
-version: 0.1.0
+description: "Use when designing/reviewing CLI tools: require --tree, --tree-brief, and real registered command tree output."
+version: 0.1.1
 ---
 
 # CLI Tree Contract
@@ -16,11 +16,13 @@ Trigger phrases include:
 - “每个接口长什么样”
 - “每个接口在做什么”
 - “对齐 CLI”
-- adding or reviewing `--help`, `--tree`, command groups, aliases, or CLI templates
+- adding or reviewing `--help`, `--tree`, `--tree-brief`, command groups, aliases, or CLI templates
 
 ## Definition
 
 A CLI tree is the **actual registered command surface**, not a prose summary and not a list of random examples.
+
+For ChatArch Python CLIs, the current shared baseline is ChatStyle `chatstyle>=0.2.0,<0.3.0`. Click CLIs should use ChatStyle's shared tree runtime (`add_tree_option()` / registered tree renderer) rather than copying package-local tree renderers. `--tree` should include signatures; `--tree-brief` should omit signatures while preserving nodes and descriptions.
 
 A valid CLI tree must show:
 
@@ -56,16 +58,18 @@ Then provide a leaf table when the tree is non-trivial:
 |---|---|---|---|---|---|
 | `chatpost account list` | List aliases | optional registry | text/json | read-only | no secrets |
 
-## `--help` vs `--tree`
+## `--help` vs `--tree` vs `--tree-brief`
 
-Every ChatArch/ChatStyle CLI template and substantial CLI package should expose both:
+Every ChatArch/ChatStyle CLI template and substantial CLI package should expose all three:
 
 - `--help`: command-specific usage, arguments, options, and examples for the current command or group.
 - `--tree`: the registered CLI tree for the current CLI, with one-line purpose comments and actual reachable leaf commands.
+- `--tree-brief`: the same registered tree without argument/option signatures, for compact summaries and dashboards.
 
 Recommended behavior:
 
 - Root: `<tool> --tree` prints the full visible registered tree.
+- Root: `<tool> --tree-brief` prints the signature-free visible registered tree.
 - Group: `<tool> <group> --tree` may print that subtree when the framework supports inherited/group options cleanly.
 - Machine output: support `--tree --output json` or a sibling `tree --output json` only when automation needs it; human tree output is mandatory first.
 - Hidden compatibility aliases must be omitted from the visible tree unless the user explicitly asks for compatibility inventory.
@@ -77,9 +81,9 @@ When asked to align a CLI:
 
 1. Run the real CLI help for root and subcommands.
 2. Inspect the command registry or source registration to determine actual groups and leaves.
-3. Produce the CLI tree first, before design prose.
+3. Produce both the full and brief CLI tree first, before design prose.
 4. For every leaf, state what it does, inputs, outputs, side effects, and boundary.
-5. Mark problems explicitly: ambiguous names, leaf/group confusion, platform coupling, missing `--tree`, stale docs, hidden aliases, or commands that are examples but not registered.
+5. Mark problems explicitly: ambiguous names, leaf/group confusion, platform coupling, missing `--tree`, missing `--tree-brief`, stale docs, hidden aliases, or commands that are examples but not registered.
 6. Only after the tree and contract are aligned should implementation begin.
 
 ## Template Requirement
@@ -89,8 +93,9 @@ ChatPyPI / ChatArch package templates that create a ChatStyle CLI must include:
 1. A top-level `--version`.
 2. A top-level `--help`.
 3. A top-level `--tree` that prints the actual registered CLI tree.
-4. A focused test that asserts `--tree` includes the expected root, groups, leaves, and one-line purpose comments.
-5. A docs section named “CLI tree” or “命令树” generated from or checked against the same registered command structure.
+4. A top-level `--tree-brief` that prints the same tree without signatures.
+5. Focused tests that assert `--tree` includes the expected root, groups, leaves, signatures, and one-line purpose comments; and that `--tree-brief` exits 0 and omits representative signatures.
+6. A docs section named “CLI tree” or “命令树” generated from or checked against the same registered command structure.
 
 ## Verification Checklist
 
@@ -99,6 +104,7 @@ For a concrete CLI package:
 ```bash
 <venv>/bin/<tool> --help
 <venv>/bin/<tool> --tree
+<venv>/bin/<tool> --tree-brief
 <venv>/bin/<tool> <group> --help
 PYTHONPATH=src <venv>/bin/python -m pytest -q tests/test_cli*.py
 ```
@@ -106,6 +112,7 @@ PYTHONPATH=src <venv>/bin/python -m pytest -q tests/test_cli*.py
 Tests should verify:
 
 - `--tree` exits 0.
+- `--tree-brief` exits 0 and omits argument/option signatures.
 - The root command appears exactly once.
 - All visible registered groups and leaf commands appear.
 - Rejected aliases or platform-specific delivery protocols do not appear.
@@ -118,4 +125,4 @@ Tests should verify:
 - Treating `--help` output of a leaf command with extra words as evidence those words are subcommands.
 - Listing platform delivery details such as Feishu/Hermes `MEDIA:` inside a platform-neutral CLI tree.
 - Hiding side effects: if a command writes, publishes, opens a browser, waits for login, or creates a receipt, say so on the leaf.
-- Updating docs but not adding `--tree` to the runtime CLI and tests.
+- Updating docs but not adding `--tree` / `--tree-brief` to the runtime CLI and tests.

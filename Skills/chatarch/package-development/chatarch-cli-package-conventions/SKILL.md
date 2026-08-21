@@ -1,7 +1,7 @@
 ---
 name: chatarch-cli-package-conventions
-description: "ChatArch Python CLI package conventions: ChatEnv integration, ChatStyle interactive UX, dependency bounds, and package-template checks."
-version: 0.1.1
+description: "ChatArch Python CLI package conventions: ChatEnv, ChatStyle tree/interactive UX, dependency bounds, and release gates."
+version: 0.1.2
 ---
 
 # ChatArch CLI Package Conventions
@@ -34,8 +34,9 @@ ChatArch package templates should generate a usable package skeleton with the ex
 Generated ChatArch CLI packages should include:
 
 - top-level `--version`
+- top-level `--tree` and `--tree-brief` for real console-script CLIs; Click CLIs should use ChatStyle `add_tree_option()` from `chatstyle>=0.2.0,<0.3.0` instead of package-local tree renderers
 - help text for the actual package command surface
-- tests for the real command skeleton and version output
+- tests for the real command skeleton, version output, `--tree`, and `--tree-brief`
 - ChatEnv/ChatStyle wiring when the package defines config or interactive input
 - build/check/publish workflow files that match the intended release path
 - when MkDocs is enabled: bounded docs dependencies, `mkdocs.yml`, bilingual source slots, CI/Preview/Deploy workflows, package Documentation URL, and ignored `site/` output
@@ -160,6 +161,7 @@ Use ChatStyle for user-facing interactive behavior instead of hand-rolled prompt
 Package CLIs should expose:
 
 - top-level `--version`
+- top-level `--tree` and `--tree-brief` when the package has a real console script; `--tree` includes argument/option signatures, `--tree-brief` omits signatures, and both render from the actual command registry rather than README examples
 - clear help text for env-var-name options versus secret values
 - JSON output mode for automation where useful
 - non-zero exits for reserved/planned commands; do not let placeholders look successful
@@ -171,8 +173,8 @@ For ChatArch packages, internal dependencies need upper bounds.
 For pre-1.0 internal packages, use the next minor as the compatibility boundary:
 
 ```toml
-chatenv>=0.2.0,<0.3.0
-chatstyle>=0.1.0,<0.2.0
+chatenv>=0.2.10,<0.3.0
+chatstyle>=0.2.0,<0.3.0
 chatup>=0.2.0,<0.3.0
 ```
 
@@ -194,7 +196,7 @@ Before finalizing a ChatArch CLI package PR:
 4. `-e/--env-profile` behavior, if present, is tested for selected-profile isolation.
 5. CLI commands are thin adapters over reusable importable Python functions/APIs, with direct function tests plus CLI smoke tests.
 6. ChatStyle is used for interactive prompts and non-interactive failure paths.
-7. Top-level `--version` works and has tests.
+7. Top-level `--version`, `--tree`, and `--tree-brief` work and have tests.
 8. Runtime dependencies include bounded ChatArch internals.
 9. Full gates pass: unit tests, version smoke, build, package check, docs if present.
 10. Security scan confirms no hardcoded secrets or raw token/cookie output.
@@ -220,6 +222,8 @@ Typical local verification:
 ```bash
 PYTHONPATH=src python -m pytest -q
 PYTHONPATH=src python -m <module>.cli --version
+PYTHONPATH=src python -m <module>.cli --tree
+PYTHONPATH=src python -m <module>.cli --tree-brief
 python -m build
 python -m twine check dist/*
 mkdocs build --strict  # if docs exist
