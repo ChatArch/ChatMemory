@@ -53,7 +53,24 @@ reference:
 5. 运行 `npm publish --dry-run --access public --registry https://registry.npmjs.org/`
 6. 用户确认目标后执行 `npm publish --access public`（或 `--access public --provenance` 开启 OIDC 出处证明）
 
-### GitHub Actions 发布（推荐）
+### 首次发布 bootstrap：先创建 npm package，再配置 Trusted Publishing
+
+npm Trusted Publishing / OIDC 是后续发版的首选，但**首次发布通常不能完全自动**：npm 的 Trusted Publisher 配置入口在 package 设置页里，而 package 设置页只有 package 已存在后才可配置。
+
+推荐顺序：
+
+1. 用本地 npm 登录态或一次性 Granular Access Token 发布第一个公开版本（通常 `0.0.1` placeholder）。
+2. 发布前必须 `npm pack --dry-run`，确认 tarball 内容、安全边界和 `--access public`。
+3. 发布成功后，在 npm package settings 中配置 Trusted Publisher：
+   - Package: `<package>`
+   - GitHub owner/org: `<owner>`
+   - Repository: `<repo>`
+   - Workflow filename: `publish.yml` 或实际 npm publish workflow
+4. 从第二个版本起，通过 GitHub Actions OIDC 发布，不再使用本地 token。
+
+如果第一次 tag-driven `npm publish --provenance` 失败，而 package 还不存在，优先判断为 bootstrap gate，不要反复重推 tag。先完成本地/短期 token 首发，再配置 Trusted Publisher，后续 rerun 或新 tag 才会成功。
+
+### GitHub Actions 发布（推荐，用于 package 已存在后的持续发版）
 
 在 CI 中使用 npm Trusted Publishing / OIDC，无需长期 token：
 
@@ -132,9 +149,10 @@ jobs:
 
 1. 保持目标版本不变，不重新打开版本决策
 2. 如果返回 `https://www.npmjs.com/auth/cli/***` 这类 URL，重试 `--auth-type=legacy` 获取可操作的认证 URL
-3. 打开认证 URL（`open '<url>'`）或发送给用户完成浏览器/安全密钥认证
-4. 如果 npm 要求 authenticator code，只问用户当前的 6 位 OTP，然后 `npm publish --otp <code>` 重试
-5. 认证后立即验证：`npm view <pkg>@<version> --json`、clean install、bin smoke
+3. 用 `chatnpm auth parse-output --format json` 解析 npm 输出中的 `login_url`、`otp_required` 和 `status`，由宿主平台（Hermes/Feishu/Slack 等）把 `login_url` 渲染成卡片按钮并等待用户点击完成；ChatNPM 本身不绑定具体消息平台
+4. 打开认证 URL（或通过卡片交给用户完成浏览器/安全密钥认证）
+5. 如果 npm 要求 authenticator code，只问用户当前的 6 位 OTP，然后 `npm publish --otp <code>` 或向等待中的 publish 进程提交 OTP
+6. 认证后立即验证：`npm view <pkg>@<version> --json`、clean install、bin smoke
 
 ## 只读审计（ChatNPM 模式）
 
