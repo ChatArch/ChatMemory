@@ -13,10 +13,11 @@ This shared skill is host-neutral. Keep concrete server aliases, usernames, priv
 ## P0 boundaries
 
 1. **ChatEnv is canonical.** Production configuration must live in the typed ChatEnv profile for the service, e.g. `~/.chatarch/envs/ChatVoice/.env`. Do not create a parallel dotenv pointer such as `QWEN_TOKEN_PLAN_ENV_FILE`, and do not create a differently-cased storage namespace such as `Chatvoice`.
-2. **OpenAI-compatible model fields only.** Model-provider config uses `OPENAI_API_BASE`, `OPENAI_API_KEY`, and `OPENAI_API_MODEL`. Provider-specific variables are not the product-facing or deployment-facing interface.
-3. **Token Plan guard.** If the deployment is expected to use a Token Plan key, the system-voice path must require an `sk-sp...` `OPENAI_API_KEY` and reject ordinary usage-billed `sk-...` keys with a clear 503 before calling upstream. Never print full keys, key fragments, hashes, or derived identifiers.
-4. **No silent UI no-ops.** A disabled or blocked button must show a visible reason: login missing, reference audio missing, consent missing, sidecar offline, Token Plan missing, or text missing.
-5. **Visual acceptance includes all primary buttons.** Do not validate only the API or only one panel. Check both the meeting recorder page and the voice studio. If a screenshot/user report shows a clipped button, verify actual browser geometry after the fix.
+2. **Do not occupy ChatEnv's global OpenAI provider fields.** ChatVoice-owned model-provider config uses service-scoped OpenAI-compatible names: `CHATVOICE_OPENAI_API_BASE`, `CHATVOICE_OPENAI_API_KEY`, and `CHATVOICE_OPENAI_API_MODEL`. The built-in/global `OPENAI_*` names belong to ChatEnv/provider surfaces, not to the ChatVoice service profile.
+3. **Token Plan guard.** If the deployment is expected to use a Token Plan key, the system-voice path must require an `sk-sp...` `CHATVOICE_OPENAI_API_KEY` and reject ordinary usage-billed `sk-...` keys with a clear 503 before calling upstream. Never print full keys, key fragments, hashes, or derived identifiers.
+4. **No database URL switch for packaged storage.** ChatVoice packaged storage is one resolved SQLite file. Do not add `CHATVOICE_DATABASE_URL` / `DATABASE_URL` as a pseudo-migration knob; use file-level backup/restore commands for the current storage layer.
+5. **No silent UI no-ops.** A disabled or blocked button must show a visible reason: login missing, reference audio missing, consent missing, sidecar offline, Token Plan missing, or text missing.
+6. **Visual acceptance includes all primary buttons.** Do not validate only the API or only one panel. Check both the meeting recorder page and the voice studio. If a screenshot/user report shows a clipped button, verify actual browser geometry after the fix.
 
 ## Voice Studio product rules
 
@@ -28,11 +29,12 @@ This shared skill is host-neutral. Keep concrete server aliases, usernames, priv
 ## Runtime implementation checklist
 
 - Register and test a typed ChatEnv provider with canonical storage name `ChatVoice`.
-- Runtime startup scripts should export process environment from `EnvStore(...).load_active(ChatVoiceConfig)` / `ChatVoiceConfig.load_from_sources(...)`, then run the packaged service command. Startup scripts should not embed secrets or point to a second provider-specific env file.
-- `/api/status` should expose only safe booleans and redacted metadata: storage namespace, base host/path, Token Plan key present/valid, configured sidecar URL boolean, and selected model name. It must not expose raw keys or hashes.
-- System TTS should return 503 for missing/non-Token-Plan model key and should pass through `HTTPException` instead of wrapping it as 500/502.
+- Runtime startup scripts should export process environment from `EnvStore(...).load_active(ChatVoiceConfig)` / `ChatVoiceConfig.load_from_sources(...)`, then run the packaged service command. Startup scripts should not embed secrets, point to a second provider-specific env file, export global `OPENAI_*` overrides, or define a `DATABASE_URL`.
+- `/api/status` should expose only safe booleans and redacted metadata: storage namespace, base host/path, Token Plan key present/valid, configured sidecar URL boolean, selected model name, and SQLite database status. It must not expose raw keys or hashes.
+- System TTS should return 503 for missing/non-Token-Plan `CHATVOICE_OPENAI_API_KEY` and should pass through `HTTPException` instead of wrapping it as 500/502.
 - Keep direct legacy voice-enrollment routes out of the product path unless explicitly reintroduced; one-shot cloning should go through the local sidecar API such as `/api/voice-clone/*`.
 - CLI tree support should come from ChatStyle (`add_tree_option`) and be verified with the real installed `chatvoice --tree-brief`.
+- Provide file-level data backup/restore commands for SQLite storage (for example `data dump` and guarded `data import`) and verify them with an integrity-checked round trip. Do not treat this as permission to run a production restore without an explicit restore task and stopped service.
 
 ## Release / deployment gates
 
@@ -42,15 +44,16 @@ Before publishing a ChatVoice release:
 2. Run targeted tests for config, web API, static UI contracts, and CLI tree.
 3. Run full gates: pytest, compileall, `git diff --check`, docs build strict, wheel/sdist build, and `twine check`.
 4. Clean-install the published or candidate package in an isolated venv and run `chatvoice --version` plus `chatvoice --tree-brief`.
-5. Deploy using the service's graceful supervisor/tmux/systemd helper; do not use `kill` / `kill -9` for normal restarts.
-6. Public readback: heartbeat, status, voice-clone sidecar status, system `/api/tts` real audio generation when Token Plan is configured, and one-shot voice-clone flow when relevant.
-7. Browser visual acceptance without annotation overlays:
+5. Verify any SQLite file-level backup command produces a single file with `integrity=ok`; remove task-generated production dumps after smoke verification.
+6. Deploy using the service's graceful supervisor/tmux/systemd helper; do not use `kill` / `kill -9` for normal restarts.
+7. Public readback: heartbeat, status, voice-clone sidecar status, system `/api/tts` real audio generation when Token Plan is configured, and one-shot voice-clone flow when relevant.
+8. Browser visual acceptance without annotation overlays:
    - meeting recorder start/finish controls visible and hit-testable;
    - voice studio cards visible in one list;
    - default text present if product expects immediate debugging;
    - `录参考音` / reference-audio controls visible and not covered by the right result panel;
    - console has no JS errors.
-8. Add or update docs with the acceptance result and screenshot asset when the UI changed.
+9. Add or update docs with the acceptance result and screenshot asset when the UI changed.
 
 ## Geometry check pattern for clipped buttons
 
