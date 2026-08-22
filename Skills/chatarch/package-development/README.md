@@ -14,6 +14,7 @@
 package-development/
   README.md
   chatarch-cli-package-conventions/
+  chatarch-npm-package-publishing/
   python-package-release-with-chattool-pypi/
   chatgh-pr-and-ci-workflow/
   chatgh-repo-token-setup/
@@ -39,6 +40,21 @@ package-development/
 4. 在开发/PR 阶段决定应该修 leaf package 还是修 ChatEnv / ChatStyle / ChatUp / ChatPyPI 这类基础设施。
 
 什么时候用：创建或修改 ChatArch Python CLI 包、模板、CLI 骨架、ChatEnv/ChatStyle 集成时。
+
+### `chatarch-npm-package-publishing`
+
+用途：ChatArch 组织下 npm 包的发版流程：包名/scope 规范、npm Trusted Publishing / OIDC 配置、GitHub Actions 发布工作流、Go CLI 安装器包装包（cc-connect 模式）和发版后验证。
+
+覆盖流程：
+
+1. 确认 npm 包名、scope（`@chatarch` 或指定的 scope）、`package.json` 元数据（name/version/private）。
+2. 确认 npm 登录状态和 scope 成员身份。
+3. 查询 registry 现有版本，避免重复发布。
+4. 使用 GitHub Actions + npm Trusted Publishing（OIDC）发布，`workflow_dispatch` 手动触发，dry-run 和 publish 分离。
+5. 对于 Go CLI 安装器包装包，先完成 Git tag + GitHub Release 资产，再发布 npm 安装器包。
+6. 发版后回读：`npm view`、clean install、CLI 验证。
+
+什么时候用：创建、修改或发布 ChatArch 组织下的 npm 包时。
 
 ### `python-package-release-with-chattool-pypi`
 
