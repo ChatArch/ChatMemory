@@ -26,6 +26,13 @@ This shared skill is host-neutral. Keep concrete server aliases, usernames, priv
 - The meeting recorder does not save or download raw recording audio; it saves text/summary state only according to product mode.
 - The reference-audio row must remain responsive. A known regression is a fixed-width grid where the `录参考音` button overflows underneath the right `试听结果` panel. Prefer flexible `minmax()` columns and a static contract that forbids the old fixed-width grid.
 
+## Recorder boundary-case rules
+
+- Meeting recorder destructive actions must be tested while recording is active, not only when idle. Cover at least: clear/reset current session, create a new meeting, delete the active meeting, and any future mode switch that discards or replaces current recording state.
+- Destructive actions during `connecting` / `recording` / `paused` / `finishing` must interrupt recording resources first: close the ASR WebSocket, stop microphone `MediaStreamTrack`s, disconnect processors/sources, close `AudioContext`, stop timers/animation frames, clear pending ASR commit flags, and cancel in-flight summary/title work before clearing content or deleting records.
+- Guard against late ASR/WebSocket events after an interrupt. Use a session token/epoch or equivalent so events from an old stream cannot write transcript/summary state into a new or cleared meeting.
+- Browser acceptance for this class should click the real production/preview UI controls. If real mic permission is unavailable in automation, inject observable fake `getUserMedia`, `WebSocket`, and `AudioContext` objects, then click the real buttons and assert resource cleanup (`track.stop()`, socket close reason, audio graph close/disconnect, idle UI, no console errors).
+
 ## Runtime implementation checklist
 
 - Register and test a typed ChatEnv provider with canonical storage name `ChatVoice`.
