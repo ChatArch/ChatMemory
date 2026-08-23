@@ -35,6 +35,9 @@ This shared skill is host-neutral. Keep concrete server aliases, usernames, priv
 - Keep direct legacy voice-enrollment routes out of the product path unless explicitly reintroduced; one-shot cloning should go through the local sidecar API such as `/api/voice-clone/*`.
 - CLI tree support should come from ChatStyle (`add_tree_option`) and be verified with the real installed `chatvoice --tree-brief`.
 - Provide file-level data backup/restore commands for SQLite storage (for example `data dump` and guarded `data import`) and verify them with an integrity-checked round trip. Do not treat this as permission to run a production restore without an explicit restore task and stopped service.
+- Do not assume the public ChatVoice main service and the VoiceClone/IndexTTS sidecar run on the same host. Read the actual proxy upstream and `/api/status` sidecar endpoint before changing runtime config.
+- `funasr-gpu` production must be persistent: in-process FunASR with startup prewarm or an explicit persistent ASR API server. Do not silently fall back to a short-lived subprocess worker that reloads `AutoModel(...)` per request/chunk; gate that only behind an explicit debug/compatibility flag.
+- After a VoiceClone/IndexTTS sidecar restart, verify `/health model_loaded=true` from the ChatVoice host. If the sidecar has no warmup endpoint, use a synthetic non-user-data one-shot job, wait for ready/failed, delete the job, then re-check health.
 
 ## Release / deployment gates
 
