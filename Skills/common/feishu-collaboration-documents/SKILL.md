@@ -10,7 +10,7 @@ Use this public/shared skill when creating, updating, or verifying Feishu/Lark d
 
 ## Private Feishu/Lark Context Policy
 
-Shared ChatMemory skills are synchronized through GitHub and must be treated as content that could be read outside the current machine/workspace. Do **not** put real Feishu/Lark document URLs, wiki URLs, tenant domains, user open IDs, chat IDs, message IDs, app IDs, account names, or other machine/account-specific collaboration identifiers in shared skills.
+Shared ChatMemory skills are synchronized through GitHub and must be treated as content that could be read outside the current machine/workspace. Do **not** put real Feishu/Lark document URLs, wiki URLs, tenant domains, user open IDs, chat IDs, message IDs, app IDs, account names, group chat IDs, bot IDs, or other machine/account-specific collaboration identifiers in shared skills.
 
 Use placeholders in shared skills:
 
@@ -21,6 +21,8 @@ Use placeholders in shared skills:
 <LOCAL_FEISHU_USER_OPEN_ID>
 <LOCAL_FEISHU_CHAT_ID>
 <LOCAL_FEISHU_MESSAGE_ID>
+<LOCAL_SECTION_NAME>
+<LOCAL_APP_PROFILE_NOTES>
 ```
 
 Machine-specific Feishu/Lark context belongs in one of these local-only places:
