@@ -34,6 +34,12 @@ version: 1.0.0
 5. 把当前用户目标和硬边界写入 PRD，再开始调研、克隆、编码、生成素材或创建在线文档。
 6. 每完成一项实质动作立即更新 `progress.md`，不要全部拖到会话结束。
 
+## 共享环境入口
+
+- Playground 根目录 `.env` 是工作区级共享环境入口，适合记录 Universe RC、代理启用函数、服务入口键名等跨 Project 复用约定。
+- 需要 GitHub、X、外网 API、服务账号或机器环境信息时，先确认 `.env` 中是否已有对应键名、函数或占位约定，再决定如何启用环境；不要猜测机器私有路径或手写固定代理地址。
+- 读取 `.env` 必须脱敏：可以确认变量/函数是否存在、用途是什么；不要把 token、cookie、password、proxy URL、API key、Authorization header、具体账号路径等值写入 PRD、progress、reports、日志或回复。
+
 ## Playground 默认结构
 
 当工作区规范采用 `projects/` 时：
