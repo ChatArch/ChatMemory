@@ -1,7 +1,7 @@
 ---
 name: hermes-external-agent-cli-orchestration
 description: Use when Hermes needs to call Codex, Cursor Agent, Claude Code, OpenCode, or another local coding-agent CLI; choose terminal/process vs delegate_task/plugin/ACP.
-version: 0.1.3
+version: 0.1.5
 tags:
   - Hermes
   - coding-agent
@@ -52,11 +52,10 @@ Yes, many coding-agent CLIs can continue from earlier context, but there are two
    - It only lasts while that process/session is alive; do not treat a Hermes process session ID as a durable project record.
 
 2. **Use the CLI's own persisted conversation/session store.**
-   - Cursor Agent durable workers should use the verified full worker executable for the current host, often a top-level `agent` wrapper, not an unverified lightweight wrapper. The portable pattern is `CHAT_ID=$(<agent-command> create-chat | tr -d '\r' | tail -n 1)` followed by `<agent-command> --print --resume "$CHAT_ID" ...`; store that `chat_id` in the run JSON and reuse it for every continuation. A small wrapper such as `cursor agent` may work for tiny one-shot probes, but do not use it for resumable release workers until its resume behavior is verified on that host.
-   - Cursor Agent supports `--continue`, `--resume [chatId]`, `ls`, and `resume` on the installed CLI checked on 2026-08-05; verify the active binary because help/output differs between `cursor-agent`, `cursor agent`, and top-level `agent`.
-   - Codex supports `codex resume`; current help also exposes `codex exec resume` for resuming a previous exec session by id or latest session.
+   - Cursor Agent durable workers should use the verified full worker executable for the current host, often a top-level `agent` wrapper, not an unverified lightweight wrapper. The portable pattern is `CHAT_ID=$(<agent-command> create-chat | tr -d '\r' | tail -n 1)` followed by `<agent-command> --print --resume "$CHAT_ID" --force --trust <prompt>`; store that `chat_id` in the run JSON and reuse it for every continuation. A small wrapper such as `cursor agent` may work for tiny one-shot probes, but do not use it for resumable release workers until its resume behavior is verified on that host.
+   - Codex supports `codex resume`; current help also exposes `codex exec resume` for resuming a previous exec session by id or latest session. Practice on 2026-08-25 verified that `codex exec resume` uses config overrides such as `-c 'sandbox_mode="read-only"'`; do not put the normal initial-run `-s read-only` flag after the session id.
    - Claude Code supports `--continue`, `--resume`, `--session-id`, and `--fork-session`; session persistence can be disabled with `--no-session-persistence`.
-   - OpenCode supports `--continue` / `-c`, `--session` / `-s`, `--fork`, `opencode session`, `opencode export`, and `opencode import`.
+   - OpenCode supports `opencode run --session <session-id> <prompt>` for explicit persisted-session continuation, plus `--continue` / `-c`, `--session` / `-s`, `--fork`, `opencode session`, `opencode export`, and `opencode import`.
 
 When using a persisted CLI session, store the external session id/name in the active Project `progress.md` or task notes. On the next turn, resume by id when possible instead of relying on “latest session”, because multiple agents or repos may have run since then.
 
@@ -113,16 +112,15 @@ When the user asks Hermes to delegate a substantial task to an external CLI agen
 
 ### Codex CLI
 
-Codex is interactive enough that Hermes should generally call it with `pty=true`. Codex also requires a Git repo for execution tasks.
+Codex `exec` one-shots do not need a PTY for bounded automation. Use a PTY only for interactive Codex sessions you intend to steer live.
 
-Do not assume Codex is installed just because it is a possible fallback. Verify `command -v codex`, `codex --help` or `codex --version`, auth/status, and one bounded smoke before assigning work. If Codex is absent on the current host, use another verified external agent instead of promising a Codex lane there.
+Do not assume Codex is installed just because it is a possible fallback. Verify `command -v codex`, `codex --help` or `codex --version`, auth/status, and one bounded smoke before assigning work. If Codex is absent on the current host, first check whether a Node/nvm install is present but missing from the non-login PATH; otherwise use another verified external agent instead of promising a Codex lane there.
 
 ```python
 terminal(
-    command="codex exec --sandbox workspace-write 'Implement <task>. Report changed files and tests.'",
-    workdir="/path/to/repo",
-    pty=True,
-    timeout=600,
+    command="codex exec --skip-git-repo-check -s read-only -c 'approval_policy=\"never\"' 'Reply exactly CODEX_SMOKE_OK. Do not use tools.'",
+    workdir="/path/to/repo-or-scratch",
+    timeout=300,
 )
 ```
 
@@ -130,25 +128,37 @@ For long bounded Codex jobs:
 
 ```python
 terminal(
-    command="codex exec --sandbox workspace-write 'Refactor <scope>. Keep changes focused.'",
+    command="codex exec -s workspace-write 'Refactor <scope>. Keep changes focused.'",
     workdir="/path/to/repo",
     background=True,
     notify_on_complete=True,
-    pty=True,
 )
 ```
 
-Current Codex CLI guidance prefers `--sandbox workspace-write`; legacy `--full-auto` is deprecated, and yolo/full-access modes require explicit risk acceptance.
+Resume a previous `codex exec` session by explicit id:
+
+```python
+terminal(
+    command="codex exec resume --skip-git-repo-check -c 'sandbox_mode=\"read-only\"' -c 'approval_policy=\"never\"' <session-id> 'Reply exactly CODEX_RESUME_OK. Do not use tools.'",
+    workdir="/path/to/repo-or-scratch",
+    timeout=300,
+)
+```
+
+Practice correction: `codex exec resume` has its own option parser. Do not put the initial-run `-s read-only` flag after `<session-id>`; use `-c 'sandbox_mode="read-only"'` for resume smokes unless the active CLI help says otherwise.
+
+Current Codex CLI guidance prefers `--sandbox workspace-write` / `-s workspace-write`; legacy `--full-auto` is deprecated, and yolo/full-access modes require explicit risk acceptance.
 
 ### Cursor Agent
 
 Hermes does not currently have a first-class Cursor Agent tool/provider in the official docs/source. Treat Cursor Agent as an external CLI unless a project supplies a plugin/MCP/ACP wrapper.
 
-On a host where Cursor Agent is the verified durable backend, use this host-neutral worker pattern for long tasks and fill placeholders from workspace-local notes:
+For durable Cursor worker chats, prefer an explicit CLI-native chat id. If the host requires Node or proxy setup, fill placeholders from workspace-local notes rather than shared skills:
 
 ```bash
-NODE_BIN=<node-bin-dir>
-CHAT_ID=$(agent create-chat | tr -d '\r' | tail -n 1)
+[ -n "${NODE_BIN:-}" ] && PATH="$NODE_BIN:$PATH"
+[ -n "${PROXY_HELPER:-}" ] && source "$PROXY_HELPER"
+CHAT_ID=$(<agent-command> create-chat | tr -d '\r' | tail -n 1)
 PROMPT=/path/to/prompt.txt
 prompt=$(PROMPT="$PROMPT" python - <<'PY'
 import os
@@ -156,10 +166,10 @@ from pathlib import Path
 print(Path(os.environ["PROMPT"]).read_text())
 PY
 )
-source <workspace>/.env
-source <proxy-helper-if-needed>
-PATH="$NODE_BIN:$PATH" agent --print --resume "$CHAT_ID" --force --trust "$prompt"
+<agent-command> --print --resume "$CHAT_ID" --force --trust "$prompt"
 ```
+
+Some installs expose the same worker as `agent`, `cursor-agent`, or a wrapper command. Resolve the active binary in the target shell and store it with the `chat_id` so future resumes use the same execution context.
 
 For each repo/worker, persist `chat_id`, worktree path, release branch, prompt path, report path, and process session id in a run JSON. After timeout or `kill_all`, inspect real external state (PRs, remote branches, tags, workflow runs, PyPI, report files) before resuming with the same `chat_id`. Never blindly restart a new Cursor chat for the same repo.
 
@@ -205,11 +215,14 @@ terminal(
 )
 ```
 
-For OpenCode, prefer `opencode run` for one-shot automation; reserve the TUI for iterative work:
+For OpenCode, prefer `opencode run` for one-shot automation and `opencode run --session <session-id>` for explicit continuation; reserve the TUI for iterative work:
 
 ```python
-terminal(command="opencode run 'Complete <task> and report tests.'", workdir="/path/to/repo", timeout=600)
+terminal(command="opencode run --format json 'Complete <task> and report tests.'", workdir="/path/to/repo", timeout=600)
+terminal(command="opencode run --format json --session <session-id> 'Continue with <follow-up>.'", workdir="/path/to/repo", timeout=600)
 ```
+
+Parse `sessionID` from the JSON events emitted by `--format json` and store it in the worker registry. Prefer explicit `--session <session-id>` over `--continue` when multiple repos or agents may have run.
 
 ## Background / interactive management
 
@@ -246,5 +259,7 @@ Copilot ACP is the built-in reference pattern for an external-process provider: 
 
 ## References
 
+- `references/codex-cursor-opencode-run-resume.md` — 2026-08-25 practice-verified run/resume templates for Codex, Cursor Agent, and OpenCode, including Codex `exec resume` option-shape correction, Cursor `create-chat`/`--resume`, OpenCode JSON `sessionID`, and supervisor verification rules.
 - `references/hermes-official-external-agent-patterns.md` — source/docs evidence for this workflow and the current Cursor Agent gap.
 - `references/interactive-agent-supervision-and-closeout.md` — session-derived supervision loop: interactive PTY steering, mid-run authorization follow-up, independent acceptance readback, graceful EOF closeout, and avoiding over-watching after completion.
+- `references/multi-worker-pr-orchestration.md` — group-task pattern for supervising multiple external CLI workers through explicit worktrees, durable CLI-native chat/session ids, resume loops, checkpoint reports, supervisor verification, and PR gates.
