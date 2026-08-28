@@ -1,7 +1,7 @@
 ---
 name: server-chatarch-bot-setup
 description: Configure a managed server as a ChatArch Playground host and add a CC Connect Feishu bot. Use for bot/server hosts with uv, ChatUp, Node.js, CC Connect, Codex or Cursor Agent, and a user-level service.
-version: 0.2.3
+version: 0.2.4
 ---
 
 # Server ChatArch Bot Setup
@@ -52,6 +52,8 @@ On the remote server:
 ## Feishu Bot Creation and Capability Baseline
 
 Use this section only for generic procedure; keep concrete app IDs, secrets, user IDs, tenant names, chat IDs, and private links in task-local records or target-local config.
+
+Scope boundary: this skill is for CC Connect server bots. Native Hermes profile/gateway bot setup is a different runtime; use `hermes-platform-development` plus `hermes-feishu-card-interactions` for that path. The user-facing UX can be similar (send the generated launcher URL as a card), but the owning setup command must match the runtime.
 
 For a **new server with no Feishu credentials**:
 

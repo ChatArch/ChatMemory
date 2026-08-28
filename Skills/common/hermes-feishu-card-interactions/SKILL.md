@@ -1,7 +1,7 @@
 ---
 name: hermes-feishu-card-interactions
 description: "Use Hermes' internal feishu_card tool to send Feishu interactive cards, wait for button clicks, and read the managed callback result."
-version: 0.1.3
+version: 0.1.4
 ---
 
 # Hermes Feishu Card Interactions
@@ -154,6 +154,23 @@ For a simple verification/permission URL, prefer `request_authorization`. It ren
   "flow_id": "auth-flow-001"
 }
 ```
+
+### 5. Bot/Profile Onboarding Card
+
+Use this when a setup/onboarding command returns a direct launcher URL for creating or connecting a bot/app. Do not replace that URL with a generic platform homepage.
+
+Correct source of the URL depends on the runtime being configured:
+
+- Native Hermes profile/gateway: use Hermes' own profile-scoped setup path such as `hermes -p <profile> gateway setup`, which calls the Feishu `qr_register()` / `PersonalAgent` scan-to-create flow.
+- CC Connect: use CC Connect's own onboarding command such as `cc-connect feishu setup/new --project <project> --qr-image <path> --timeout <seconds>`.
+- Lark CLI user-scope OAuth: use `lark-cli auth login --scope ... --no-wait --json`; this is a user permission flow, not bot creation.
+
+Card rules:
+
+- Send the exact current launcher/verification URL in a Feishu card button; do not code-highlight or split it.
+- Prefer `request_authorization` when the agent should receive a completion/cancel click. If the upstream onboarding command already polls independently, `send` plus a background poller is acceptable; a card-tool timeout does not prove the launcher was unused.
+- Store short-lived `device_code`, `user_code`, QR images, and launcher URLs only in task-local files with restrictive permissions when needed. Do not write them into durable memory or shared skills.
+- After a click/completion, verify downstream state: credentials saved, bot info probe succeeds, permissions/events/publish state are adequate, gateway connects, and a real message round trip works.
 
 ## Example: Guess Number Card
 

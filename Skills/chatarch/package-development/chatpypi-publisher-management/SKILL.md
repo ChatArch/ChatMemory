@@ -1,7 +1,7 @@
 ---
 name: chatpypi-publisher-management
 description: "Manage PyPI Trusted Publishers with ChatPyPI 0.2.3+: list projects/publishers, inspect details, add GitHub active publishers, and keep pending scoped to true pre-registration cases."
-version: 0.1.2
+version: 0.1.3
 ---
 
 # ChatPyPI Publisher Management
@@ -71,6 +71,18 @@ publisher_details include:
   workflow: publish.yml
   environment: (Any)  # when the PyPI page environment is blank
 ```
+
+## Existing Occupied Project Ownership Gate
+
+PyPI's public JSON and package pages do **not** expose the private owner/maintainer account list. Public metadata can show author, maintainer, project URLs, or README hints only when the package metadata includes them; absence of those fields is not evidence that the package is unowned or third-party. For an existing occupied project, classify ownership from stronger evidence:
+
+1. User assertion can establish business intent (`the package is ours`) but does not by itself provide a usable web session for Publisher mutation.
+2. Source-first checks: local `core/<ProjectName>`, historical project reports, prior release notes, and public package metadata/URLs.
+3. Authenticated account checks: `chatpypi project list -e <profile> --format json` must show the project, or `publisher detail <ProjectName> -e <profile>` must authenticate and read the project page.
+4. If controlled, continue existing-project Publisher flow. Do not attempt a new `0.0.1` placeholder for the normalized name.
+5. If control is unproven because login/session is missing, report `BLOCKED at PyPI web-session`, not `third-party conflict`, and give the exact login/confirmation step needed.
+
+Current ChatPyPI releases store PyPI web-session runtime state in ChatEnv's token store (`~/.chatarch/tokens/PyPI/<profile>.json`), while older profiles may still contain a legacy `PYPI_SESSION_TOKEN` in `~/.chatarch/envs/PyPI/<profile>.env`. Before declaring a token store missing, check for a legacy token and migrate it through ChatPyPI's session helpers or run `chatpypi auth login -e <profile> --format json`; never print the token value. If the migrated/loaded session redirects to `/account/login/`, the session is expired and a fresh PyPI login confirmation link must be clicked in the same active login flow before Publisher readback can work.
 
 ## ChatArch New Project Baseline
 
