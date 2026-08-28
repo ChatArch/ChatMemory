@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.6
+version: 0.1.7
 tags:
   - ChatArch
   - Python
@@ -32,6 +32,18 @@ reference:
 7. 本地测试、`chatpypi pkg build`、`chatpypi pkg check`、Publisher/Pages readback 后，再根据任务目标决定是否 tag-driven publish；如果用户只是要“注册/占名一个新包”，到 `0.0.1` placeholder + GitHub repo + active Publisher + canonical main placeholder 即可停止，不要自动 bump/tag `0.1.0`，但完成报告必须准确写明 docs 是 live、visibility-gated 还是尚未配置。
 
 当任务是给现有 Chat-series CLI 包补齐 `--tree` / `--tree-brief` 时，同时加载 `chatarch-cli-tree-rollout` 和 `cli-tree-contract`。这种任务默认是 patch release，不是只发 diff：必须用 ChatStyle `chatstyle>=0.2.0,<0.3.0` 的共享 tree runtime；若包有 ChatEnv/profile/config 行为，则使用 `chatenv>=0.2.10,<0.3.0` 并注册 ChatEnv typed profile/storage 路径；最终完成必须有 PR、green checks、merge、默认分支 tag、publish workflow success、PyPI wheel+sdist、clean install、发布态 CLI `--version` / `--tree` / `--tree-brief` 回读。新项目创建时就应满足这些规范；已有仓库缺少 ChatStyle/ChatEnv 对齐时，应修仓库或模板，使它回到当前标准。
+
+## 名字候选必须先做只读可用性检查
+
+用户校正（2026-08-28）：当给用户推荐用于 ChatArch Python/PyPI 包注册的候选名时，不要只凭语义好坏推荐。只要用户的意图已经落到“要开包/建仓/发布/Publisher”，候选名必须先做只读 gate，再标注是否推荐：
+
+1. 对每个候选跑 PyPI exact/normalized 检查，例如 `chatpypi pkg probe <Name>` 和/或 `https://pypi.org/pypi/<Name>/json`。
+2. 对候选的 `ChatArch/<Name>` 跑 GitHub 仓库 readback。
+3. 如果 PyPI 已存在，检查 public metadata、local `core/<Name>`、历史 project/report、以及受控 PyPI web session/project list/Publisher detail；PyPI 不公开 owner 时，不能把“看不到 owner”当成“可用”。
+4. 候选表必须区分 `available`、`occupied-by-us`、`occupied-unknown`、`blocked`、`unchecked`；没有完成只读检查的名字只能标 `unchecked`，不能作为首推。
+5. 一旦发现所选名字是 `occupied-unknown` 或第三方占用，停止使用这个名字创建 GitHub repo、Hermes profile、project branding、Publisher 或后续实现；先请用户换名或证明所有权。
+
+`ChatSelf` 事故教训：`chatself` 已存在于 PyPI 且是 feature-bearing wheel，非 ChatArch placeholder。名字推荐阶段没有预查是流程错误；后续应把可用性/所有权检查前置到候选推荐，而不是等 Codex worker 开始注册时才发现冲突。
 
 ## 两种流程必须分开
 

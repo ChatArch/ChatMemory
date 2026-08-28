@@ -1,7 +1,7 @@
 ---
 name: hermes-platform-development
 description: Hermes 作为智能体载体的平台开发、配置、gateway、Feishu 卡片、SSH Mode 与运行验证入口。
-version: 0.1.2
+version: 0.1.4
 reference:
   - hermes-slash-command-development: "Hermes slash/gateway command、Feishu thread/card、/ssh command 开发模式"
   - hermes-ssh-target-configuration: "Hermes SSH target registry、bindings、known_hosts 与安全配置"
@@ -9,6 +9,7 @@ reference:
   - hermes-environment-notes: "Hermes 会话内运行 workspace 工具的通用环境注意事项"
   - hermes-external-agent-cli-orchestration: "Hermes 通过 terminal/process 调用 Codex、Cursor Agent、Claude Code、OpenCode 等外部 coding-agent CLI 的模式"
   - feishu-inline-image-delivery: "Feishu/Hermes 正常消息投递路径与线程内验证经验"
+  - hermes-feishu-card-interactions: "Hermes feishu_card 授权/链接卡片与回调验证"
 ---
 
 # Hermes Platform Development
@@ -102,6 +103,20 @@ hermes gateway restart
 ```
 
 Before reporting success, verify redacted persisted values and gateway state: Feishu connected, `FEISHU_ALLOW_ALL_USERS=true`, `FEISHU_GROUP_POLICY=open`, `FEISHU_REQUIRE_MENTION=true`, and whether `FEISHU_ALLOWED_USERS` is intentionally empty.
+
+## Hermes profile Feishu/Lark bot creation UX
+
+When the user is creating a dedicated messaging identity for a Hermes profile, treat it as an onboarding/authorization handoff, not as a plain documentation link.
+
+1. Keep profile identity and package/repo identity separate. Example: a profile such as `<profile-name>` may use a separate package/repo brand; do not reuse one as proof of the other.
+2. Before creating a new bot/app, inspect the profile-local channel state without printing secrets: profile path, `.env` key presence, gateway state, existing Feishu/Lark app presence, and whether the profile was cloned from another profile.
+3. If the profile already has working Feishu/Lark credentials, do not create a second bot by default. Verify the existing bot first and repair missing permissions/events/publish state unless the user explicitly asks for a fresh bot.
+4. If the user asks for a fresh bot creation flow, generate a real current launcher/onboarding URL from the owning setup command; do not send the generic `open.feishu.cn/` platform home page as the primary action.
+5. In a live Feishu/Hermes conversation with `feishu_card` available, send that launcher URL as an interactive card: URL/open button plus explicit completion/cancel feedback. A raw bare URL plus QR image is only the fallback path.
+6. A card click is not final proof. After the user completes the browser-side/app-side flow, verify credentials, bot identity, required scopes, long-connection event subscription, `card.action.trigger` if cards are enabled, published/available app state, gateway connection, and a real message smoke test.
+7. Native Hermes profile bot creation uses Hermes' own Feishu onboarding helpers, not CC Connect. The current implementation path is `hermes -p <profile> gateway setup` -> `_setup_feishu()` -> `gateway.platforms.feishu.qr_register()` -> `_begin_registration()` with `archetype=PersonalAgent`, `auth_method=client_secret`, and `request_user_info=open_id`; the user-facing launcher URL is `verification_uri_complete` plus `from=hermes&tp=hermes`.
+8. CC Connect has its own similar card/launcher pattern, but it is a separate product/runtime. Do not route a Hermes profile setup or Hermes model/channel authorization task through CC Connect unless the user explicitly asks for CC Connect.
+9. For native Hermes gateways, convert any emitted scan/create/verification URL or QR artifact into the same card handoff. If the official flow only opens a browser or prints manual console instructions, report that limitation and update the skill before falling back to prose.
 
 ## Development workflow
 
