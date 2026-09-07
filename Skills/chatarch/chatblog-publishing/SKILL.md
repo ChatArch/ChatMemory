@@ -64,7 +64,7 @@ Write an internal expression map for the article before producing prose:
 - **Evidence model**: which claims need official docs, source code, release notes, issue/PR links, screenshots, or live readback?
 - **Voice boundary**: should the piece be neutral technical explanation, opinionated analysis, practical field note, or product/tutorial writing?
 
-Do not start from a generic blog skeleton. Recent ChatBlog posts can be inspected for repository format, evidence density, diagrams, and URL conventions, but do not copy warmed-up formulas or rhetorical openings from older posts.
+Draft independently from the topic, the reader's goal, and verified evidence. Do not read existing ChatBlog articles as editorial templates; if the user forbids reading old articles, do not read them at all. Use independent technical-writing guidance such as Google Technical Writing sample-code guidance and Diataxis tutorials. Write the complete article in the task project before putting it into the publishing repository; inspect repository configuration/frontmatter only for mechanical format compatibility. Practice/tutorial bodies need complete runnable code, observable real results, explanation, and failure handling. Tables and links supplement that learning path rather than substitute for it.
 
 ### While writing
 
@@ -137,3 +137,8 @@ The anti-AI-slop editorial gate distills operating lessons from two MIT-licensed
 
 - `blader/humanizer`: https://github.com/blader/humanizer
 - `petergyang/no-ai-slop`: https://github.com/petergyang/no-ai-slop
+
+
+## Canonical preview route verification
+
+An extensionless preview URL can temporarily return 404 while its `.html` resource is available. Recheck the canonical route after deployment propagation. Direct `.html` navigation can produce duplicated article trees after client hydration despite HTTP 200 and a single article in server HTML. Verify the canonical route with a unique article/title, no page errors, decoded images and working download links; do not conceal duplication by selecting the first matching article.
