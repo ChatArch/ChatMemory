@@ -16,7 +16,8 @@ Use when a standard Images client receives `502 no image produced by upstream`, 
 - Collect completed `image_generation_call` results from output-item and terminal-output locations; deduplicate by item identity.
 - Keep previews separate. Final-item status/identity outranks size or event order.
 - Require terminal `response.completed` success; reject error/failed/incomplete or truncated streams even after an image item.
-- Test final-only, completed-output, preview+final, preview-only, truncation, and late error/failure/incomplete.
+- Parse complete SSE frames, joining multiple `data:` lines and dispatching only at a blank-line boundary. A complete-looking JSON terminal object is not a complete SSE event when EOF arrives before that boundary; reject pending data at EOF, including a trailing incomplete frame after an earlier successful terminal event.
+- Test final-only, completed-output, preview+final, preview-only, truncation, late error/failure/incomplete, multiline frames, and unterminated terminal/trailing frames.
 - Verify extracted PNG bytes/signature/dimensions; do not equate HTTP 200 with the final artifact.
 
 ## Attribution and upstream feedback
