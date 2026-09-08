@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.7
+version: 0.1.8
 tags:
   - ChatArch
   - Python
@@ -19,12 +19,20 @@ reference:
 
 # ChatArch Python 包创建与发版流程
 
+## 执行主机与记录位置
+
+用户指定执行主机后，Project、源码、模板生成、测试、占位上传、GitHub 操作、Trusted Publisher 与验收记录都在该主机完成。本流程中的“本地”指当前执行主机，不特指 agent gateway 或个人工作站；只有用户明确同意拆分执行面时才跨主机处理。
+
+服务器通常已有配置。PATH 找不到命令时，先检查该主机的标准运行环境、canonical checkout、既有验证环境、ChatEnv profiles、token store 和正常上传配置，并用实际命令验证可用性。不能仅凭一个命令路径不存在或一个环境变量未设置，就认定环境不足并切换机器。确有缺项时，在当前主机补齐获准的工具或报告认证缺口；不擅自迁移凭据。
+
+引用另一台主机上的源码不改变主任务归属：按授权只读检查参考源码，设计、实现和进度仍留在原任务主机。图像投递工具所需的短时传输缓存与开发控制面应明确区分，不能借此另建一份本机开发任务。
+
 ## 适用场景
 
 当需要创建一个新的 ChatArch 风格 Python CLI 包，并完整跑通以下流程时使用：
 
 1. 确认品牌、PyPI project name、normalized name、module、CLI、初始版本和发布目标。
-2. 在当前 workspace task 的 `playground/` 下创建**临时本地 package scaffold**，先验证 PyPI 占位发布可行性。
+2. 在当前执行主机的 workspace task `playground/` 下创建临时 package scaffold，先验证 PyPI 占位发布可行性。
 3. 对新 PyPI project，先构建并上传真实 `0.0.1` placeholder 到 PyPI；只有 PyPI 回读确认项目存在后，才允许创建 GitHub 仓库。
 4. PyPI 占位成功后，再在 GitHub `ChatArch` 组织下创建远程仓库、初始化 canonical `core/<ProjectName>`、配置 remote/token 并 push。
 5. 配置/验证 PyPI Trusted Publisher，确认 `ChatArch/<Repo>` + `publish.yml` + environment `(Any)`；如果 PyPI session 过期，先 `chatpypi auth login -e <pypi-profile> --format json` 刷新再继续 Publisher 操作。
