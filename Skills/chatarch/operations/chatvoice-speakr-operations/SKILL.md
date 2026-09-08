@@ -31,7 +31,17 @@ This shared skill is host-neutral. Keep concrete server aliases, usernames, priv
 - Meeting recorder destructive actions must be tested while recording is active, not only when idle. Cover at least: clear/reset current session, create a new meeting, delete the active meeting, and any future mode switch that discards or replaces current recording state.
 - Destructive actions during `connecting` / `recording` / `paused` / `finishing` must interrupt recording resources first: close the ASR WebSocket, stop microphone `MediaStreamTrack`s, disconnect processors/sources, close `AudioContext`, stop timers/animation frames, clear pending ASR commit flags, and cancel in-flight summary/title work before clearing content or deleting records.
 - Guard against late ASR/WebSocket events after an interrupt. Use a session token/epoch or equivalent so events from an old stream cannot write transcript/summary state into a new or cleared meeting.
-- Browser acceptance for this class should click the real production/preview UI controls. If real mic permission is unavailable in automation, inject observable fake `getUserMedia`, `WebSocket`, and `AudioContext` objects, then click the real buttons and assert resource cleanup (`track.stop()`, socket close reason, audio graph close/disconnect, idle UI, no console errors).
+- Ordinary regression executes the actual frontend controllers/registered handlers and backend HTTP/SSE/WebSocket routes without launching a browser. Replace only DOM/device/storage/transport boundaries; do not copy business logic into test-only implementations. Assert observable resource cleanup and late-event rejection. Reserve browser checks for explicit visual/physical-device acceptance, not a separate mandatory click run after every change.
+
+## Acceptance-tool integrity
+
+- A normal exit code does not prove an async test completed. Node cases require an exact, unique case-specific completion marker plus a completion guard; inject a never-resolving handler promise to prove the runner fails closed without a browser.
+- Keep deterministic offline regression separate from opt-in deployed-provider acceptance. Mocked success is not live readiness. Test each acceptance decision with negative transport-boundary fixtures, not just helper-string assertions.
+- ASR acceptance rejects stub channels, checks actual channel/engine evidence, and requires a nonempty result for every pause/resume window with valid window/rollover progression.
+- TTS acceptance compares returned provider/model/voice headers with selected configuration and verifies actual container/codec, not just decodability or the filename extension.
+- Realtime completion needs explicit successful status, acknowledged configuration and matching response identity. Missing status never defaults to success; a model-list entry or session handshake does not prove Plan entitlement. Keep permission/quota failures BLOCKED with nonzero exit, without paid fallback.
+- Pending or late independent reviews are not approval. Read every required verdict, reconcile concrete findings against the current tree, and withdraw older claims when new evidence exposes a false-green path. Keep historical receipts distinct from results obtained under stronger verification rules.
+- Inspect actual readiness payloads before writing deployment assertions: heartbeat uses `database.ok` and `asr.funasr_model_warm`; clone status has flat `model_loaded`, not an assumed `sidecar` object. Add a redacted real-shape contract test before enabling rollback on verifier failure.
 
 ## Runtime implementation checklist
 
@@ -57,7 +67,7 @@ Before publishing a ChatVoice release:
 5. Verify any SQLite file-level backup command produces a single file with `integrity=ok`; remove task-generated production dumps after smoke verification.
 6. Production main-service supervision is `systemd --user`; use the discovered unit and graceful stop/start, not a new tmux deployment or process signals. A TTS-only task does not authorize sidecar, ASR-provider or gateway reconfiguration.
 7. Public readback: heartbeat, status, unchanged voice-clone sidecar readiness, and real `/api/tts` generation with the configured provider. Prove a short warm ASR request after restarting an in-process ASR runtime; its response contract uses `raw_text` / `corrected_text`, not a generic `text` field. Exercise clone generation only when relevant to the changed scope.
-8. Browser visual acceptance without annotation overlays:
+8. When the visual/physical-device surface changed, browser visual acceptance without annotation overlays:
    - meeting recorder start/finish controls visible and hit-testable;
    - voice studio cards visible in one list;
    - default text present if product expects immediate debugging;
