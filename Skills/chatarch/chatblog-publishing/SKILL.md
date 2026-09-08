@@ -142,3 +142,10 @@ The anti-AI-slop editorial gate distills operating lessons from two MIT-licensed
 ## Canonical preview route verification
 
 An extensionless preview URL can temporarily return 404 while its `.html` resource is available. Recheck the canonical route after deployment propagation. Direct `.html` navigation can produce duplicated article trees after client hydration despite HTTP 200 and a single article in server HTML. Verify the canonical route with a unique article/title, no page errors, decoded images and working download links; do not conceal duplication by selecting the first matching article.
+
+## Positive-only tutorials and image-result checks
+
+- Keep the subject distinct from the venue: an image-generation guide published on ChatBlog is not a guide to ChatBlog. When the user requests positive-only content, teach the verified successful workflow with runnable code and real output; keep failure investigations in private task records. Error handling inside executable examples still matters.
+- For CRS caller-key tutorials, keep authentication on the requested API-key path rather than teaching access/refresh-token handling. Clearly identify accompanying scripts instead of implying that an unverified native CLI command produced the demonstrated result.
+- Python and shell SSE decoders should accept final image results from both `response.output_item.done.item` and `response.completed.response.output[]`, require final response status `completed`, and reject error/failed/incomplete streams. Replay the saved real response and compare image bytes; cover truncated, partial-only, and failed-after-image cases without spending new API calls.
+- Scope browser image checks to the article body, such as `article .markdown img`: embedded comment widgets may contain hidden, intentionally unloaded lazy emoji images. Preserve strict single-article/title checks and verify all actual article assets and downloads; do not overlook broken visible content.
