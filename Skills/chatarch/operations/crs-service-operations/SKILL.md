@@ -117,6 +117,12 @@ For ChatCRS package releases:
 
 Avoid Python-version drift: for Python 3.10 compatibility use `datetime.timezone.utc` rather than Python 3.11+ conveniences such as `datetime.UTC`.
 
+## Images API result extraction
+
+When an Images compatibility route returns `502 no image produced by upstream` while Responses image tooling succeeds, first compare the pinned running source with upstream and the maintained fork. Do not infer account/model incapability from that error. Replay the actual stream-consumer code offline against a saved successful SSE before spending another image request. Keep final `image_generation_call.result` separate from `partial_image_b64`, require terminal success, and never choose the final artifact by longest base64. Carrier-model differences and an uncaptured original failing SSE must remain explicit evidence limits. See `references/images-api-final-result-extraction.md`.
+
 ## References
+
+- `references/images-api-final-result-extraction.md`
 
 - `references/chatcrs-runtime-token-store.md`
