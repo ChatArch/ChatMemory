@@ -20,6 +20,21 @@ Use when a standard Images client receives `502 no image produced by upstream`, 
 - Test final-only, completed-output, preview+final, preview-only, truncation, late error/failure/incomplete, multiline frames, and unterminated terminal/trailing frames.
 - Verify extracted PNG bytes/signature/dimensions; do not equate HTTP 200 with the final artifact.
 
+## Native API-key client transport
+
+For ChatImg versions whose real installed tree exposes the options (introduced in 0.1.8), prefer the native key-only path:
+
+```bash
+chatimg openai generate "A minimal blue square icon" \
+  --profile <profile> --api-mode responses \
+  --model gpt-image-2-low --host-model <carrier-model> \
+  --output image.png -I
+```
+
+Keep the caller API key and OAuth token paths separate. A named profile must not activate the global default or silently borrow another account. The carrier model is independent of the image model/preset. The compatible default remains Images; a web consumer must explicitly pass/select Responses, not assume that installing a newer package switches its protocol. Remove proven stale source-path overrides when adopting a published wheel, and read back the actual imported package as well as its distribution version.
+
+Decode SSE frames only at blank-line boundaries, require the successful terminal event and completed final image, and do not automatically retry a paid request after an ambiguous failure. Keep offline fixtures, installed-CLI live calls, and browser operation evidence distinct.
+
 ## Attribution and upstream feedback
 
 A working Responses request with a different carrier model or payload is not a controlled same-payload A/B test. Without the failed Images request's internal SSE, do not claim that its upstream generation definitely completed. State the consumer defect proven by replay separately from the original incident's remaining uncertainty.
