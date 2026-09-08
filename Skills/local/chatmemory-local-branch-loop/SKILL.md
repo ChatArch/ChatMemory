@@ -21,6 +21,12 @@ Variables:
 
 For normal ChatMemory/Skills maintenance, each machine should commit directly on its own long-running machine branch. Do not create extra `feat/...` or `docs/...` branches unless the user explicitly asks for a temporary branch; if such a branch is used, delete it after its PR/MR is merged.
 
+Routine fleet refresh uses each server's existing checkout and explicitly assigned machine branch. Do not create linked `git worktree` directories, borrow another machine's branch, or infer a permanent main-only role from an old inventory. A working tree being clean describes file state; it does not mean an extra linked worktree exists. Audit and preserve unique content before cleaning historical branches or linked worktrees.
+
+Process machines sequentially. Resolve understood documentation conflicts and completed local changes within that machine's scope; if connectivity, permissions, ownership, or a safe merge cannot be established, record the precise blocker and continue with the next machine. Do not repeatedly rerun successful targets or operate products merely because their names appear inside reviewed Skills. Finish with actual changes, final branch/HEAD/clean state, and skipped targets; partial success is not fleet-wide success.
+
+Scheduled maintenance should reuse prevalidated maintenance tools rather than developing temporary shell/Python helpers during the run. If a complete maintenance summary is intercepted with `finish_reason=verification_required`, preserve it while diagnosing the verification follow-up; an ad-hoc test summary must not replace the fleet outcome. Keep task artifacts inside the approved task workspace and never disable global verification or bypass merge checks to obtain a successful status.
+
 Treat a user request such as “刷新 Skills” or “同步 ChatMemory/Skills” as one continuous refresh loop: publish local skill changes, squash them into `<default-branch>`, then reset the machine branch back to `origin/<default-branch>` unless there is a real blocker such as conflicts, failing validation, unclear ownership of pre-existing changes, or an explicit user instruction to stop before merge.
 
 A dirty Git worktree is a blocker to resolve, not a normal state to carry across completed tasks. At every meaningful milestone and before ending a task, review `git status`/`git diff`, validate, stage exact logical changes, commit them with a purpose-revealing message, and verify clean status. Never leave known agent-authored changes dirty for the next session or person to reconstruct. If ownership or intent is unclear, stop and ask rather than resetting or guessing.
@@ -101,9 +107,8 @@ else
 
   # After squash merge, align the machine branch back to remote default branch for the next PR.
   git fetch --prune origin
-  git checkout <default-branch>
-  git pull --ff-only origin <default-branch>
-  git checkout <machine-branch>
+  test "$(git branch --show-current)" = "<machine-branch>"
+  test -z "$(git status --porcelain=v1)"
   git reset --hard origin/<default-branch>
   git push --force-with-lease origin <machine-branch>
 fi
