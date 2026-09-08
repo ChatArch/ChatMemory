@@ -26,7 +26,7 @@ Use when the user asks to publish files/directories with ChatShare, or use a man
 3. Publish one file with `chatshare --json put SOURCE DESTINATION`, or a directory natively with `chatshare --json put SOURCE_DIR DEST_PREFIX`.
 4. Parse and save each receipt in the task project. Verify returned path, URL, size/hash or aggregate file count according to the real command schema.
 5. Read back the exact public URL anonymously. For one image, download the whole file and compare its hash, MIME type and decoded dimensions. For directories, verify the full inventory against source counts and check the intended browse/download URLs.
-6. Deliver the verified bare URL immediately, with minimal useful metadata. Do this before secondary engineering, documentation, or blog changes. See `references/primary-link-before-follow-up-2026-08.md`.
+6. Deliver the verified bare URL immediately, with minimal useful metadata. Do this before secondary engineering, documentation, or blog changes.
 7. If updating a blog, use the returned public image URL for both the image source and original-image link, then follow that publication system's PR/Preview/production gates. Keep existing unrelated downloads unchanged.
 
 ## Embedded website integrations
@@ -66,7 +66,7 @@ Compare the downloaded file with the original. A successful request with HTTP pr
 
 ## Directory compatibility
 
-Current native directory support and tree inspection are documented in `references/chatshare-native-directory-tree-2026-08.md`. On older versions that truly accept files only, enumerate regular files, append each relative source path to the destination prefix, and call `put` for each file; aggregate receipts programmatically and verify no files were dropped. Do not choose a manual loop just because an old example used one.
+On older versions that truly accept files only, enumerate regular files, append each relative source path to the destination prefix, and call `put` for each file; aggregate receipts programmatically and verify no files were dropped. Do not choose a manual loop just because an old example used one.
 
 ## Verification checklist
 
@@ -75,10 +75,3 @@ Current native directory support and tree inspection are documented in `referenc
 - Public reachability is reported separately from local publication if verification fails.
 - The primary link was delivered before optional follow-up work.
 - No live service, auth configuration, or unrelated file was modified.
-
-## References
-
-- `references/chatshare-directory-upload-2026-08.md` — legacy per-file directory publication.
-- `references/chatshare-native-directory-tree-2026-08.md` — native directory and tree support.
-- `references/primary-link-before-follow-up-2026-08.md` — deliver the verified link first.
-- `references/github-release-to-chatshare.md` — publishing release downloads.
