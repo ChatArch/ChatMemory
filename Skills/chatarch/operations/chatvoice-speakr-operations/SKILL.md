@@ -1,7 +1,7 @@
 ---
 name: chatvoice-speakr-operations
-description: Operate ChatVoice/Speakr voice-workspace releases with ChatEnv, Token Plan, and browser visual acceptance gates.
-version: 0.1.0
+description: Use when operating ChatVoice/Speakr model cutovers.
+version: 0.2.0
 ---
 
 # ChatVoice / Speakr Operations
@@ -14,7 +14,7 @@ This shared skill is host-neutral. Keep concrete server aliases, usernames, priv
 
 1. **ChatEnv is canonical.** Production configuration must live in the typed ChatEnv profile for the service, e.g. `~/.chatarch/envs/ChatVoice/.env`. Do not create a parallel dotenv pointer such as `QWEN_TOKEN_PLAN_ENV_FILE`, and do not create a differently-cased storage namespace such as `Chatvoice`.
 2. **Do not occupy ChatEnv's global OpenAI provider fields.** ChatVoice-owned model-provider config uses service-scoped OpenAI-compatible names: `CHATVOICE_OPENAI_API_BASE`, `CHATVOICE_OPENAI_API_KEY`, and `CHATVOICE_OPENAI_API_MODEL`. The built-in/global `OPENAI_*` names belong to ChatEnv/provider surfaces, not to the ChatVoice service profile.
-3. **Token Plan guard.** If the deployment is expected to use a Token Plan key, the system-voice path must require an `sk-sp...` `CHATVOICE_OPENAI_API_KEY` and reject ordinary usage-billed `sk-...` keys with a clear 503 before calling upstream. Never print full keys, key fragments, hashes, or derived identifiers.
+3. **Protocol-specific Plan guard.** Separate capability, protocol, endpoint, model and billing policy. Explicit TTS uses independent `CHATVOICE_TTS_*` fields; do not apply a legacy vendor's key-prefix rule to every provider. The legacy Qwen path and explicit Qwen WebSocket path retain their Token Plan guard. Never print real keys, fragments, hashes, or derived identifiers; never silently fall back to another endpoint/key when a Plan is exhausted.
 4. **No database URL switch for packaged storage.** ChatVoice packaged storage is one resolved SQLite file. Do not add `CHATVOICE_DATABASE_URL` / `DATABASE_URL` as a pseudo-migration knob; use file-level backup/restore commands for the current storage layer.
 5. **No silent UI no-ops.** A disabled or blocked button must show a visible reason: login missing, reference audio missing, consent missing, sidecar offline, Token Plan missing, or text missing.
 6. **Visual acceptance includes all primary buttons.** Do not validate only the API or only one panel. Check both the meeting recorder page and the voice studio. If a screenshot/user report shows a clipped button, verify actual browser geometry after the fix.
@@ -31,14 +31,24 @@ This shared skill is host-neutral. Keep concrete server aliases, usernames, priv
 - Meeting recorder destructive actions must be tested while recording is active, not only when idle. Cover at least: clear/reset current session, create a new meeting, delete the active meeting, and any future mode switch that discards or replaces current recording state.
 - Destructive actions during `connecting` / `recording` / `paused` / `finishing` must interrupt recording resources first: close the ASR WebSocket, stop microphone `MediaStreamTrack`s, disconnect processors/sources, close `AudioContext`, stop timers/animation frames, clear pending ASR commit flags, and cancel in-flight summary/title work before clearing content or deleting records.
 - Guard against late ASR/WebSocket events after an interrupt. Use a session token/epoch or equivalent so events from an old stream cannot write transcript/summary state into a new or cleared meeting.
-- Browser acceptance for this class should click the real production/preview UI controls. If real mic permission is unavailable in automation, inject observable fake `getUserMedia`, `WebSocket`, and `AudioContext` objects, then click the real buttons and assert resource cleanup (`track.stop()`, socket close reason, audio graph close/disconnect, idle UI, no console errors).
+- Ordinary regression executes the actual frontend controllers/registered handlers and backend HTTP/SSE/WebSocket routes without launching a browser. Replace only DOM/device/storage/transport boundaries; do not copy business logic into test-only implementations. Assert observable resource cleanup and late-event rejection. Reserve browser checks for explicit visual/physical-device acceptance, not a separate mandatory click run after every change.
+
+## Acceptance-tool integrity
+
+- A normal exit code does not prove an async test completed. Node cases require an exact, unique case-specific completion marker plus a completion guard; inject a never-resolving handler promise to prove the runner fails closed without a browser.
+- Keep deterministic offline regression separate from opt-in deployed-provider acceptance. Mocked success is not live readiness. Test each acceptance decision with negative transport-boundary fixtures, not just helper-string assertions.
+- ASR acceptance rejects stub channels, checks actual channel/engine evidence, and requires a nonempty result for every pause/resume window with valid window/rollover progression.
+- TTS acceptance compares returned provider/model/voice headers with selected configuration and verifies actual container/codec, not just decodability or the filename extension.
+- Realtime completion needs explicit successful status, acknowledged configuration and matching response identity. Missing status never defaults to success; a model-list entry or session handshake does not prove Plan entitlement. Keep permission/quota failures BLOCKED with nonzero exit, without paid fallback.
+- Pending or late independent reviews are not approval. Read every required verdict, reconcile concrete findings against the current tree, and withdraw older claims when new evidence exposes a false-green path. Keep historical receipts distinct from results obtained under stronger verification rules.
+- Inspect actual readiness payloads before writing deployment assertions: heartbeat uses `database.ok` and `asr.funasr_model_warm`; clone status has flat `model_loaded`, not an assumed `sidecar` object. Add a redacted real-shape contract test before enabling rollback on verifier failure.
 
 ## Runtime implementation checklist
 
 - Register and test a typed ChatEnv provider with canonical storage name `ChatVoice`.
 - Runtime startup scripts should export process environment from `EnvStore(...).load_active(ChatVoiceConfig)` / `ChatVoiceConfig.load_from_sources(...)`, then run the packaged service command. Startup scripts should not embed secrets, point to a second provider-specific env file, export global `OPENAI_*` overrides, or define a `DATABASE_URL`.
 - `/api/status` should expose only safe booleans and redacted metadata: storage namespace, base host/path, Token Plan key present/valid, configured sidecar URL boolean, selected model name, and SQLite database status. It must not expose raw keys or hashes.
-- System TTS should return 503 for missing/non-Token-Plan `CHATVOICE_OPENAI_API_KEY` and should pass through `HTTPException` instead of wrapping it as 500/502.
+- Explicit TTS uses `CHATVOICE_TTS_API_TYPE`, `_API_BASE`, `_API_KEY`, `_MODEL`, `_RESOURCE_ID`, and `_VOICES`; any partial explicit configuration fails closed instead of borrowing text/global credentials. Only an entirely unset independent TTS configuration selects legacy compatibility. Configuration failures return 503; sanitized upstream failures return 502. Preserve existing `HTTPException` status codes.
 - Keep direct legacy voice-enrollment routes out of the product path unless explicitly reintroduced; one-shot cloning should go through the local sidecar API such as `/api/voice-clone/*`.
 - CLI tree support should come from ChatStyle (`add_tree_option`) and be verified with the real installed `chatvoice --tree-brief`.
 - Provide file-level data backup/restore commands for SQLite storage (for example `data dump` and guarded `data import`) and verify them with an integrity-checked round trip. Do not treat this as permission to run a production restore without an explicit restore task and stopped service.
@@ -55,9 +65,9 @@ Before publishing a ChatVoice release:
 3. Run full gates: pytest, compileall, `git diff --check`, docs build strict, wheel/sdist build, and `twine check`.
 4. Clean-install the published or candidate package in an isolated venv and run `chatvoice --version` plus `chatvoice --tree-brief`.
 5. Verify any SQLite file-level backup command produces a single file with `integrity=ok`; remove task-generated production dumps after smoke verification.
-6. Deploy using the service's graceful supervisor/tmux/systemd helper; do not use `kill` / `kill -9` for normal restarts.
-7. Public readback: heartbeat, status, voice-clone sidecar status, system `/api/tts` real audio generation when Token Plan is configured, and one-shot voice-clone flow when relevant.
-8. Browser visual acceptance without annotation overlays:
+6. Production main-service supervision is `systemd --user`; use the discovered unit and graceful stop/start, not a new tmux deployment or process signals. A TTS-only task does not authorize sidecar, ASR-provider or gateway reconfiguration.
+7. Public readback: heartbeat, status, unchanged voice-clone sidecar readiness, and real `/api/tts` generation with the configured provider. Prove a short warm ASR request after restarting an in-process ASR runtime; its response contract uses `raw_text` / `corrected_text`, not a generic `text` field. Exercise clone generation only when relevant to the changed scope.
+8. When the visual/physical-device surface changed, browser visual acceptance without annotation overlays:
    - meeting recorder start/finish controls visible and hit-testable;
    - voice studio cards visible in one list;
    - default text present if product expects immediate debugging;
@@ -66,6 +76,8 @@ Before publishing a ChatVoice release:
 9. Add or update docs with the acceptance result and screenshot asset when the UI changed.
 
 ## Geometry check pattern for clipped buttons
+
+For provider cutovers, also follow `references/configurable-tts-plan-cutovers.md`: documented Plan endpoints and deduction/overage controls, selected-home ChatEnv probes, real framed-audio validation, immutable review gates, dependency-preserving rollback, and public generation/playback/download evidence. A mocked provider test is not a real provider connectivity result.
 
 For a suspected overlap, verify with the browser DOM rather than visual impression alone:
 
