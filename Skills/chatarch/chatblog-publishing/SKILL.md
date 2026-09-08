@@ -64,7 +64,7 @@ Write an internal expression map for the article before producing prose:
 - **Evidence model**: which claims need official docs, source code, release notes, issue/PR links, screenshots, or live readback?
 - **Voice boundary**: should the piece be neutral technical explanation, opinionated analysis, practical field note, or product/tutorial writing?
 
-Do not start from a generic blog skeleton. Recent ChatBlog posts can be inspected for repository format, evidence density, diagrams, and URL conventions, but do not copy warmed-up formulas or rhetorical openings from older posts.
+Draft independently from the topic, the reader's goal, and verified evidence. Do not read existing ChatBlog articles as editorial templates; if the user forbids reading old articles, do not read them at all. Use independent technical-writing guidance such as Google Technical Writing sample-code guidance and Diataxis tutorials. Write the complete article in the task project before putting it into the publishing repository; inspect repository configuration/frontmatter only for mechanical format compatibility. Practice/tutorial bodies need complete runnable code, observable real results, explanation, and failure handling. Tables and links supplement that learning path rather than substitute for it.
 
 ### While writing
 
@@ -137,3 +137,16 @@ The anti-AI-slop editorial gate distills operating lessons from two MIT-licensed
 
 - `blader/humanizer`: https://github.com/blader/humanizer
 - `petergyang/no-ai-slop`: https://github.com/petergyang/no-ai-slop
+
+
+## Canonical preview route verification
+
+An extensionless preview URL can temporarily return 404 while its `.html` resource is available. Recheck the canonical route after deployment propagation. Direct `.html` navigation can produce duplicated article trees after client hydration despite HTTP 200 and a single article in server HTML. Verify the canonical route with a unique article/title, no page errors, decoded images and working download links; do not conceal duplication by selecting the first matching article.
+
+## Positive-only tutorials and image-result checks
+
+- Keep the subject distinct from the venue: an image-generation guide published on ChatBlog is not a guide to ChatBlog. When the user requests positive-only content, teach the verified successful workflow with runnable code and real output; keep failure investigations in private task records. Error handling inside executable examples still matters.
+- For CRS caller-key tutorials, keep authentication on the requested API-key path rather than teaching access/refresh-token handling. Clearly identify accompanying scripts instead of implying that an unverified native CLI command produced the demonstrated result.
+- Python and shell SSE decoders should accept final image results from both `response.output_item.done.item` and `response.completed.response.output[]`, require final response status `completed`, and reject error/failed/incomplete streams. Replay the saved real response and compare image bytes; cover truncated, partial-only, and failed-after-image cases without spending new API calls.
+- Scope browser image checks to the article body, such as `article .markdown img`: embedded comment widgets may contain hidden, intentionally unloaded lazy emoji images. Preserve strict single-article/title checks and verify all actual article assets and downloads; do not overlook broken visible content.
+- Prefer the user's existing managed ChatShare instance for blog image hosting when requested. Publish only the intended image with `chatshare put`, use an immutable content-hash filename, verify anonymous public reads and byte equality, deliver the image URL first, then replace the article image source and original-image link through the normal PR/Preview/production flow. Keep unrelated code bundles and old public URLs unchanged. Disabling curl's HTTP proxy does not bypass DNS/TUN routing; corroborate no-proxy claims on a suitable direct-public-IP path rather than relying on a fake-IP result.
