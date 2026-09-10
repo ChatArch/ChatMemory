@@ -19,6 +19,12 @@ Use this skill when the user asks to view, add, update, clean, or verify PyPI pu
 
 This skill covers PyPI-side publisher configuration. Pair it with `python-package-release-with-chattool-pypi` / `python-package-publishing` for release gates, `chatarch-mkdocs-docs-alignment` for Pages/Preview/About acceptance when the package has MkDocs, and `chatgh-pr-and-ci-workflow` when repository PRs/tags/workflows are involved.
 
+## Autonomous Authentication Checkpoint
+
+Use existing ChatEnv credentials and token state to carry an authorized release through publish and verification. A generic login failure does not justify asking the user to rerun commands or re-enter credentials already present. Diagnose safe response metadata first and hand off only a confirmed human-only requirement. When the user requires an end-to-end server flow, keep login, Publisher, source, and release on that server unless they explicitly split the control plane.
+
+Distinguish password rejection, TOTP rejection, sensitive-action reauthentication, and new-device email confirmation. `Unrecognized device` at `/account/confirm-login/` after successful TOTP is an email checkpoint, not a bad password. Use an already-authorized inbox integration if available; otherwise request only the specific confirmation link. Consume it from the original server/network egress, since PyPI can bind approval to the original IP. See `references/new-device-email-checkpoint.md`.
+
 ## Core Rule
 
 For existing PyPI projects, Publisher management is **active state**, not pending. Use a working released `chatpypi` command at version 0.2.3 or newer. Prefer the installed command when it is healthy; if the shell command is shadowed or stale, use the local ChatPyPI checkout venv as the operator fallback:
@@ -82,7 +88,7 @@ PyPI's public JSON and package pages do **not** expose the private owner/maintai
 4. If controlled, continue existing-project Publisher flow. Do not attempt a new `0.0.1` placeholder for the normalized name.
 5. If control is unproven because login/session is missing, report `BLOCKED at PyPI web-session`, not `third-party conflict`, and give the exact login/confirmation step needed.
 
-Current ChatPyPI releases store PyPI web-session runtime state in ChatEnv's token store (`~/.chatarch/tokens/PyPI/<profile>.json`), while older profiles may still contain a legacy `PYPI_SESSION_TOKEN` in `~/.chatarch/envs/PyPI/<profile>.env`. Before declaring a token store missing, check for a legacy token and migrate it through ChatPyPI's session helpers or run `chatpypi auth login -e <profile> --format json`; never print the token value. If the migrated/loaded session redirects to `/account/login/`, the session is expired and a fresh PyPI login confirmation link must be clicked in the same active login flow before Publisher readback can work.
+Current ChatPyPI releases store PyPI web-session runtime state in ChatEnv's token store (`~/.chatarch/tokens/PyPI/<profile>.json`), while older profiles may still contain a legacy `PYPI_SESSION_TOKEN` in `~/.chatarch/envs/PyPI/<profile>.env`. Before declaring a token store missing, check for a legacy token and migrate it through ChatPyPI's session helpers or run `chatpypi auth login -e <profile> --format json`; never print the token value. If the migrated/loaded session redirects to `/account/login/`, run a fresh login with the selected profile and diagnose the returned stage. Request a confirmation link only when password and TOTP have passed and the provider explicitly presents the new-device email checkpoint; a generic unauthenticated error alone does not prove human action is needed.
 
 ## ChatArch New Project Baseline
 
