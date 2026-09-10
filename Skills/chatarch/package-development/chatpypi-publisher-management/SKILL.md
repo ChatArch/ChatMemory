@@ -1,7 +1,7 @@
 ---
 name: chatpypi-publisher-management
 description: "Manage PyPI Trusted Publishers with ChatPyPI 0.2.3+: list projects/publishers, inspect details, add GitHub active publishers, and keep pending scoped to true pre-registration cases."
-version: 0.1.3
+version: 0.1.4
 ---
 
 # ChatPyPI Publisher Management
