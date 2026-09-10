@@ -1,7 +1,7 @@
 ---
 name: python-package-release-with-chattool-pypi
 description: ChatArch Python 包从仓库创建、ChatTool PyPI/ChatStyle 模板初始化、提交推送到 PyPI 发版的完整流程。
-version: 0.1.8
+version: 0.1.9
 tags:
   - ChatArch
   - Python
@@ -22,6 +22,8 @@ reference:
 ## 执行主机与记录位置
 
 用户指定执行主机后，Project、源码、模板生成、测试、占位上传、GitHub 操作、Trusted Publisher 与验收记录都在该主机完成。本流程中的“本地”指当前执行主机，不特指 agent gateway 或个人工作站；只有用户明确同意拆分执行面时才跨主机处理。
+
+目的导向的“打通整个发版流程”要求继续到实际 tag/OIDC publish、PyPI 产物和干净安装验收，不能停在登录检查、占位上传或 Publisher 配置。已有 ChatEnv 凭据应由助手直接使用；用户已完成邮件确认后，先核对目标主机 PyPI 请求的真实网络出口，避免桌面直连与命令行代理形成不同 IP。只在证明确实需要人工验证时交接，不要求用户重填已有凭据或反复运行失败命令，也不因个人工作站已登录而切换执行面。具体检查见 `chatpypi-publisher-management` 的 `references/new-device-email-checkpoint.md`。
 
 服务器通常已有配置。PATH 找不到命令时，先检查该主机的标准运行环境、canonical checkout、既有验证环境、ChatEnv profiles、token store 和正常上传配置，并用实际命令验证可用性。不能仅凭一个命令路径不存在或一个环境变量未设置，就认定环境不足并切换机器。确有缺项时，在当前主机补齐获准的工具或报告认证缺口；不擅自迁移凭据。
 
