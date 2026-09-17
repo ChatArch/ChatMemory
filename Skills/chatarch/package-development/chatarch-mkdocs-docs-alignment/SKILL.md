@@ -20,8 +20,6 @@ For the Gitea self-hosted Pages session that validated PR preview Pages with a G
 
 For the Gitea bot/user/trigger/executor explanation that emerged from the native-bot PR preview practice and `@bot` mention discussion, see `references/gitea-bot-trigger-executor-practice.md`.
 
-For the ChatBlog Docusaurus session that aligned a non-MkDocs static site to ChatArch Pages preview/deploy, Pages API enablement, About homepage sync, and lowercase URL aliases, see `references/chatblog-docusaurus-pages-deploy.md`.
-
 For the ChatArch root homepage session that converted `ChatArch.github.io` from legacy `main:/` Pages serving to CI + PR preview + merge deploy via `gh-pages:/`, see `references/chatarch-root-pages-hub-preview-deploy.md`.
 
 ## Trigger Conditions
@@ -72,8 +70,6 @@ Use the Chat-series tools by responsibility:
 - ChatGH owns GitHub repository metadata, PRs, Actions, GitHub About metadata, and GitHub Pages API calls.
 - Git edits remain normal repo work in a project-local worktree or in `core/` when explicitly appropriate.
 - If a Chat-series CLI is missing a GitHub Pages capability, add or fix that interface first when feasible; otherwise use a short token-safe REST bridge for the immediate readback and record the missing command as a ChatGH capability gap.
-
-For non-package static content sites in ChatArch, such as Docusaurus-based ChatBlog, preserve the site's framework when it already fits the product goal. Do not convert Docusaurus to MkDocs solely to match this skill's package-docs examples. Instead apply the shared ChatArch Pages mechanics: canonical public-domain URL, PR preview under `/dev/`, merge deploy to `gh-pages`, GitHub Pages source/readback, About homepage sync, and HTTP verification. See `references/chatblog-docusaurus-pages-deploy.md` for the Docusaurus workflow shape.
 
 ## New Package Release Handoff
 
