@@ -84,7 +84,8 @@ ChatMemory/
 ├── LICENSE
 └── Skills/
 │   ├── agents/
-│   │   └── README.md
+│   │   ├── README.md
+│   │   └── indonesia-product-classification-workbook/
 │   ├── chatarch/
 │   │   ├── chatarch-org-pr-status/
 │   │   ├── chatenv-provider-workflow/
@@ -132,6 +133,10 @@ Workspace maintenance, development-process, update, and handoff conventions shar
 ### `agents/`
 
 Shared agent-created or agent-learned skills formed during PRD/project/archive/review work. This group is intentionally light on policy for now.
+
+### `agents/indonesia-product-classification-workbook`
+
+Image-backed, auditable Excel classification for Indonesia-bound cargo. Captures the validated business-rule priority, nine-label schema, structured image review, WPS `DISPIMG` preservation, and final artifact verification workflow.
 
 ### `chatarch/chatarch-org-pr-status`
 
