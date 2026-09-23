@@ -26,7 +26,7 @@ Inspect:
 - unique and duplicate SKUs;
 - formulas, especially WPS `DISPIMG`;
 - image formula count, unique image ID count, and blank-image rows;
-- archive integrity with `unzip -t` or an equivalent ZIP test.
+- archive integrity with a standard ZIP library or an available platform utility. Do not require the POSIX `unzip` command.
 
 Do not assume the business sheet is `sheet1.xml`. Resolve the sheet relationship when the workbook layout differs.
 
@@ -205,7 +205,7 @@ Recommended behavior:
 
 Some spreadsheet runtimes evaluate unsupported `DISPIMG` formulas as `#NAME?`. Do not treat the evaluated image-cell value as a source-data change. Protect the original formula and OOXML package instead.
 
-## 10. Restore WPS private image parts when needed
+## 10. Restore WPS private image parts without desktop WPS
 
 Generic XLSX writers may keep formula text while dropping WPS image package parts. If package comparison shows this happened, rebuild the exported archive by restoring from the source workbook:
 
@@ -218,6 +218,15 @@ Generic XLSX writers may keep formula text while dropping WPS image package part
 - the workbook relationship to `/xl/cellimages.xml`.
 
 Use a temporary directory, build a new archive, and atomically replace only the new output file. Never modify the source workbook. Do not save the restored output through software that removes unknown OOXML extensions before verification.
+
+Prefer the bundled cross-platform script, which uses only the Python standard library and does not require WPS Office, Excel, `zip`, or `unzip`:
+
+```bash
+python scripts/wps_cell_images.py restore --source source.xlsx --output output.xlsx
+python scripts/wps_cell_images.py verify --source source.xlsx --output output.xlsx
+```
+
+The restore command is intentionally source-to-output: it copies the source-owned WPS media and private OOXML parts, restores effective image cells including shared-formula followers, merges the required content type and workbook relationship, validates the rebuilt ZIP, and atomically replaces only the output. The verify command compares package-part hashes, effective cell-to-image mappings, shared-formula counts, relationships, media resolution, and archive CRCs without opening a desktop office application.
 
 ## 11. Verify the final artifact
 
@@ -243,7 +252,9 @@ Perform all of the following:
 
 ### Visual checks
 
-Render or inspect the top, middle, and bottom of the business sheet plus any reserved cell-image sheet. Confirm new columns, widths, wrapping, and source layout. Finally open the workbook in WPS Office and spot-check actual images, because generic renderers may show `#NAME?` for valid WPS cell images.
+Render or inspect the top, middle, and bottom of the business sheet plus any reserved cell-image sheet. Confirm new columns, widths, wrapping, and source layout. Review the extracted source images or contact sheets for product identity. A generic renderer may show `#NAME?` for valid WPS `DISPIMG` cells; treat that as an expected renderer limitation only after the package checks pass.
+
+Desktop WPS Office is an optional smoke test, not a completion dependency. When a compatible desktop app is already available, spot-check representative images for added confidence. When it is unavailable, complete the task from semantic checks, portable OOXML/package verification, extracted-image review, and generic layout renders, and state that the optional client-rendering test was not performed. If the user explicitly requires proof of rendering in a particular desktop app, that app or an equivalent compatible environment is required for that extra acceptance criterion.
 
 Only formula errors outside expected WPS `DISPIMG` evaluation should count as new formula failures.
 

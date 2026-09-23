@@ -1,6 +1,6 @@
 ---
 name: indonesia-product-classification-workbook
-description: Classify product rows in standalone Excel workbooks for Indonesia-bound shipping using product images, names, SKUs, specifications, materials, confirmed cargo rules, historical evidence, and independent review; preserve WPS DISPIMG cell images and verify the final XLSX. Use when the workbook must be filled with the nine Indonesia cargo labels and audit notes. Do not reuse the rules for pricing or another destination country without fresh confirmation.
+description: Classify product rows in standalone Excel workbooks for Indonesia-bound shipping using product images, names, SKUs, specifications, materials, confirmed cargo rules, historical evidence, and independent review; preserve WPS DISPIMG cell images and verify the final XLSX without requiring desktop WPS Office. Use when the workbook must be filled with the nine Indonesia cargo labels and audit notes. Do not reuse the rules for pricing or another destination country without fresh confirmation.
 ---
 
 # Indonesia Product Classification Workbook
@@ -29,6 +29,7 @@ Produce a new workbook that:
 - Do not classify from one field alone. Cross-check image, Chinese and English names, SKU, specification, and material.
 - Do not silently repair source fields. Keep the source value and write the discrepancy in the note column.
 - Do not overwrite the input workbook.
+- Do not make desktop WPS Office or Microsoft Excel a required dependency. Use portable XLSX/OOXML checks as the primary completion gate; a compatible desktop-app smoke test is optional unless the user explicitly requires it.
 - Do not infer route prices. This skill classifies cargo types only.
 - Do not reuse the rules for another destination country without new confirmation.
 - Do not present the result as a legal or customs ruling; it is the confirmed operational classification for the stated route and ruleset.
@@ -43,7 +44,7 @@ Produce a new workbook that:
 6. Review every image group and every missing-image row. When subagents are authorized and available, distribute disjoint batches and require structured results; otherwise perform the same review serially.
 7. Run a separate high-risk audit for weapons/military items, drones, magnets, chemicals, batteries, medical items, pressure containers, white powders, tools, automotive parts, hardware, lighting, and field conflicts.
 8. Merge batch corrections and explicit final overrides. After the last override, rerun same-image, same-product, note-obligation, and coverage checks. Resolve every conflict; do not hide unresolved rows in a broad default category.
-9. Write the classification and note columns into a new workbook, then restore WPS private image parts if the authoring runtime stripped them.
+9. Write the classification and note columns into a new workbook, then restore WPS private image parts if the authoring runtime stripped them. Prefer the bundled standard-library script so this step remains portable.
 10. Verify source-column equality, classification validity, note obligations, review coverage, image relationships/hashes, archive integrity, and visual layout.
 
 ## Decision discipline
