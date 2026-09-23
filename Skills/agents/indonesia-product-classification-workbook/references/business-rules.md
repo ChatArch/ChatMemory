@@ -89,6 +89,7 @@ Do not copy historical non-accept values merely because the old workbook contain
 - Orthoses and posture supports are classified from exact use, structure, image, and material. A textile brace with hard support is usually `慢线半纺织`; a sensitive electronic or invasive device may be `敏感类` or `不接`.
 - The piano hand/posture corrector is an explicitly confirmed `普货` example.
 - Microneedle rollers, dental instrument trays, ostomy bags, anti-choking suction devices, and postoperative breast prostheses were treated as `不接` in the validated case because their specific medical use crossed the confirmed sensitivity boundary.
+- Do not classify all dental products as one class. Invasive needles, tattoo needle cartridges, dental drug/irrigation injectors, and instrument trays were treated as `不接` in the validated cases. Non-invasive burs, polishing discs, scaler tips, supports, suction consumables, and measuring tools were generally `敏感类`. Needle-free feeding syringes and dry plastic protective sleeves require their own use and material review.
 
 ## Glue, batteries, and chemicals
 
@@ -100,8 +101,10 @@ Do not copy historical non-accept values merely because the old workbook contain
   `需提供MSDS和运输鉴定报告，确认非危险品后可接`
 
 - Confirmed dangerous chemicals are `不接`.
+- Apply the MSDS and transport-appraisal note because the product actually contains glue, gel, liquid, powder, paint, ink, cleaner, or another chemical—not merely because its final label is `A类特敏` or `B类特敏`. Category-driven non-chemical A/B items do not inherit a chemical-document note automatically.
 - Alcohol- or iodine-filled swabs are not dry cotton swabs; classify the chemical liquid and require documentation.
 - A solid protective film, adhesive strip, silicone article, or tape is not automatically liquid glue.
+- The character `胶` in `橡胶`, a glue applicator, a tube, or a nozzle does not by itself establish that glue ships with the product.
 - A pump, valve, or hose whose name contains oil/fuel is not necessarily shipping with liquid. Note `不含液体` when the image and declaration support that distinction.
 
 Where a current route table names power banks or another battery-containing finished product differently from the explicit battery rule, surface the conflict and resolve it by the evidence priority rather than choosing silently.

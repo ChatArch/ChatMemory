@@ -37,12 +37,12 @@ Produce a new workbook that:
 
 1. Confirm the route, allowed labels, target sheet, source columns, output columns, and current rule sources.
 2. Inventory the workbook: product rows, unique SKUs, formulas, images, missing images, existing labels, and package integrity.
-3. Normalize historical classifications, but keep their source workbook and row for traceability.
+3. Normalize historical classifications, but keep their source workbook and row for traceability. Reject blank or generic placeholder identifiers before any exact-SKU match.
 4. Generate a rule-based proposal with rule ID, basis, note, confidence, and review status.
 5. Extract WPS cell images and group rows that share an image ID.
 6. Review every image group and every missing-image row. When subagents are authorized and available, distribute disjoint batches and require structured results; otherwise perform the same review serially.
 7. Run a separate high-risk audit for weapons/military items, drones, magnets, chemicals, batteries, medical items, pressure containers, white powders, tools, automotive parts, hardware, lighting, and field conflicts.
-8. Merge batch corrections and explicit final overrides. Resolve every conflict; do not hide unresolved rows in a broad default category.
+8. Merge batch corrections and explicit final overrides. After the last override, rerun same-image, same-product, note-obligation, and coverage checks. Resolve every conflict; do not hide unresolved rows in a broad default category.
 9. Write the classification and note columns into a new workbook, then restore WPS private image parts if the authoring runtime stripped them.
 10. Verify source-column equality, classification validity, note obligations, review coverage, image relationships/hashes, archive integrity, and visual layout.
 
@@ -66,5 +66,5 @@ Do not declare completion until all of these are true:
 - required MSDS/transport appraisal, weak-magnet, missing-image, and field-conflict notes are present;
 - source business columns match the original;
 - output classification and notes match the final decision data;
-- all WPS image formulas resolve to retained image package parts;
+- all effective WPS image cells, including shared-formula followers, resolve to retained image package parts;
 - the XLSX archive and representative visual renders pass verification.

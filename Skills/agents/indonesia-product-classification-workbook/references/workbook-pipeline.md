@@ -54,7 +54,7 @@ Normalize label variants from recent workbooks into the nine allowed labels whil
 - source SKU/name/material/use;
 - source classification and note.
 
-Match in this order: exact SKU, exact normalized product identity, then carefully reviewed same-use/same-material similarity. Do not let broad substring matches override the product body.
+Match in this order: exact SKU, exact normalized product identity, then carefully reviewed same-use/same-material similarity. Before exact-SKU matching, exclude blank and generic placeholder values such as `组合`, `以后增加`, `待定`, and similar non-identifiers; otherwise unrelated rows can inherit one another's history. Do not let broad substring matches override the product body.
 
 Audit conflicts separately. Historical non-accept matches should be listed for review, not applied automatically.
 
@@ -70,6 +70,8 @@ worksheet cell formula DISPIMG(image-id)
 ```
 
 Build a mapping from image ID to the extracted local image and original archive part. Fail or flag when an ID cannot be resolved. Group rows by shared image ID so identical images receive one visual decision.
+
+Do not count only formula tags that contain literal `DISPIMG` text. WPS may store one leader formula and follower cells as `<f t="shared" .../>`, with each follower's effective `DISPIMG` expression cached in `<v>`. Count effective image cells from the cell formula or cached value, preserve the original cells, and resolve every extracted image ID.
 
 For missing-image rows, review all text fields and require a missing-image note. Do not invent visual details.
 
@@ -90,7 +92,9 @@ Guard against substring and subject errors. Validated failures included:
 
 - `pink` or `shrink` falsely matching `ink`;
 - oil/fuel pump names being treated as chemical liquids;
-- battery testers, clips, and chargers being treated as battery bodies;
+- battery testers, battery boards, storage boxes, motors, clips, chargers, and related accessories being treated as battery bodies;
+- `胶` inside `橡胶`, or in the name of an applicator, tube, or nozzle, being treated as shipped glue;
+- spray nozzles, sprayer booms, and spray tools being treated as pressure containers, while an innocuous text label can still hide an actual aerosol or pressure can in the image;
 - product names containing `car`, `face-mask`, `tool`, `wire`, or `cup cover` overriding the image body;
 - material-only decisions that ignored a tool, automotive part, medical use, or embedded magnet.
 
@@ -103,7 +107,7 @@ Create one review item per unique image ID and one item per missing-image row. A
 3. create contact sheets with readable row numbers and proposal labels;
 4. include the source JSON beside the contact sheet.
 
-When subagent delegation is authorized by the user or active instructions, assign disjoint batches to independent reviewers. Otherwise use the same batch protocol serially. Do not let multiple reviewers edit the workbook.
+When subagent delegation is authorized by the user or active instructions, wait until the schema, rules, normalization, and proposal format are stable, then assign disjoint image groups to independent reviewers. Otherwise use the same batch protocol serially. Keep one merger and one workbook writer; do not let multiple reviewers edit the workbook.
 
 Each reviewer must inspect every assigned group and return structured data:
 
@@ -174,7 +178,7 @@ Create:
 - a change/audit log;
 - a summary of label counts, reviewed rows, image-reviewed rows, missing-image rows, and note rows.
 
-Before authoring the workbook, also assert:
+After all batch corrections and final overrides, rerun the full consistency suite. Any later correction must trigger it again. Before authoring the workbook, assert:
 
 - no shared image ID has conflicting classifications;
 - same-name differences are either resolved or explained by image/material/use;
@@ -234,6 +238,7 @@ Perform all of the following:
 - required media, drawings, cell-image XML, and relationships present;
 - relevant package-part hashes equal the source;
 - expected image formula count and unique ID count;
+- effective image-cell count, distinguishing literal formulas from shared-formula followers when present;
 - every formula ID resolves through cell-image relationships to a retained media part.
 
 ### Visual checks
