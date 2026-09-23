@@ -1,0 +1,260 @@
+# Workbook, Image Review, and Verification Pipeline
+
+Read this reference when working on an actual XLSX file. Adapt paths, sheets, columns, and counts to the current workbook; the validated case numbers at the end are benchmarks, not universal constants.
+
+## 1. Establish a task record
+
+Follow the host workspace convention. Record at least:
+
+- input workbook and reference sources;
+- route scope and allowed labels;
+- target sheet and source/output columns;
+- explicit business rules and conflict priority;
+- whether prices are out of scope;
+- acceptance criteria and output path.
+
+Keep the original workbook read-only and write intermediate data inside the task/project area.
+
+## 2. Discover the workbook instead of assuming its shape
+
+Inspect:
+
+- sheet names and used ranges;
+- row count and header row;
+- Chinese name, English name, image, SKU, specification, and material columns;
+- existing classification and note columns, if any;
+- unique and duplicate SKUs;
+- formulas, especially WPS `DISPIMG`;
+- image formula count, unique image ID count, and blank-image rows;
+- archive integrity with `unzip -t` or an equivalent ZIP test.
+
+Do not assume the business sheet is `sheet1.xml`. Resolve the sheet relationship when the workbook layout differs.
+
+Create a normalized target record for each product, retaining the original Excel row number:
+
+```json
+{
+  "row": 2,
+  "chineseName": "<chinese-product-name>",
+  "englishName": "<english-product-name>",
+  "imageFormula": "=DISPIMG(\"ID_EXAMPLE\",1)",
+  "imageId": "ID_EXAMPLE",
+  "sku": "<sku>",
+  "specification": "<specification>",
+  "material": "<material>"
+}
+```
+
+## 3. Build traceable reference evidence
+
+Normalize label variants from recent workbooks into the nine allowed labels while retaining:
+
+- source workbook;
+- source row;
+- source SKU/name/material/use;
+- source classification and note.
+
+Match in this order: exact SKU, exact normalized product identity, then carefully reviewed same-use/same-material similarity. Do not let broad substring matches override the product body.
+
+Audit conflicts separately. Historical non-accept matches should be listed for review, not applied automatically.
+
+## 4. Extract WPS cell images
+
+WPS cell images commonly use:
+
+```text
+worksheet cell formula DISPIMG(image-id)
+  -> xl/cellimages.xml
+  -> xl/_rels/cellimages.xml.rels
+  -> xl/media/<image>
+```
+
+Build a mapping from image ID to the extracted local image and original archive part. Fail or flag when an ID cannot be resolved. Group rows by shared image ID so identical images receive one visual decision.
+
+For missing-image rows, review all text fields and require a missing-image note. Do not invent visual details.
+
+## 5. Generate proposals, not final answers
+
+Each initial proposal should include:
+
+- classification;
+- note;
+- confidence;
+- rule ID;
+- rule basis;
+- review status.
+
+Apply explicit user rules first, then current specific category rules, then historical evidence, then conservative fallback. Confidence only determines review order.
+
+Guard against substring and subject errors. Validated failures included:
+
+- `pink` or `shrink` falsely matching `ink`;
+- oil/fuel pump names being treated as chemical liquids;
+- battery testers, clips, and chargers being treated as battery bodies;
+- product names containing `car`, `face-mask`, `tool`, `wire`, or `cup cover` overriding the image body;
+- material-only decisions that ignored a tool, automotive part, medical use, or embedded magnet.
+
+## 6. Create visual-review batches
+
+Create one review item per unique image ID and one item per missing-image row. A useful batching strategy is:
+
+1. sort image groups by the minimum proposal confidence;
+2. keep all rows sharing an image in the same group;
+3. create contact sheets with readable row numbers and proposal labels;
+4. include the source JSON beside the contact sheet.
+
+When subagent delegation is authorized by the user or active instructions, assign disjoint batches to independent reviewers. Otherwise use the same batch protocol serially. Do not let multiple reviewers edit the workbook.
+
+Each reviewer must inspect every assigned group and return structured data:
+
+```json
+{
+  "batchId": "01",
+  "reviewedImageGroupCount": 180,
+  "reviewedRows": 182,
+  "corrections": [
+    {
+      "rows": [55],
+      "classification": "敏感类",
+      "note": "optional replacement note",
+      "reason": "why the proposal is wrong"
+    }
+  ],
+  "dataQualityNotes": [
+    {
+      "rows": [73],
+      "note": "image shows textile straps but material lists only plastic"
+    }
+  ],
+  "unresolved": []
+}
+```
+
+Validate that:
+
+- counts match the batch manifest;
+- every referenced row belongs to the batch;
+- labels are legal;
+- rows are not duplicated across corrections;
+- corrections actually change the proposal or its note;
+- every image group and missing-image row is covered.
+
+## 7. Run a high-risk audit
+
+Independently rescan product names, SKUs, materials, notes, and images for:
+
+- military, camouflage, gun, sight, weapon, drone, and remote-aircraft terms;
+- magnets and magnetic accessories;
+- needles, dental, ostomy, postoperative, emergency, rehabilitation, and other medical terms;
+- glue, resin, ink, paint, cleaner, polish, powder, alcohol, iodine, batteries, and pressure containers;
+- automotive, hardware, tools, lighting, and textile mixtures;
+- image/name/material conflicts.
+
+The audit should catch dangerous false negatives and broad-rule false positives. Record final overrides with row, classification, optional note, and reason.
+
+## 8. Merge with full coverage guarantees
+
+Start from the proposal set, then apply:
+
+1. batch corrections;
+2. batch data-quality notes;
+3. explicit final audit overrides.
+
+The merger should fail when:
+
+- a batch is missing;
+- a reviewer reports unresolved items;
+- review counts differ from the manifest;
+- a product row is missing or reviewed by more than one batch;
+- a final label is invalid.
+
+Create:
+
+- final row decisions;
+- a change/audit log;
+- a summary of label counts, reviewed rows, image-reviewed rows, missing-image rows, and note rows.
+
+Before authoring the workbook, also assert:
+
+- no shared image ID has conflicting classifications;
+- same-name differences are either resolved or explained by image/material/use;
+- every non-accept row has a reason;
+- every accepted chemical that requires documents has the required note;
+- every embedded magnet has `弱磁`;
+- every missing-image row has a note.
+
+## 9. Author the output workbook
+
+Use a spreadsheet-capable runtime that preserves formatting and formulas. Follow the active spreadsheet skill's operation marker and authoring requirements when present.
+
+Recommended behavior:
+
+- import the original workbook;
+- copy an adjacent source-column style into the new classification and note columns;
+- write fixed headers;
+- write final classification and note values in one range operation;
+- add list validation for the nine labels;
+- set readable widths, alignment, and note wrapping;
+- compare untouched source columns before export;
+- compare the image column by formula, not evaluated value;
+- export to a new path.
+
+Some spreadsheet runtimes evaluate unsupported `DISPIMG` formulas as `#NAME?`. Do not treat the evaluated image-cell value as a source-data change. Protect the original formula and OOXML package instead.
+
+## 10. Restore WPS private image parts when needed
+
+Generic XLSX writers may keep formula text while dropping WPS image package parts. If package comparison shows this happened, rebuild the exported archive by restoring from the source workbook:
+
+- `xl/media/*`;
+- `xl/drawings/*`;
+- `xl/cellimages.xml`;
+- `xl/_rels/cellimages.xml.rels`;
+- the original image-formula cells in the target worksheet XML;
+- the WPS cell-image content type;
+- the workbook relationship to `/xl/cellimages.xml`.
+
+Use a temporary directory, build a new archive, and atomically replace only the new output file. Never modify the source workbook. Do not save the restored output through software that removes unknown OOXML extensions before verification.
+
+## 11. Verify the final artifact
+
+Perform all of the following:
+
+### Semantic checks
+
+- output row count and headers;
+- source-column equality;
+- image-formula equality;
+- final classification/note equality to decision data;
+- allowed-label membership;
+- classification counts and note count.
+
+### Package checks
+
+- ZIP integrity;
+- required media, drawings, cell-image XML, and relationships present;
+- relevant package-part hashes equal the source;
+- expected image formula count and unique ID count;
+- every formula ID resolves through cell-image relationships to a retained media part.
+
+### Visual checks
+
+Render or inspect the top, middle, and bottom of the business sheet plus any reserved cell-image sheet. Confirm new columns, widths, wrapping, and source layout. Finally open the workbook in WPS Office and spot-check actual images, because generic renderers may show `#NAME?` for valid WPS cell images.
+
+Only formula errors outside expected WPS `DISPIMG` evaluation should count as new formula failures.
+
+## 12. Validated case benchmark
+
+One completed workbook validated this process with:
+
+- 1,047 product rows and unique SKUs;
+- 1,044 image-formula rows;
+- 3 missing-image rows;
+- 1,033 unique image IDs;
+- 1,036 image/missing-image review groups across six batches;
+- zero unresolved rows;
+- zero source-column mismatches;
+- zero final decision mismatches;
+- 1,017 WPS image-related package parts with zero missing parts and zero hash mismatches;
+- a valid XLSX ZIP archive.
+
+Use these figures only to reproduce that exact case. A new workbook must discover and verify its own counts.

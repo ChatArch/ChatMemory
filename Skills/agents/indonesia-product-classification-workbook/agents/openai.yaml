@@ -1,0 +1,4 @@
+interface:
+  display_name: "Indonesia Product Classification"
+  short_description: "Classify Indonesia-bound product workbooks."
+  default_prompt: "Classify this Indonesia-bound product workbook using the validated rules, image review, audit, WPS image preservation, and acceptance checks in this skill."

@@ -9,3 +9,7 @@ This group is intentionally lightweight for now:
 - heavy governance and polishing requirements can be added later when usage patterns stabilize.
 
 Use `common/` for stable non-ChatArch shared skills, `chatarch/` for stable ChatArch-specific workflows, and local workspace `skills/local/` for machine-specific or private, non-shared skills.
+
+## Skills
+
+- `indonesia-product-classification-workbook/` — audited image-backed Excel classification for Indonesia-bound cargo, including confirmed business rules, structured review, WPS `DISPIMG` preservation, and final workbook acceptance checks.
