@@ -63,4 +63,3 @@ Test the extracted deployment shell against a disposable local Git remote and fa
 After the focused tests, validate the real chain: exact PR head CI and Preview success → preview root and deep page HTTP 200 → authorized merge → exact merged-main CI and Deploy success → Pages deployment success for the current `gh-pages` commit → production and preview roots, English homes, and deep pages HTTP 200 with expected content and canonical URLs. A Pages API status by itself is weaker than the deployment run plus live content.
 
 For multi-repository work, save each batch to a JSON ledger, verify unique target counts, and compute the final totals from the ledger. Reuse a known successful package publishing chain; a documentation-only repair does not authorize another PyPI release.
-
