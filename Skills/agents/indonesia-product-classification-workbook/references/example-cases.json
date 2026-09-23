@@ -1,0 +1,115 @@
+{
+  "task_id": "indonesia-product-classification",
+  "ruleset_version": "2026-09-24",
+  "source": "Validated workspace cases from the 2026-08-24 and 2026-09-23 batches",
+  "cases": [
+    {
+      "id": "IDN-EX-001",
+      "split": "example",
+      "input": {"sku": "401009", "name": "一次性手环腕带-红色", "specification": "300条一包红色", "material": "塑料(PVC)", "image_observation": "包装图标示100pcs"},
+      "expected": {"classification": "普货", "note": "确认包装数量：图片标示100pcs，规格为300条", "basis": "塑料腕带为普通塑料用品；数量冲突写入备注"}
+    },
+    {
+      "id": "IDN-EX-002",
+      "split": "example",
+      "input": {"sku": "401026", "name": "半磨砂椭圆穿戴甲", "specification": "半磨砂椭圆", "material": "磨料/砂", "image_observation": "塑料穿戴甲片"},
+      "expected": {"classification": "普货", "note": "确认材质：图片为塑料穿戴甲片，与“磨料/砂”不符", "basis": "具体产品身份优先，保留材质冲突"}
+    },
+    {
+      "id": "IDN-EX-003",
+      "split": "example",
+      "input": {"sku": "401030", "name": "车载空调香薰", "specification": "车载空调香薰", "material": "化工(香薰)", "image_observation": "车载出风口香薰夹并含香薰耗材"},
+      "expected": {"classification": "A类特敏", "note": "需提供MSDS和运输鉴定报告，确认非危险品后可接；确认实际含香薰耗材", "basis": "实际含化学香薰耗材"}
+    },
+    {
+      "id": "IDN-EX-004",
+      "split": "example",
+      "input": {"sku": "401031", "name": "竹制丝质长幅舞蹈扇", "specification": "1.8米红橙黄", "material": "竹", "image_observation": "竹扇骨和大幅纺织扇面"},
+      "expected": {"classification": "慢线半纺织", "note": "确认材质：图片及品名含长幅丝质扇面，材质栏仅写“竹”", "basis": "纺织与竹制结构混合"}
+    },
+    {
+      "id": "IDN-EX-005",
+      "split": "example",
+      "input": {"sku": "401034", "name": "PCX160/ADV160车厢内衬", "specification": "黑色金边", "material": "发泡", "image_observation": "摩托车坐桶内衬，疑似PU/PVC皮面或面料加发泡"},
+      "expected": {"classification": "商检货", "note": "确认材质：图片疑似PU/PVC皮面或面料+发泡，材质栏仅写“发泡”", "basis": "明确摩托车功能配件"}
+    },
+    {
+      "id": "IDN-EX-006",
+      "split": "example",
+      "input": {"sku": "401035", "name": "一次性奶头贴", "specification": "白色100pcs", "material": "无纺布/布料", "image_observation": "图片为肤色10pcs"},
+      "expected": {"classification": "B类特敏", "note": "确认颜色及包装数量：图片为肤色10pcs，品名为白色100pcs", "basis": "贴身内衣/护垫用途，字段冲突需备注"}
+    },
+    {
+      "id": "IDN-TEST-001",
+      "split": "test",
+      "input": {"name": "食品脱氧剂", "material": "化学成分", "image_observation": "密封小包，不是裸露粉末"},
+      "expected": {"classification": "A类特敏", "note": "食品脱氧剂含化学成分；需提供MSDS和运输鉴定报告，确认非危险品后可接", "basis": "普通化学品且需要资料"}
+    },
+    {
+      "id": "IDN-TEST-002",
+      "split": "test",
+      "input": {"name": "工业喷砂枪配碳化硼喷嘴", "material": "金属/碳化硼", "image_observation": "工业手工具，不是仿真枪"},
+      "expected": {"classification": "普货", "note": "工业喷砂枪配碳化硼喷嘴，属于工具；并非玩具枪、仿真枪或其配件", "basis": "产品主体是工业工具，枪形词不触发禁收"}
+    },
+    {
+      "id": "IDN-TEST-003",
+      "split": "test",
+      "input": {"name": "钢制高压软管接头套", "material": "钢", "image_observation": "通用金属管接套"},
+      "expected": {"classification": "敏感类", "note": "钢制高压软管接头套，按金属五金敏感类", "basis": "通用金属五金，不是手工具或明确汽配"}
+    },
+    {
+      "id": "IDN-TEST-004",
+      "split": "test",
+      "input": {"name": "蟑螂药", "material": "杀虫药剂", "image_observation": "用于毒杀害虫"},
+      "expected": {"classification": "不接", "note": "蟑螂药属于杀虫药剂/危险化学品，不接", "basis": "危险药剂用途"}
+    },
+    {
+      "id": "IDN-TEST-005",
+      "split": "test",
+      "input": {"name": "担架绑带", "material": "牛津布/扣件", "image_observation": "纺织绑带主体并含扣件"},
+      "expected": {"classification": "慢线半纺织", "note": "担架绑带为牛津布织带并含扣件", "basis": "纺织主体与非纺织配件混合"}
+    },
+    {
+      "id": "IDN-TEST-006",
+      "split": "test",
+      "input": {"name": "拨码遥控器", "specification": "带电池", "material": "塑料/电子元件", "image_observation": "成品遥控器"},
+      "expected": {"classification": "敏感类", "note": "拨码遥控器规格明确带电池，按含电池产品处理", "basis": "带电属性优先于普通遥控器品名"}
+    },
+    {
+      "id": "IDN-VAL-001",
+      "split": "validation",
+      "input": {"name": "地面清洁液", "material": "清洁洗涤液", "image_observation": "瓶装液体"},
+      "expected": {"classification": "A类特敏", "note": "地面清洁液；需提供MSDS和运输鉴定报告，确认非危险品后可接", "basis": "普通化学清洁液"}
+    },
+    {
+      "id": "IDN-VAL-002",
+      "split": "validation",
+      "input": {"name": "造口护肤粉", "material": "白色粉末", "image_observation": "医疗护理用粉末"},
+      "expected": {"classification": "不接", "note": "造口护肤粉属于医疗护理用白色粉末产品，不接", "basis": "同时触发医疗护理与白色粉末边界"}
+    },
+    {
+      "id": "IDN-VAL-003",
+      "split": "validation",
+      "input": {"name": "泵用机械密封组件", "material": "金属/碳化硅/氟胶", "image_observation": "完整机械密封组件"},
+      "expected": {"classification": "商检货", "note": "图片为完整泵用机械密封组件；确认准确品名及组合材质", "basis": "完整小型机械配件"}
+    },
+    {
+      "id": "IDN-VAL-004",
+      "split": "validation",
+      "input": {"name": "家具装饰金属箔片", "material": "金属", "image_observation": "金色/银色装饰薄片"},
+      "expected": {"classification": "敏感类", "note": "家具装饰金属箔片；确认实际金属成分", "basis": "装饰用金属薄片按金属材质处理"}
+    },
+    {
+      "id": "IDN-VAL-005",
+      "split": "validation",
+      "input": {"name": "牛津布成品搬家袋", "material": "牛津布", "image_observation": "完整箱包类成品"},
+      "expected": {"classification": "普货", "note": "牛津布成品搬家袋，按箱包类普货", "basis": "具体箱包品名优先于纺织材质兜底"}
+    },
+    {
+      "id": "IDN-VAL-006",
+      "split": "validation",
+      "input": {"name": "迷彩背包式点肥器", "material": "混合材质", "image_observation": "图片清楚显示迷彩图案"},
+      "expected": {"classification": "不接", "note": "图片为迷彩背包式点肥器，迷彩产品不接；确认最终颜色/图案", "basis": "图片触发明确迷彩禁收规则"}
+    }
+  ]
+}

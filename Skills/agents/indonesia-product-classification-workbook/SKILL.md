@@ -11,6 +11,7 @@ Use this skill for auditable product-by-product classification, not keyword-only
 
 - Read [references/business-rules.md](references/business-rules.md) before assigning or reviewing classifications.
 - Read [references/workbook-pipeline.md](references/workbook-pipeline.md) when inspecting, editing, delegating review of, or validating an XLSX workbook, especially one that uses WPS `DISPIMG` cell images.
+- Read [references/automation-task-profile.md](references/automation-task-profile.md) when registering this workflow in an annotation platform, building its API/UI, or evaluating automation against the maintained examples and splits.
 
 ## Outcome
 
