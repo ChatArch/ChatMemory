@@ -286,34 +286,11 @@ If the workflow already created a wrong `github.io` preview comment, update only
 
 ## Deploy Docs Workflow Pattern
 
-Formal docs deployment runs from the default branch after merge:
+When production and preview share `gh-pages`, do not deploy production with a whole-tree replacement that discards `dev/` and `versions.json`. Build production strictly, preserve only the intended preview paths from the latest published branch, then publish the combined tree. Put Preview and Deploy in the same non-cancelling concurrency group so their branch writes cannot race. Keep stale production files out of the new tree.
 
-```yaml
-name: Deploy Docs
+Use `references/preview-preserving-deployment.md` for the tested workflow and regression/acceptance gates. Treat preview-before-merge and preview-after-production-deploy as separate checks: a green PR preview can still disappear on merge.
 
-on:
-  push:
-    branches:
-      - main
-      - master
-
-permissions:
-  contents: write
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-      - run: python -m pip install --upgrade pip
-      - run: python -m pip install -e ".[docs]"
-      - run: mkdocs gh-deploy --force
-```
-
-Do not claim the formal docs site has changed until the default-branch deploy completes and HTTP readback confirms the new content.
+For private-to-public package batches, freeze the verified package allowlist and keep a per-repository ledger covering visibility, protection, exact-head CI/Preview, merged-main Deploy, current Pages deployment SHA, About/source/PyPI URL agreement, and production/preview root, English, and deep-page HTTP checks. Do not close the batch from configuration or workflow success alone.
 
 ## About URL And Package Metadata Sync
 
