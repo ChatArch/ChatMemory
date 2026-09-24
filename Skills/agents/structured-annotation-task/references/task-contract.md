@@ -97,6 +97,20 @@ Processing progress, proposal coverage, and human-review coverage are different 
 - Validation set: separately identified cases used for acceptance metrics and regression checks.
 - Keep source provenance and expected-decision provenance for every fixture.
 - Include counterexamples where keyword-only classification would fail.
+- Split by the strongest shared identity available, such as exact SKU, image hash, or normalized product family, so near duplicates cannot cross from train/examples into acceptance evaluation.
+- Freeze and hash the acceptance set before its first evaluated run. Cases inspected to change the current prompt, rules, or retrieval library move to regression history in the next version rather than remaining “unseen.”
+- Quarantine contradictory same-identity labels from gold until an explicit adjudication records the chosen label and reason.
+
+## Ingestion preflight
+
+Before a bulk proposal job can leave normalization:
+
+- read representative persisted records back through the production API or store boundary;
+- compare all required task fields and evidence states to source artifacts, including positional columns with blank or non-standard headers;
+- record field-population and evidence-resolution counts;
+- fail closed when an intended source column is unexpectedly empty or evidence resolution materially differs from the source inventory.
+
+Proposals produced before a failed evidence preflight are invalid for final decisions and ground truth, even if their API calls succeeded.
 
 ## Shared UI contract
 

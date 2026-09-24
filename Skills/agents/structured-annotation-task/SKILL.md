@@ -14,12 +14,12 @@ Read [references/task-contract.md](references/task-contract.md) when defining a 
 ## Workflow
 
 1. Assign a stable task ID and version. Record the task owner, purpose, exclusions, and source-of-truth rules.
-2. Define machine-readable input and output schemas. Keep source fields immutable and put derived values in explicit proposal/final-decision fields.
+2. Define machine-readable input and output schemas. Keep source fields immutable and put derived values in explicit proposal/final-decision fields. Before bulk execution, read normalized records back through the production boundary and prove that required fields were not dropped by aliases, blank headers, or positional parsing.
 3. Provide representative examples, including ordinary cases, high-risk boundaries, missing evidence, field conflicts, and note obligations.
-4. Split fixtures into visible tests for development and a separate validation set for acceptance. Do not tune against validation failures without versioning the task or split.
+4. Split fixtures into visible tests for development and a separately sealed validation set for acceptance. Group-split near duplicates, hash the sealed set before its first run, and do not tune against its failures without versioning the task or split. Exact or grouped examples used for retrieval are not independent evaluation cases.
 5. Run automation as a proposal stage. Require the task profile's review and completion gate before marking annotations final.
 6. Present evidence, proposal, confidence, rule basis, reviewer decision, notes, and unresolved status in the UI. Avoid domain-specific labels in shared components.
-7. Preserve an audit trail from source record through proposal, review, override, export, and evaluation.
+7. Preserve an audit trail from source record through proposal, review, override, export, and evaluation. Quarantine contradictory examples from reusable gold until explicit adjudication resolves them.
 
 ## Completion boundary
 

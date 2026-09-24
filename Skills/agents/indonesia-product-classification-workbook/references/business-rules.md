@@ -37,14 +37,14 @@ A current specific product rule normally beats a broad material fallback. A curr
 ## Hardware, tools, keys, and automotive products
 
 - General metal hardware and restricted stainless-steel hardware are `敏感类`. Typical examples include rails, hinges, racks, brackets, generic metal storage hardware, and coated metal wire.
-- A usable hand tool, tool attachment, or tool consumable is normally `普货`, even when metal.
+- A clearly identified, ordinary finished hand tool may be `普货`, even when metal, but `工具` is only a candidate identity and never a terminal rule. Cutting, piercing, drilling, grinding, sawing, welding, sharp-edge, machine-mounted, and functional metal products require their own current rule or review; do not extend the hand-tool exception to every attachment or consumable.
 - A clearly identified automotive, motorcycle, or vehicle functional part is normally `商检货`.
 - Automotive lights are a confirmed exception and are `普货`.
 - A metal key is `商检货`.
 - A key cover, key ring, or T-handle removal tool is not a metal key; classify the actual product.
 - An automotive seat cushion follows the specific category-table rule `敏感类`, rather than the broad automotive-parts fallback.
 
-Use the image to distinguish a functional part, a repair tool, generic hardware, and a decorative accessory.
+Use the image to distinguish a functional part, a repair tool, generic hardware, a cutting or machine consumable, and a decorative accessory. Decide the product body and risk-bearing function before applying the broad material fallback.
 
 ## Lighting
 

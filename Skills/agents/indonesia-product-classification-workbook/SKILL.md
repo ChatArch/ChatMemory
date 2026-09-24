@@ -38,19 +38,20 @@ Produce a new workbook that:
 ## Workflow
 
 1. Confirm the route, allowed labels, target sheet, source columns, output columns, and current rule sources.
-2. Inventory the workbook: product rows, unique SKUs, formulas, images, missing images, existing labels, and package integrity.
-3. Normalize historical classifications, but keep their source workbook and row for traceability. Reject blank or generic placeholder identifiers before any exact-SKU match.
-4. Generate a rule-based proposal with rule ID, basis, note, confidence, and review status.
+2. Inventory the workbook: product rows, unique SKUs, formulas, images, missing images, existing labels, and package integrity. Before any model call, round-trip representative normalized records and prove that every intended source column reached the persisted task input; blank or non-standard headers are not permission to omit positional evidence.
+3. Normalize historical classifications, but keep their source workbook and row for traceability. Reject blank or generic placeholder identifiers before any exact-SKU match. When a recent correction workbook overlaps a master workbook, version both evidence snapshots and use the correction workbook for the fields it actually corrects rather than blindly replacing the whole row.
+4. Generate a rule-based or model proposal with rule ID, basis, note, confidence, prompt/task version, response provenance, and review status. Treat it as a proposal even when every row received a successful response.
 5. Extract WPS cell images and group rows that share an image ID.
 6. Review every image group and every missing-image row. When subagents are authorized and available, distribute disjoint batches and require structured results; otherwise perform the same review serially.
-7. Run a separate high-risk audit for weapons/military items, drones, magnets, chemicals, batteries, medical items, pressure containers, white powders, tools, automotive parts, hardware, lighting, and field conflicts.
-8. Merge batch corrections and explicit final overrides. After the last override, rerun same-image, same-product, note-obligation, and coverage checks. Resolve every conflict; do not hide unresolved rows in a broad default category.
+7. Run a separate high-risk audit for weapons/military items, drones, magnets, chemicals, batteries, medical items, pressure containers, white powders, cutting/drilling/grinding/welding products, automotive parts, hardware, lighting, and field conflicts. Re-adjudicate every master/correction disagreement from combined current evidence.
+8. Merge batch corrections and explicit final overrides. Do not resolve a disagreement by repeatedly asking a model that can retrieve the exact disputed row as an example. Quarantine conflicting same-product examples from reusable gold, and use current rules, raw evidence, an independent pass without exact-row retrieval, or explicit human adjudication. After the last override, rerun same-image, same-product, note-obligation, and coverage checks.
 9. Write the classification and note columns into a new workbook, then restore WPS private image parts if the authoring runtime stripped them. Prefer the bundled standard-library script so this step remains portable.
 10. Verify source-column equality, classification validity, note obligations, review coverage, image relationships/hashes, archive integrity, and visual layout.
 
 ## Decision discipline
 
 - Prefer a specific named-product rule over a broad material rule when both are current and applicable.
+- Decide in this order: concrete product identity, risk-bearing structure or contents, specific route exception, then material fallback. A word such as `tool`, `metal`, `medical`, or `automotive` is not a terminal rule.
 - Distinguish the product body from incidental words and accessories: a battery tester is not a battery, a plastic film is not liquid glue, and a tool made of metal is not automatically restricted hardware.
 - Use confidence only to prioritize review. Confidence is not evidence and cannot waive image review.
 - When two reviewers disagree, decide from the rule priority, the actual image, and the most specific supported product identity. Record the final reason.
@@ -68,5 +69,9 @@ Do not declare completion until all of these are true:
 - required MSDS/transport appraisal, weak-magnet, missing-image, and field-conflict notes are present;
 - source business columns match the original;
 - output classification and notes match the final decision data;
+- source-field ingestion was proven before batch proposal generation, including non-standard or blank-header columns mapped by the task contract;
+- corrected-overlap rows were adjudicated from the latest combined evidence rather than whichever file ran last;
+- no exact disputed record was used both as the answer-bearing retrieval example and as claimed independent verification;
+- contradictory same-product examples are quarantined from reusable gold until adjudicated;
 - all effective WPS image cells, including shared-formula followers, resolve to retained image package parts;
 - the XLSX archive and representative visual renders pass verification.
