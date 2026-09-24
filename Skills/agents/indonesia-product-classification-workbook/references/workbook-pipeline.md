@@ -88,6 +88,8 @@ Each initial proposal should include:
 
 Apply explicit user rules first, then current specific category rules, then historical evidence, then conservative fallback. Confidence only determines review order.
 
+In a service, proposal generation completion and annotation completion are separate counters. Persist and expose `total`, `proposed`, `reviewed`, `unresolved`, and `remaining_review`; report proposal and review percentages independently. If only 10% of rows were human-reviewed, call the file 10% reviewed even when every row already has a proposal.
+
 Guard against substring and subject errors. Validated failures included:
 
 - `pink` or `shrink` falsely matching `ink`;
@@ -186,6 +188,8 @@ After all batch corrections and final overrides, rerun the full consistency suit
 - every accepted chemical that requires documents has the required note;
 - every embedded magnet has `弱磁`;
 - every missing-image row has a note.
+
+Do not trigger chemical-document notes from the final A/B label alone. Re-evaluate the source evidence and require those documents only when the actual product contains an applicable chemical; category-driven non-chemical A/B items do not inherit the obligation.
 
 ## 9. Author the output workbook
 
