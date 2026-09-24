@@ -20,6 +20,7 @@ The platform layer follows the workspace Skill `structured-annotation-task`. Thi
   "excel_row": 34,
   "image_id": "WPS-image-id-or-null",
   "image_ref": "portable-extracted-image-or-null",
+  "image_status": "resolved|missing|unresolved",
   "sku": "401030",
   "chinese_name": "车载空调香薰",
   "english_name": "Parfum Mobil",
@@ -33,6 +34,10 @@ The platform layer follows the workspace Skill `structured-annotation-task`. Thi
 ## Output record
 
 Each proposal and final decision carries `classification`, `note`, `confidence`, `rule_id`, `basis`, `review_status`, and source provenance. `review_status=proposed` is not final.
+
+Carry `image_status` from workbook parsing into the model input, persisted source record, review UI, and final completion gate. A missing image is explicit evidence, not an omitted field: the proposal/final note must state that the product image is missing and the record must remain visible for human review.
+
+Document-note obligations are evidence-driven. Require MSDS, transport-appraisal, and non-dangerous-goods wording only when the declared product actually contains glue, gel, paint, ink, cleaner, cosmetic paste, or another applicable chemical. Do not infer this obligation merely from an `A类特敏` or `B类特敏` label assigned for a non-chemical named category.
 
 See [example-cases.json](example-cases.json) for compact real cases extracted from completed work. These examples include field conflicts and note obligations rather than only easy keyword matches.
 
@@ -58,3 +63,9 @@ For a production benchmark, retain source workbook/image provenance outside the 
 
 Label accuracy on the validation split is reported separately from workflow completeness. A high score cannot waive image review or artifact integrity gates.
 
+## Service progress acceptance
+
+- The API and page report proposal coverage and human-review coverage separately.
+- After all 20 proposals exist and only 2 have a final human decision, the page must show proposal `20/20 (100%)`, review `2/20 (10%)`, and remaining review `18`.
+- Unresolved rows are displayed separately and still count as unfinished for final export.
+- A pipeline-stage percentage may be shown as secondary context only; it must not replace the human-review percentage.

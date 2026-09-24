@@ -25,3 +25,4 @@ Read [references/task-contract.md](references/task-contract.md) when defining a 
 
 A processing job may be complete while annotation review is not. Report these states separately. Never map a successful model/API call directly to `final` unless the task profile explicitly permits fully automatic acceptance and defines measurable gates for it.
 
+For file jobs, expose at least `total`, `proposed`, `reviewed`, `unresolved`, and `remaining_review`. Display proposal coverage and human-review coverage as separate percentages in the API and UI. A file with 100% proposals and 10% human review is 10% reviewed, not “almost complete”; its final export gate remains closed.

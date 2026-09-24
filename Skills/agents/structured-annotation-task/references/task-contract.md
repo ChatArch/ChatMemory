@@ -40,6 +40,33 @@ uploaded -> normalized -> proposed -> in_review -> reviewed -> validated -> expo
 
 Track job state separately as `queued`, `running`, `succeeded`, or `failed`.
 
+## File-job progress contract
+
+Processing progress, proposal coverage, and human-review coverage are different measurements. A service should return them separately, for example:
+
+```json
+{
+  "counts": {
+    "total": 20,
+    "proposed": 20,
+    "reviewed": 2,
+    "unresolved": 0,
+    "remaining_review": 18
+  },
+  "progress": {
+    "pipeline": 0.86,
+    "proposal": 1.0,
+    "review": 0.1
+  }
+}
+```
+
+- `proposal` answers how many effective records have an automation proposal.
+- `review` answers how many effective records have a final accepted or corrected human decision.
+- `remaining_review` is the number still lacking a final human decision; unresolved records remain unfinished.
+- `pipeline` may summarize execution stages, but the UI must not present it as annotation completion.
+- A partial-review page must show the numerator, denominator, percentage, unresolved count, and remaining count. Final validation/export remains unavailable until the task completion gate passes.
+
 ## Output record
 
 ```json
@@ -77,3 +104,4 @@ The first screen is the working annotation console, not a marketing page. It sho
 
 Use a quiet operational layout with clear hierarchy, restrained color, compact tables, keyboard-friendly review, and a detail pane for evidence. A task may supply label colors, but the platform must not become a one-color theme or hard-code one domain's visual language.
 
+When a file task is active, show automation progress and human-review progress in separately labeled bars or counters. Do not let a completed proposal stage visually imply completed annotation review.
