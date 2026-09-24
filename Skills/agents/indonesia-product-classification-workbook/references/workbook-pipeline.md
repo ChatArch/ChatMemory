@@ -28,6 +28,8 @@ Inspect:
 - image formula count, unique image ID count, and blank-image rows;
 - archive integrity with a standard ZIP library or an available platform utility. Do not require the POSIX `unzip` command.
 
+After normalization and before launching a batch model job, read representative persisted records back through the same service boundary used by production. Check at least the first, middle, last, missing-image, and non-standard-header rows. Compare image status, name, SKU, material, purpose/use, and any task-specific positional fields to the source cells. If an intended column is silently empty across the batch, stop and invalidate that run; partial proposals generated without required evidence are not reusable results.
+
 Do not assume the business sheet is `sheet1.xml`. Resolve the sheet relationship when the workbook layout differs.
 
 Create a normalized target record for each product, retaining the original Excel row number:
@@ -58,6 +60,8 @@ Match in this order: exact SKU, exact normalized product identity, then carefull
 
 Audit conflicts separately. Historical non-accept matches should be listed for review, not applied automatically.
 
+When a smaller correction workbook overlaps a master workbook, create an explicit field-level merge contract. Prefer the correction workbook for corrected image/name/material fields, retain master-only fields such as purpose when still current, and run a new combined-evidence adjudication for every overlapping SKU. Never choose a final label merely because one workbook was processed later.
+
 ## 4. Extract WPS cell images
 
 WPS cell images commonly use:
@@ -87,6 +91,8 @@ Each initial proposal should include:
 - review status.
 
 Apply explicit user rules first, then current specific category rules, then historical evidence, then conservative fallback. Confidence only determines review order.
+
+Pin the task manifest, prompt, example-library hash, model, and reasoning effort for every run. Preserve response IDs and retrieved example IDs. A proposal generated with missing required evidence, a different prompt version, or an unpinned example set belongs to a different run and cannot be silently merged.
 
 In a service, proposal generation completion and annotation completion are separate counters. Persist and expose `total`, `proposed`, `reviewed`, `unresolved`, and `remaining_review`; report proposal and review percentages independently. If only 10% of rows were human-reviewed, call the file 10% reviewed even when every row already has a proposal.
 
@@ -158,6 +164,16 @@ Independently rescan product names, SKUs, materials, notes, and images for:
 
 The audit should catch dangerous false negatives and broad-rule false positives. Record final overrides with row, classification, optional note, and reason.
 
+Also audit the largest observed confusion pairs from the latest human corrections. For the validated Indonesia workflow these included broad `普货 -> 敏感类` and `普货 -> 商检货` mistakes caused by treating `工具`, metal, automotive, or medical keywords as terminal rules. Update this list from measured corrections rather than intuition.
+
+For model-assisted adjudication, distinguish three kinds of checks:
+
+- known-error regression: the case or a near-duplicate may be in the example library; this only proves the old failure no longer reproduces;
+- independent re-review: exact SKU/image/product-group examples are excluded from retrieval and the reviewer sees current raw evidence;
+- acceptance evaluation: a sealed, provenance-tracked challenge that was not used to change the current prompt or examples.
+
+Do not report a regression result as independent accuracy. If a repeated model call retrieves the exact disputed record, treat the result as self-leaked and do not use it to break the tie. Quarantine contradictory same-image or same-series records from training gold until an explicit adjudication resolves them.
+
 ## 8. Merge with full coverage guarantees
 
 Start from the proposal set, then apply:
@@ -173,6 +189,9 @@ The merger should fail when:
 - review counts differ from the manifest;
 - a product row is missing or reviewed by more than one batch;
 - a final label is invalid.
+- an overlap record lacks its combined-evidence adjudication;
+- a high-risk disagreement lacks a valid tie-break or explicit unresolved decision;
+- a tie-break depends on an exact-row retrieval example that already contains one of the disputed labels.
 
 Create:
 
@@ -188,6 +207,7 @@ After all batch corrections and final overrides, rerun the full consistency suit
 - every accepted chemical that requires documents has the required note;
 - every embedded magnet has `弱磁`;
 - every missing-image row has a note.
+- conflicting same-product records are resolved or visibly marked for confirmation and excluded from reusable gold.
 
 Do not trigger chemical-document notes from the final A/B label alone. Re-evaluate the source evidence and require those documents only when the actual product contains an applicable chemical; category-driven non-chemical A/B items do not inherit the obligation.
 

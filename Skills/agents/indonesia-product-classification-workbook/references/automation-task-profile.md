@@ -47,7 +47,7 @@ See [example-cases.json](example-cases.json) for compact real cases extracted fr
 - `test`: records `IDN-TEST-001` through `IDN-TEST-006`, visible during implementation.
 - `validation`: records `IDN-VAL-001` through `IDN-VAL-006`, reserved for acceptance checks.
 
-For a production benchmark, retain source workbook/image provenance outside the public UI and verify that each fixture still matches the current route rules before a ruleset version bump.
+For a production benchmark, retain source workbook/image provenance outside the public UI and verify that each fixture still matches the current route rules before a ruleset version bump. Freeze a challenge before the evaluated run, hash it, and group-split by SKU/image/product family. Exclude contradictory same-series records from gold until adjudicated. A record used to correct the prompt or supplied as a retrieval example may be reported as regression coverage, not independent acceptance accuracy.
 
 ## Acceptance metrics
 
@@ -60,6 +60,9 @@ For a production benchmark, retain source workbook/image provenance outside the 
 - Unexplained same-product conflicts: zero.
 - Source-column changes: zero.
 - WPS image relationship/media resolution: 100% for effective image cells.
+- Required source-field ingestion preflight: 100%; a missing intended column invalidates the proposal run.
+- Master/correction overlap adjudication coverage: 100% when an override workbook is present.
+- Train/example versus sealed-challenge exact/group leakage: zero.
 
 Label accuracy on the validation split is reported separately from workflow completeness. A high score cannot waive image review or artifact integrity gates.
 
