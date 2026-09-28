@@ -24,6 +24,14 @@ Use only an existing, authorized inbox integration if it can read the exact veri
 
 PyPI's confirmation handler checks that the request IP matches the original login attempt. Consume the link from the original execution host with unchanged network egress; opening it from a phone or unrelated workstation can fail with a device-details mismatch. Recheck official behavior if the provider changes. Avoid repeated login attempts: confirmation email delivery is rate-limited.
 
+## Waiting and callback capability
+
+Verify the installed `--tree`, `auth login --help`, and runtime login implementation before recommending a waiting command. An HTTP `--timeout` only bounds a network request; it does not create an email wait. A registered `auth verify-email` command can be an unimplemented bootstrap placeholder, and account email verification is distinct from new-device `confirm-login`. Compare the installed module with the checkout rather than assuming they match.
+
+Treat the new-device email as a one-time confirmation URL, not a numeric email OTP. The confirmation handler validates the original attempt IP and authenticates the session receiving that URL. It is not an OAuth redirect_uri protocol or a native webhook to an arbitrary callback endpoint. Polling an old token file or the bare confirmation page does not supply the missing URL or transfer another browser's cookies.
+
+For a requested waiting feature, implement one bounded checkpoint state machine shared by CLI and API: begin once, wait for user-supplied confirmation input, consume it on the unchanged original egress, verify the actual authenticated account matches the selected profile, then save through ChatEnv and independently read back. Use hidden terminal input or an authenticated completion interface; never put the one-time URL in shell arguments, logs, status output, or public query strings. Keep pending secrets separate from an already-verified session under the approved private ChatArch state root, with expiry/cancel cleanup. Do not repeatedly log in to simulate polling, auto-read mail without authorized integration, or describe an application-owned completion endpoint as a PyPI callback. Label proposed CLI options as unimplemented until exercised.
+
 ## Resume safely
 
 Treat the one-time URL as a credential: accept only HTTPS on the exact expected PyPI hostname and confirmation path; never echo or commit its query. Keep any temporary credential state in the approved ChatArch token store, not the workspace. After approval, save the authenticated session through ChatPyPI's token-store helper, independently run `auth whoami`, and read the exact project's Publisher details before proceeding to tag/publish. Do not claim authenticated state from approval-page navigation alone.
