@@ -1,7 +1,7 @@
 ---
 name: chatglance-service-entry
-description: Use when adding services to ChatGlance. Verify cards.
-version: 0.1.0
+description: Add verified services to ChatGlance through its reviewed catalog, generated covers, monitoring, validated refresh, and browser acceptance.
+version: 0.1.1
 reference:
   - local-public-service-entry-pattern: "Verify the service's local/public entry before adding a human-facing ChatGlance card"
 ---
@@ -60,14 +60,13 @@ For inline SVG covers, verify the image alt, decoded/load state, destination hre
 
 4. **Back up and update the reviewed ChatGlance inventory.**
 
-   Add a site entry like:
+   Add a site entry like this. Omit `cover_url` by default; add it only when verified custom artwork was explicitly requested:
 
    ```yaml
    - name: <service>
      title: <Human Title>
      kind: <short category>
      description: <one sentence>
-     cover_url: <public-cover-url>
      cover_summary: <short image summary>
      visual_card: true
      card_mode: visual
@@ -127,7 +126,7 @@ For inline SVG covers, verify the image alt, decoded/load state, destination hre
    - generated JSON contains the service;
    - generated JSON counts increased as expected;
    - service status is `healthy` when Uptime has a successful latest result;
-   - generated page YAML contains the title and cover URL;
+   - generated page YAML contains the title and a derived inline cover, or the verified custom cover URL;
    - live `glance.yml` still validates;
    - public Glance route still redirects/serves correctly and does not leak local hostnames;
    - the service public URL and Uptime detail URL return HTTP 200.

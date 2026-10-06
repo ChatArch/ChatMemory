@@ -1,7 +1,7 @@
 ---
 name: local-public-service-entry-pattern
 description: Shared workflow for exposing a machine-local service through local nginx plus an automatic public entry, without per-service DNS or certificate drift.
-version: 0.1.0
+version: 0.1.1
 ---
 
 # Local/Public Service Entry Pattern
