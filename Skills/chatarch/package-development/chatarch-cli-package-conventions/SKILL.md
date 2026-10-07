@@ -70,6 +70,10 @@ chatenv --home <task-local-home> test -t <alias> -I
 chatenv --home <task-local-home> new <profile> -t <alias> -I --yes
 ```
 
+### Runtime preferences must be both discoverable and effective
+
+When promoting a process-only runtime switch into ChatEnv, register its canonical typed schema and reuse EnvStore for persistence, then wire the actual runtime decision path to that store. A field that appears in `status` but does not affect behavior is incomplete. Resolve the selected `--home` before missing-input interaction, preserve explicit CLI flags over process env over the active profile over defaults, and avoid exporting profile values into `os.environ` or depending on mutable `EnvField.value` state. Verify a fresh CLI process, both env-override directions, explicit `-i/-I`, home isolation, profile save/use and a built-wheel install. State which consumers actually adopt persistent preferences; schema registration alone does not change every ChatArch CLI.
+
 ### Use ChatEnv's write path
 
 When updating ChatEnv-backed values from a package, use ChatEnv's store primitives instead of rewriting `.env` files yourself:
