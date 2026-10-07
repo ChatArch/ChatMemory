@@ -1,7 +1,7 @@
 ---
 name: local-public-service-entry-pattern
 description: Shared workflow for exposing a machine-local service through local nginx plus an automatic public entry, without per-service DNS or certificate drift.
-version: 0.1.0
+version: 0.1.1
 ---
 
 # Local/Public Service Entry Pattern
@@ -33,6 +33,10 @@ For a service named `<service>`:
 - upstream: normally `http://127.0.0.1:<port>` unless the service intentionally listens elsewhere
 
 Only add or update the local nginx service config for normal service onboarding. Do not add per-service DNS records, create per-service certificates, or edit the public tunnel configuration unless the user explicitly asks to change the shared infrastructure.
+
+## Shared Service Identity
+
+For ChatArch services, use the ingress workspace's canonical `SITES.md` account/email/password policy regardless of which host runs the application, unless the user explicitly declares an exception. Provisioning that declared shared login for a new service is the default deployment behavior and needs no additional cross-host reuse question. Read and privately transport only those account fields into restricted service configuration; do not migrate unrelated token stores, account databases, or personal profiles. After service acceptance, register the public entry in the common service homepage using the same catalog. A missing copy of the catalog on an application host does not change this policy.
 
 ## Expected Preconditions
 

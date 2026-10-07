@@ -1,14 +1,14 @@
 ---
 name: chatglance-service-entry
-description: Add a verified service to the ChatGlance website-services page with cover art, Uptime/Gatus monitoring, validated config refresh, and no secret leakage.
-version: 0.1.0
+description: Add verified services to ChatGlance through its reviewed catalog, generated covers, monitoring, validated refresh, and browser acceptance.
+version: 0.1.1
 reference:
   - local-public-service-entry-pattern: "Verify the service's local/public entry before adding a human-facing ChatGlance card"
 ---
 
 # ChatGlance Service Entry
 
-Use this skill when a ChatArch service already has a working public entry and the user asks to add it to the current Glance/ChatGlance website showcase page.
+Use this skill for the standard post-service ChatArch catalog/homepage registration, or when the user explicitly asks to add a verified service to Glance/ChatGlance.
 
 The workflow is not automatic Nginx discovery. ChatGlance uses a reviewed runtime inventory plus generated snapshots. Add one intentional service card at a time and verify it end-to-end.
 
@@ -26,6 +26,12 @@ For a service `<service>` gather:
 
 Do not put local probe hostnames, private IPs, API keys, cookies, or passwords on the public-facing card.
 
+## Domain defaults and detached collection gate
+
+Read the canonical ingress catalog and the live inventory before deriving URLs. Ensure `page.public_domain` and `page.local_domain`, or their owning typed profile defaults, are present; domain values contain no scheme, port or path. Preserve explicit per-service destinations. Run the installed `sites collect` command once into a task-owned candidate and reconcile counts/destinations before entering the live refresh queue. This isolates a missing input from an expensive scheduled pipeline or a generic collection error. Publish only through the actual supported validated pipeline and respect its lock.
+
+For inline SVG covers, verify the image alt, decoded/load state, destination href, and visible pixels. A title rendered inside an image need not exist as DOM text. Exercise the actual open link, handling a new owned tab when appropriate; a written inventory or a locator assumption is not page acceptance.
+
 ## Procedure
 
 1. **Verify the service first.**
@@ -42,35 +48,25 @@ Do not put local probe hostnames, private IPs, API keys, cookies, or passwords o
 
    Locate the live ChatGlance runtime home and read the reviewed inventory and generated JSON/page:
 
-   ```bash
-   cat <runtime-home>/config/site-services.yml
-   cat <runtime-home>/data/site-services.json
-   ```
+   Read `<runtime-home>/config/site-services.yml` and `<runtime-home>/data/site-services.json` with the available file tools; keep secret-bearing runtime files out of diagnostic output.
 
    Confirm whether the service already exists. Do not infer membership by scanning Nginx; the inventory is reviewed, not discovered.
 
-3. **Create a cover that matches the service, not a template.**
+3. **Use the self-contained inline SVG cover by default.**
 
-   Check one or two existing cover images so you understand the page's visual density and card ratio. Avoid cloning the same background/composition for every card.
+   Omit `cover_url` so the installed renderer derives the title, summary and safe public destination label from the reviewed service data. Verify the visible result and retain intentional per-service URL overrides; do not hard-code a domain into artwork or display an internal probe address.
 
-   Preferred cover specs:
-
-   - wide card ratio: `16:7`, final `1280x560` PNG or equivalent;
-   - include the service title and 1 short overview line in the image;
-   - distinct composition based on the service's function;
-   - no real URLs, tokens, account names, or internal hostnames in the image;
-   - publish the final image to the managed Share/image host and verify HTTP 200.
+   Only when custom artwork is explicitly requested, inspect existing cards, use the `16:7` ratio, omit credentials/account/internal-address text, and publish the verified image through the managed image host. Require HTTP 200 before using that external cover.
 
 4. **Back up and update the reviewed ChatGlance inventory.**
 
-   Add a site entry like:
+   Add a site entry like this. Omit `cover_url` by default; add it only when verified custom artwork was explicitly requested:
 
    ```yaml
    - name: <service>
      title: <Human Title>
      kind: <short category>
      description: <one sentence>
-     cover_url: <public-cover-url>
      cover_summary: <short image summary>
      visual_card: true
      card_mode: visual
@@ -130,7 +126,7 @@ Do not put local probe hostnames, private IPs, API keys, cookies, or passwords o
    - generated JSON contains the service;
    - generated JSON counts increased as expected;
    - service status is `healthy` when Uptime has a successful latest result;
-   - generated page YAML contains the title and cover URL;
+   - generated page YAML contains the title and a derived inline cover, or the verified custom cover URL;
    - live `glance.yml` still validates;
    - public Glance route still redirects/serves correctly and does not leak local hostnames;
    - the service public URL and Uptime detail URL return HTTP 200.
