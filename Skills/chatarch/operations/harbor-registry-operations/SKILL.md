@@ -1,7 +1,7 @@
 ---
 name: harbor-registry-operations
 description: Use when operating Harbor registries and official CLI.
-version: 0.1.1
+version: 0.1.2
 ---
 
 # Harbor Registry Operations
@@ -11,6 +11,16 @@ version: 0.1.1
 Use the official Harbor service, official `goharbor/harbor-cli` for management, and Docker/other OCI clients for image transport. A REST API is not the same thing as a management CLI. Before proposing a custom wrapper, check the official CLI's registered help, maintained release, authentication, required operations and compatibility against the deployed service. Prefer the existing CLI when verified; document gaps before considering another package.
 
 For ChatArch onboarding, follow the ingress catalog's canonical `SITES.md` shared account/email/password on every application host unless the user declares an exception. Provision only those fields privately, without another cross-host reuse question. Keep unrelated account databases, tokens and personal profiles out of the transfer. Deploy the service and verify its real workflow before catalog/homepage registration or tool-development work.
+
+## Quick start: use the right client
+
+1. Resolve the verified official executable, HTTPS origin, and canonical shared identity. A remote CLI client does not need SSH, Docker daemon, or server co-location.
+2. Create an explicit private config under the resolved `CHATARCH_HOME`, initialize a named context through trusted interactive login, and verify health plus authenticated identity. Do not put passwords in argv or expose context dumps.
+3. Use the management CLI for project/repository/artifact queries; use Docker/OCI clients with a separate private auth cache for tag/push/pull. A login in one client does not initialize the other.
+4. Call `/api/v2.0/` directly for JSON management when a CLI is unnecessary; use the Swagger API Explorer to validate write payloads, and keep Registry `/v2/` separate.
+5. Use least-privilege project Robot Accounts for CI, protect exported secrets, and treat creation/rotation/deletion/bulk operations as explicit writes, not as read-only exploration.
+
+Follow the [step-by-step usage runbook](references/official-cli-api.md) for complete variables, login/context switch, exact query and project-create syntax, Docker push/pull, REST examples, safe robot export/CI flow, troubleshooting, and the full visible command tree.
 
 ## Deployment and exposure
 
