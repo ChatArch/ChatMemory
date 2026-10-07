@@ -1,7 +1,7 @@
 ---
 name: harbor-registry-operations
 description: Use when operating Harbor registries and official CLI.
-version: 0.1.0
+version: 0.1.1
 ---
 
 # Harbor Registry Operations
@@ -43,6 +43,12 @@ harbor --config <private-config> --output-format json artifact list <project>/<r
 Read the installed command's help before automation. Prefer interactive password input or an already-initialized private context, never a password flag or raw credential output. Verify whether that release's `--password-stdin` really supports non-TTY input; if it requires a TTY, initialize through a bounded owned non-echoing terminal and verify the resulting context. Do not claim generic unattended login support from the flag name alone.
 
 Normalize JSON deliberately: some commands return an array while others wrap results in `Payload` and expose `XTotalCount`. Paginate and reconcile totals before reporting an all-items result. Read-only command compatibility does not prove every administrative write, scanner or replication feature is supported.
+
+## Client/server and API boundary
+
+Run the official CLI wherever a supported client can reach the configured HTTPS Harbor origin; the client is not required to share the service host and does not need SSH or the server Docker daemon. Keep management REST `/api/v2.0/`, the Swagger API Explorer, and Registry data-plane `/v2/` distinct. Read back authenticated identity and a real list before claiming remote access. Preserve server/runtime migration as a separate operation.
+
+For complete capability checks, build the visible command tree recursively from real installed help and reconcile node coverage; do not invent a `--tree` option or drop longest Cobra command names because their description padding is only one space. See [official CLI and API contract](references/official-cli-api.md) for the versioned tree, platform/placement boundary, API examples and verified automation limits.
 
 ## Registry acceptance and CI
 
