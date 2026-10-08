@@ -1,7 +1,7 @@
 ---
 name: chatpypi-publisher-management
 description: "Manage PyPI Trusted Publishers with ChatPyPI 0.2.3+: list projects/publishers, inspect details, add GitHub active publishers, and keep pending scoped to true pre-registration cases."
-version: 0.1.4
+version: 0.1.5
 ---
 
 # ChatPyPI Publisher Management
@@ -54,7 +54,11 @@ Environment: blank / (Any), unless the existing project/workflow explicitly uses
 
 `<legacy-owner>/<legacy-project>` is an existing exception, not the pattern to copy to ChatArch packages.
 
-## Current ChatPyPI 0.2.3 Publisher Tree
+## Hosted tool-service mode
+
+For ChatPyPI 0.2.14+ local/service CLI routing, authenticated REST/MCP, ChatEnv mode defaults and server-side account bindings, load `chatpypi-tool-service-operations`. It owns transport/client operation; this skill continues to own PyPI Publisher identity, ownership and mutation rules. In service mode the backend selects its bound profile, so do not send `--env-profile` as a remote account selector. Routine releases on an established unchanged tag/OIDC chain do not require another Publisher login/detail/add cycle.
+
+## Current ChatPyPI Publisher Tree
 
 ```text
 chatpypi publisher
