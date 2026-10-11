@@ -1,103 +1,96 @@
 ---
 name: chatgh-repo-token-setup
-description: Configure repo-scoped GitHub credentials for ChatArch repositories immediately after repo creation or first checkout so ChatGH repo/PR/API commands and HTTPS git fetch/push use the intended repository-local authority.
-version: 0.1.0
-tags:
-  - ChatArch
-  - ChatGH
-  - GitHub
-  - repository
-  - credentials
+description: "Use when updating or clearing ChatGH repo tokens. Keep set/unset symmetric and support file batches."
+version: 0.2.4
 ---
 
-# ChatGH Repo Token Setup
+# ChatGH Token Updates And Cleanup
 
-## Purpose
+## Core contract
 
-Use this skill when a ChatArch / Chat-series repository is newly created, first checked out, or newly initialized locally and needs repo-scoped GitHub credentials.
+Treat these as configuration operations, not an identity-binding or credential-lifecycle product:
 
-For **new Python/PyPI packages whose PyPI project does not exist yet**, do not use this skill as a reason to create the GitHub repository early. First complete the `python-package-release-with-chattool-pypi` new-project preflight: upload and verify the real PyPI `0.0.1` placeholder from a task-local `playground/` scaffold. Only after that succeeds should the GitHub repository be created and this token setup skill run.
+- `set-token` writes or updates one repository Git HTTPS token configuration item.
+- `unset-token` simply undoes that configuration: use the same origin-first GitHub remote selector and delete the same exact key.
+- Unset must not inspect/decode/validate token contents, resolve a default credential, restore history, or clean other keys/remotes/repositories. An absent item is an idempotent success.
+- Keep other requested commands unchanged when correcting unset. Distinguish fixing a command's implementation from restoring an earlier bulk operation; never restore credentials to other repositories based on the word “revert” alone.
 
-This is not a PR/CI readiness skill. `chatgh pr`, `chatgh repo ...`, `chatgh run ...`, and `chatgh repo-perms` are GitHub API surfaces, while `git push` / `git fetch` are git transport surfaces. `chatgh set-token` is still relevant to both in ChatArch workflows because the repo-local credential it writes is part of ChatGH's token resolution and also lets HTTPS git transport authenticate without SSH and without putting a token in the remote URL.
+Consumer token precedence remains explicit value > matching repository configuration > current typed GitHub configuration. Do not switch identities automatically after HTTP 401.
 
-## Core rule
+## Installed command gate
 
-For ChatArch / Chat-series repositories:
-
-- Use HTTPS remotes.
-- Configure repo-local token auth with `chatgh set-token` at repository creation / first local checkout time.
-- Do not switch to SSH clone/push as a workaround for missing HTTPS credentials.
-- Do not put tokens in remote URLs.
-- Do not print tokens, `.git/config` extraHeader values, or decoded Authorization headers.
-
-## When to run
-
-Run this immediately after any of these:
-
-1. `chatgh repo create ...` creates a new remote repo.
-2. A local package/repo scaffold is initialized and `origin` is set for the first time.
-3. A repo is cloned/checked out on a new machine and needs HTTPS push.
-4. `git push` / `git fetch` over HTTPS fails with an auth error even though ChatGH API commands work.
-5. ChatGH repo/PR/API commands should use the repository-specific credential instead of falling back to a broad active ChatEnv token.
-
-## Standard setup
-
-From the local repository root:
+ChatGH 0.2.14 provides the verified update/cleanup and batch interfaces. Read the real installed tree/help before use:
 
 ```bash
-cd <WORKSPACE_ROOT>/core/<RepoName>
-
-git remote add origin https://github.com/ChatArch/<RepoName>.git 2>/dev/null || \
-  git remote set-url origin https://github.com/ChatArch/<RepoName>.git
-git remote set-url --push origin https://github.com/ChatArch/<RepoName>.git
-
-# Prefer the password-style interactive prompt; avoid putting a real PAT in shell history or process listings.
-chatgh set-token
+chatgh --version
+chatgh --tree
+chatgh --tree-brief
+chatgh set-token --help
+chatgh unset-token --help
 ```
 
-If using the existing ChatGH/ChatEnv token path programmatically, never print the token. Pipe/pass it directly to `chatgh set-token` only through a non-logging helper and redact command output if needed; do not show the raw command with the token value.
+Unset has no broad `--all` mode. Do not teach the removed 0.2.13 expansion or advertise a future interface as installed.
 
-## Verification
+## Refresh and clear repository configuration
 
-Verify capability, not credential content:
+Inside the target checkout:
 
 ```bash
-chatgh repo-perms --repo ChatArch/<RepoName> --json-output
-git push --dry-run origin <branch-or-tag>
-git remote -v
+chatgh set-token --from-config --dry-run --json-output
+chatgh set-token --from-config --json-output
+chatgh unset-token
 ```
 
-Expected:
+`--from-config` reads the current typed GitHub configuration instead of reusing an old repository value. It is mutually exclusive with `--token`. Existing interactive and explicit-token behavior remains available without this flag. Avoid raw token values in argv, history, URLs, logs and examples.
 
-- `repo-perms` token source should be `repo git config` after setup.
-- `permissions.push` should be true for write tasks.
-- `git remote -v` should show HTTPS fetch and push URLs.
-- dry-run push should succeed or report `Everything up-to-date`.
+Set and unset must select the same target even when the branch upstream differs from origin. Clearing expired, malformed or empty values is an exact-key operation; do not make content recognition a prerequisite. Global/system/included configuration and unrelated repository fields are outside unset's scope.
 
-## Important distinction
+## Explicit JSON/YAML repository maintenance file
 
-ChatGH API commands and git transport auth are different surfaces:
+Store paths and optional expected repository assertions, never token values:
 
-- `chatgh pr ...`, `chatgh repo ...`, `chatgh run ...`, and `chatgh repo-perms ...` use GitHub API tokens.
-- `git push` and `git fetch` over HTTPS use git's repo-local credential config.
-- ChatGH API token resolution may read the repo-scoped credential written by `chatgh set-token` before falling back to a broader ChatEnv token.
-- A valid ChatEnv token can make `chatgh repo-perms` pass while HTTPS `git push` still fails until `chatgh set-token` writes the repo-local git config.
+```json
+{
+  "version": 1,
+  "repositories": [
+    {"path": "./repo-one", "repo": "example/repo-one"},
+    {"path": "./repo-two"}
+  ]
+}
+```
 
-## Do not use SSH for ChatArch repo workflow
-
-SSH can expose broader machine-level authority and is less portable across the user's machines. The expected ChatArch workflow is HTTPS + repo-local token auth.
-
-If a repo currently has SSH remotes from older work, convert them:
+Relative paths resolve from the manifest directory. JSON and safe YAML are supported. Keep machine-specific manifests in private application state, not a public source repository.
 
 ```bash
-git remote set-url origin https://github.com/ChatArch/<RepoName>.git
-git remote set-url --push origin https://github.com/ChatArch/<RepoName>.git
-chatgh set-token
+chatgh set-token --from-config --file repositories.json --dry-run --json-output
+chatgh set-token --from-config --file repositories.json --json-output
+chatgh set-token --from-config --file repositories.yaml --json-output
 ```
 
-Then verify with `repo-perms` and HTTPS dry-run push.
+Batch mode requires an explicit source (`--from-config` or `--token`) and cannot combine `--file` with `--save-env`. Preflight every path/schema/repository assertion before reading a credential or writing anything. Deduplicate shared Git config plus exact key across worktrees. Preserve a nonzero result for partial write/readback failures and report requested/unique/skipped/configured/failed counts from persisted results.
 
-## Related workflows
+Creating a maintenance file does not authorize applying it. When the user asks only for tracking or implementation, keep real repositories unchanged and use dry-run; verify all affected configs remain unchanged. A file based on an earlier audit is a maintenance target list, not evidence that those repositories are currently configured.
 
-- Use this skill from package/repo creation workflows such as `python-package-release-with-chattool-pypi`.
-- PR/CI, repo visibility, and branch protection workflows may reference this skill when they should run with repo-scoped ChatGH credentials or when git transport auth is missing; the setup action itself still belongs to repository setup, not PR readiness.
+## Safe Git configuration writes
+
+- Preserve native Git semantics for case-insensitive section/option names and case-sensitive URL subsections; updating a key must replace all case variants/old values of that exact key.
+- Preserve valid valueless booleans, quoted comment characters, escapes, multivalues and include references. Do not assume a Python config parser is lossless: verify the minimum dependency version, not only the newest wheel resolver.
+- Acquire Git's config lock with atomic exclusive creation before reading the snapshot. Never use existence-check then ordinary open, and never remove a foreign lock.
+- Keep secrets out of child-process argv and errors. Native Git may process a private config copy with a nonsensitive temporary value, followed by the actual value written only in memory/private owned lock; do not introduce a persistent helper or unrelated auth state.
+- Verify descriptor/inode ownership for writes and cleanup, use private permissions before secret writes, flush/fsync, and atomically replace. Holding only the final write lock can discard a concurrent writer's unrelated fields.
+- Tightening permissions does not revoke or retroactively protect an already exposed old credential. Backups containing raw configuration belong only in an approved owner-private state directory.
+
+## Verification and release boundary
+
+Use minimal child environments, isolated typed profiles and dummy values for tests. Do not expose production provider keys to pytest dictionary assertions. Require regressions for same set/unset target, content-independent exact deletion, from-config overriding old values, JSON/YAML preflight, duplicate/shared config, dry-run, partial failures, unrelated syntax preservation and racing foreign locks.
+
+Test source and installed artifacts separately. Verify actual version/tree/help, installed set→unset and file batches in isolated fixtures, a real maintenance-file dry-run, and unchanged real repository configurations unless an apply was expressly authorized. Native Git does not automatically read ChatEnv; unset removes the repository override so Git can use its usual remaining credentials, rather than configuring a new global helper.
+
+For an authorized release require exact-head review/CI, merged-default-branch tag, successful OIDC upload, PyPI exact/latest/Simple convergence, clean public installation and operator-runtime provenance. Preserve existing public versions/tags when issuing a forward correction.
+
+## Related boundaries
+
+- Use ChatEnv typed configuration rather than inventing another token file/store.
+- For new package name claims, follow the package-release gate before creating its remote repository; token maintenance does not waive it.
+- Inspect HTTPS remotes before changes; do not substitute SSH, copy another machine's credential, or overwrite unrelated account authority to solve a local mismatch.
+- A tool-approval timeout is not an auth failure or consent. Expired card taps resolving zero requests require a fresh live approval, not a blind retry or policy bypass.
