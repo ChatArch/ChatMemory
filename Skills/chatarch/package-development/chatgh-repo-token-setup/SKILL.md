@@ -1,119 +1,96 @@
 ---
 name: chatgh-repo-token-setup
-description: "Use when configuring ChatGH auth or token rotation. Choose live defaults or explicit repository pins."
-version: 0.2.3
-tags:
-  - ChatArch
-  - ChatGH
-  - GitHub
-  - credentials
+description: "Use when updating or clearing ChatGH repo tokens. Keep set/unset symmetric and support file batches."
+version: 0.2.4
 ---
 
-# ChatGH Authentication And Token Lifecycle
+# ChatGH Token Updates And Cleanup
 
-## Choose the lifecycle first
+## Core contract
 
-Preserve the same credential order for GitHub API and Git transport:
+Treat these as configuration operations, not an identity-binding or credential-lifecycle product:
 
-**explicit token > matching repository `set-token` > current ChatEnv default**.
+- `set-token` writes or updates one repository Git HTTPS token configuration item.
+- `unset-token` simply undoes that configuration: use the same origin-first GitHub remote selector and delete the same exact key.
+- Unset must not inspect/decode/validate token contents, resolve a default credential, restore history, or clean other keys/remotes/repositories. An absent item is an idempotent success.
+- Keep other requested commands unchanged when correcting unset. Distinguish fixing a command's implementation from restoring an earlier bulk operation; never restore credentials to other repositories based on the word “revert” alone.
 
-A selected invalid token is an authentication error, not permission to switch to a broader account. ChatEnv is reached when no matching pin exists, not by retrying an HTTP 401 with another identity.
-
-For centralized rotation, prefer unpinned repositories and invocation-scoped ChatGH transport. Keep `set-token` as an explicit repository/account isolation choice rather than a mandatory bootstrap step. Removing a repository copy means preserving the current ChatEnv default, not deleting all GitHub credentials.
-
-For a new Python package with no PyPI project, complete its authorized name-claim/upload preflight before creating a GitHub repository; authentication setup does not waive that release gate.
+Consumer token precedence remains explicit value > matching repository configuration > current typed GitHub configuration. Do not switch identities automatically after HTTP 401.
 
 ## Installed command gate
 
-ChatGH 0.2.13 provides these real interfaces. Check the active installation before using them:
+ChatGH 0.2.14 provides the verified update/cleanup and batch interfaces. Read the real installed tree/help before use:
 
 ```bash
 chatgh --version
 chatgh --tree
 chatgh --tree-brief
-chatgh fetch --help
-chatgh pull --help
-chatgh push --help
+chatgh set-token --help
 chatgh unset-token --help
 ```
 
-An older `repo sync` implementation that runs bare Git or labels its token flag reserved does not establish dynamic authentication. Refresh the installed package rather than documenting proposed commands as implemented.
+Unset has no broad `--all` mode. Do not teach the removed 0.2.13 expansion or advertise a future interface as installed.
 
-## Ordinary dynamic workflow
+## Refresh and clear repository configuration
 
-Inside a GitHub HTTPS checkout:
-
-```bash
-chatgh fetch
-chatgh pull
-chatgh push --dry-run
-chatgh push
-```
-
-- Without explicit targets, commands follow the current branch's configured upstream. If it is absent or ambiguous, supply the remote and branch/refspec instead of guessing.
-- `pull` defaults to fast-forward-only; `--rebase` is explicit and mutually exclusive with `--ff-only`.
-- `push` supports explicit `-u/--set-upstream`, `--dry-run`, and `--tags`; force syntax and automatic reset/stash are not part of this interface.
-- Explicit examples: `chatgh pull origin <branch>` and `chatgh push -u origin <branch>`.
-- `repo clone` and `repo sync` reuse this transport; clone does not persist a token by default. `repo clone --set-token` is opt-in pinning.
-- Callable APIs are `chatgh.github.transport.fetch`, `pull`, `push`, `clone_repository`, and `unset_token`.
-
-Each invocation resolves the selected credential afresh and supplies it only to the authenticated Git child. No global credential helper or repository token copy is required for these commands. Native `git fetch/pull/push` do not automatically gain ChatEnv authentication.
-
-## Release an existing pin
+Inside the target checkout:
 
 ```bash
-# Remove the selected remote's local GitHub token pin.
+chatgh set-token --from-config --dry-run --json-output
+chatgh set-token --from-config --json-output
 chatgh unset-token
-
-# Remove every token-bearing GitHub HTTPS header in THIS repository only.
-chatgh unset-token --all
-
-chatgh repo-perms --repo <owner>/<repo> --json repo,token_source,permissions
-chatgh fetch
-chatgh push --dry-run
 ```
 
-The unset command emits safe JSON with removed keys/count and credential-presence status, never token values or masks. It is idempotent. It removes only recognized token-bearing GitHub HTTPS headers directly owned by the current repository's local config; unrelated headers, included files, other hosts, and global/system config are preserved. Linked worktrees share common Git config: deduplicate before bulk mutation.
+`--from-config` reads the current typed GitHub configuration instead of reusing an old repository value. It is mutually exclusive with `--token`. Existing interactive and explicit-token behavior remains available without this flag. Avoid raw token values in argv, history, URLs, logs and examples.
 
-`--all` means all matching pins in one repository, not all workspace repositories. A workspace migration requires an explicit repository manifest and per-item verification.
+Set and unset must select the same target even when the branch upstream differs from origin. Clearing expired, malformed or empty values is an exact-key operation; do not make content recognition a prerequisite. Global/system/included configuration and unrelated repository fields are outside unset's scope.
 
-## Bulk migration to the live default
+## Explicit JSON/YAML repository maintenance file
 
-1. Define the authorized host/repository scope; do not transfer another machine's credential.
-2. Resolve and validate the intended default in a neutral directory without printing it. Check required scopes separately from repository push capability when workflow files are involved.
-3. Verify the installed dynamic entry point with real private HTTPS read and push dry-run BEFORE removing fixed copies.
-4. Deduplicate Git common config across worktrees; record each configuration root, matching key names, and intended removals. Do not recursively mutate archived checkouts.
-5. Back up secret-bearing config only in an approved private application state directory, with owner-only directory/file modes. Do not place raw config or headers in task reports/public repositories.
-6. Unset through the importable API or real CLI. Confirm removed counts, zero in-scope residual token headers, current resolver source, and preservation of all unrelated config entries and source status.
-7. Re-read every named target and aggregate persisted results programmatically. Keep native Git authentication separate from ChatGH acceptance.
-8. Prove A-to-B default-profile rotation in an isolated ChatEnv test home using dummy values and actual credential-helper protocol responses; do not rotate the real token for a simulation.
+Store paths and optional expected repository assertions, never token values:
 
-A pin-consistency audit designed to require a fixed header will report missing headers in dynamic mode. That absence is intentional; do not restore copies merely to make a pin-only audit green.
+```json
+{
+  "version": 1,
+  "repositories": [
+    {"path": "./repo-one", "repo": "example/repo-one"},
+    {"path": "./repo-two"}
+  ]
+}
+```
 
-## Optional fixed repository authentication
-
-Use HTTPS and inspect the exact remote before changing it:
+Relative paths resolve from the manifest directory. JSON and safe YAML are supported. Keep machine-specific manifests in private application state, not a public source repository.
 
 ```bash
-git remote -v
-chatgh set-token
-chatgh repo-perms --repo <owner>/<repo> --json repo,token_source,permissions
+chatgh set-token --from-config --file repositories.json --dry-run --json-output
+chatgh set-token --from-config --file repositories.json --json-output
+chatgh set-token --from-config --file repositories.yaml --json-output
 ```
 
-Plain `set-token` prefers an existing pin, so it does NOT refresh a stale pin from a rotated default. To intentionally pin the new default, first validate the replacement, then unset the old pin and set again. Never put a raw token in shell history, URLs, logs or examples. Inspect the writer when process-argv secrecy is required: older pin writers serialize an encoded Authorization header into `git config` argv. Dynamic transport avoids that persistent-writer surface.
+Batch mode requires an explicit source (`--from-config` or `--token`) and cannot combine `--file` with `--save-env`. Preflight every path/schema/repository assertion before reading a credential or writing anything. Deduplicate shared Git config plus exact key across worktrees. Preserve a nonzero result for partial write/readback failures and report requested/unique/skipped/configured/failed counts from persisted results.
 
-Do not silently convert unsupported transports or substitute SSH to solve an HTTPS credential gap. Preserve unrelated remote/account authority.
+Creating a maintenance file does not authorize applying it. When the user asks only for tracking or implementation, keep real repositories unchanged and use dry-run; verify all affected configs remain unchanged. A file based on an earlier audit is a maintenance target list, not evidence that those repositories are currently configured.
 
-## Implementation and verification rules
+## Safe Git configuration writes
 
-- Validate effective fetch and push destinations before resolving credentials; `pushurl`, URL rewrites and multiple destinations need explicit handling. Scope helper responses to the exact supported host/protocol/path and disallow credential redirects.
-- Reject `remote.<name>.vcs` as well as custom uploadpack/receivepack before credential resolution. A canonical-looking HTTPS URL does not prevent Git from selecting a custom remote helper that inherits its environment.
-- Reset additive inherited headers/helpers only in the authenticated child so a second credential cannot override the selected one. This is not permission to bypass repository-pin precedence.
-- Keep local merge/rebase/checkout token-free. Network-facing hooks and submodule recursion are disabled by the scoped transport; document this boundary rather than claiming native Git parity.
-- Hold Git's exclusive config lock across the entire read/parse/transform/write/atomic-replace transaction. Locking only the final write can silently lose a concurrent writer's unrelated entries. Test both foreign-lock preservation and deterministic writer interleaving.
-- Run offline tests with a minimal environment, disposable application home, isolated Git config, and task-local temp paths. Avoid pytest assertions that expand token-bearing environment dictionaries.
-- Treat runtime approval timeouts separately from auth failures. A stale approval-card tap resolving zero requests is not consent to a new command; use a fresh live request and do not bypass the gate.
+- Preserve native Git semantics for case-insensitive section/option names and case-sensitive URL subsections; updating a key must replace all case variants/old values of that exact key.
+- Preserve valid valueless booleans, quoted comment characters, escapes, multivalues and include references. Do not assume a Python config parser is lossless: verify the minimum dependency version, not only the newest wheel resolver.
+- Acquire Git's config lock with atomic exclusive creation before reading the snapshot. Never use existence-check then ordinary open, and never remove a foreign lock.
+- Keep secrets out of child-process argv and errors. Native Git may process a private config copy with a nonsensitive temporary value, followed by the actual value written only in memory/private owned lock; do not introduce a persistent helper or unrelated auth state.
+- Verify descriptor/inode ownership for writes and cleanup, use private permissions before secret writes, flush/fsync, and atomically replace. Holding only the final write lock can discard a concurrent writer's unrelated fields.
+- Tightening permissions does not revoke or retroactively protect an already exposed old credential. Backups containing raw configuration belong only in an approved owner-private state directory.
 
-## Acceptance boundary
+## Verification and release boundary
 
-Verify the real installed command/version/tree, explicit/repo/default precedence, unpin idempotence/preservation, isolated rotation, actual HTTPS reads and push dry-run, and clean source state. For an authorized release, require exact-head CI/review, merged-default-branch tag, successful OIDC upload, PyPI exact/latest/Simple convergence, clean public installation and operator-runtime provenance. Do not equate a PR or local wheel with a published working command.
+Use minimal child environments, isolated typed profiles and dummy values for tests. Do not expose production provider keys to pytest dictionary assertions. Require regressions for same set/unset target, content-independent exact deletion, from-config overriding old values, JSON/YAML preflight, duplicate/shared config, dry-run, partial failures, unrelated syntax preservation and racing foreign locks.
+
+Test source and installed artifacts separately. Verify actual version/tree/help, installed set→unset and file batches in isolated fixtures, a real maintenance-file dry-run, and unchanged real repository configurations unless an apply was expressly authorized. Native Git does not automatically read ChatEnv; unset removes the repository override so Git can use its usual remaining credentials, rather than configuring a new global helper.
+
+For an authorized release require exact-head review/CI, merged-default-branch tag, successful OIDC upload, PyPI exact/latest/Simple convergence, clean public installation and operator-runtime provenance. Preserve existing public versions/tags when issuing a forward correction.
+
+## Related boundaries
+
+- Use ChatEnv typed configuration rather than inventing another token file/store.
+- For new package name claims, follow the package-release gate before creating its remote repository; token maintenance does not waive it.
+- Inspect HTTPS remotes before changes; do not substitute SSH, copy another machine's credential, or overwrite unrelated account authority to solve a local mismatch.
+- A tool-approval timeout is not an auth failure or consent. Expired card taps resolving zero requests require a fresh live approval, not a blind retry or policy bypass.
