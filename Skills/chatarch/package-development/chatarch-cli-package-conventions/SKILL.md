@@ -150,6 +150,10 @@ When implementing or reviewing a CLI command, verify that:
 - result objects/data are structured enough for MCP or other adapters to reuse
 - the CLI does not become the only stable integration surface for package-local capabilities
 
+### Authenticated Web component reuse
+
+For packages that provide reusable login, account APIs or optional host templates, preserve one domain policy beneath transport adapters and keep frontend choice independent of account lifecycle. Build truthful route/capability discovery, resolve navigation from live sessions, define factory ownership for injected services, and verify a new host through installed-artifact browser interactions. See `references/authenticated-service-onboarding.md` for the complete contract and acceptance matrix; a shared HTTP contract must not be represented as centralized SSO.
+
 ## ChatStyle / Interactive Rules
 
 Use ChatStyle for user-facing interactive behavior instead of hand-rolled prompts:
