@@ -1,0 +1,4 @@
+interface:
+  display_name: "ChatCoolify 项目接入"
+  short_description: "登录自建平台，注册前端项目并完成预览、发布、权限与后端服务接入"
+  default_prompt: "使用 $chatcoolify-project-onboarding 将当前项目接入已有的自建托管平台，先预览并验证，再按本次授权范围发布。"
