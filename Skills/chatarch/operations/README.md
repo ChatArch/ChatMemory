@@ -4,6 +4,7 @@ ChatArch service operations, release/readiness, DNS/certificate, and service-con
 
 ## Skills
 
+- `chatcoolify-project-onboarding/` — Log in to the existing self-hosted platform, register local frontend builds, preview/publish/roll back, manage project collaboration, and connect supported independent backend services.
 - `chatdns-certificate-operations/` — ChatDNS-managed DNS records and certificates, with generic server-install patterns.
 - `chatglance-service-entry/` — Register verified services through the reviewed catalog, default inline SVG covers, monitoring, validated refresh, and browser acceptance.
 - `chatimg-image-generation-modes/` — Generate images with ChatImg via API-key OpenAI-compatible routing or OAuth/access-token routing, with proxy and redaction rules.
