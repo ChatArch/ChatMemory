@@ -1,0 +1,4 @@
+interface:
+  display_name: "SWF 原生网页迁移"
+  short_description: "逆向 SWF 素材、规则和时间轴，迁移原生网页游戏并逐项对照验收"
+  default_prompt: "使用 $swf-to-native-web，将选定 SWF 忠实迁移为独立 HTML/Canvas/JavaScript 游戏，并提供原版对照证据。"
