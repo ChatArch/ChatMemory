@@ -1,0 +1,4 @@
+interface:
+  display_name: "企业微信桌面端读取"
+  short_description: "通过可访问性树与截图读取企业微信报告文档，恢复窗口并核对全文"
+  default_prompt: "使用 $wecom-desktop-reading 读取企业微信中指定范围的报告或文档，核对完整性并保存到当前私有项目。"
