@@ -13,3 +13,4 @@ Use `common/` for stable non-ChatArch shared skills, `chatarch/` for stable Chat
 ## Skills
 
 - `indonesia-product-classification-workbook/` — audited image-backed Excel classification for Indonesia-bound cargo, including confirmed business rules, structured review, WPS `DISPIMG` preservation, and final workbook acceptance checks.
+- `wecom-desktop-reading/` — read reports and documents through the macOS WeCom client using CUA, accessibility text and screenshots, with window recovery, completeness checks and privacy-safe reuse.
