@@ -19,6 +19,8 @@
 
 原 JPEG 被导出为 PNG 时可能显著膨胀。需要缩包时可保留原 JPEG 字节与无损 alpha，但先核对该标签的预乘/反预乘规则；不能直接丢 alpha 或一概用 destination-in 合成。验证恢复 RGBA 后仍应比较完整场景：Canvas 与 Image 作为纹理源，缩放过滤结果可能不同，孤立像素相同不代表最终绘制相同。
 
+旧 JPEG/JPEG3 载荷可能在内部包含 EOI/SOI 分段，不只是文件开头有多余标记。Pillow 能打开不代表浏览器 `createImageBitmap` 或生产 Canvas 解码器能打开；应实际解码全部依赖。浏览器拒绝时优先用可靠导出器无损恢复 PNG，并核对 alpha、完整场景和包体，不机械删除内部标记或使用占位图。
+
 FFDec 26.4 已核对的命令形式如下；其他版本先读帮助。将占位符替换为当前项目路径，导出到独立空目录：
 
 ```sh
@@ -42,11 +44,27 @@ Flash 几何遮罩不能一概用原填充 alpha 作为 Canvas `destination-in` 
 
 字体嵌入不全、HTML 文本和动态变量绑定可能令实际对齐不同于静态标签。先检查原件和实际显示；现代后备字体与历史 Flash 字体的差异要明确记录。
 
+声明了字体名称不代表嵌入了字形；同时检查 glyph/codeTable/advance 与设备字体路径。若目标是匹配固定 Ruffle 基准，可追溯该版本实际 fallback，而不是把字段统一画成系统 Arial。例如 [Ruffle v0.5.0](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/player.rs) 使用内置 Noto Sans subset；这是该现代基准的选择，不证明历史 Flash 也使用 Noto。保存原压缩字库、解压/子集派生关系、哈希、实际字符范围及许可证；subset 不能声称支持完整 Noto 字库，缺字不能通过删除原文字掩盖。
+
+文字校准分别核对 unitsPerEm、ascent/descent、字号、字段边界与 gutter、基线、对齐和逐字 advance 的量化。固定版本的 [font.rs](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/font.rs) 与 [edit_text.rs](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/display_object/edit_text.rs) 可解释设备字形的 twip/整像素舍入；仅有 Canvas `measureText` 相近不能证明原布局一致。用相同 CSS 舞台尺寸与 DPR 的字段截图复核宽度和基线，分开记录来源推算、实际视觉结果及尚未校准的中文/多行路径。必要时离线抽取已许可字库的静态 glyph/advance，不引入 Ruffle 运行依赖。
+
+## 有限绘制缓存与像素范围
+
+整舞台遮罩、滤镜和像素读写的成本取决于实际 backing 尺寸；CSS 尺寸不变时，像素量大致随 DPR 的平方增长。分别记录 CSS、DPR、backing 宽高和同时存活的缓冲；缓存条目的 RGBA 字节预算不等于包含临时滤镜画布的总内存上限。
+
+可把已证有限、静态的滤镜输入分组缓存，先检查完整子树是否含动态帧、按钮、文字或其他状态。Key 覆盖当前画布尺寸、完整变换、globalAlpha、父颜色变换及所有未由组身份固定的输入；不能仅按 symbol ID 合并。准备只绘图，不推进逻辑、timer、声音或 RNG，必要时隔离导出 helper 的可变闭包。进度按实际完成条目推进，组间让出执行；同步单组仍可能有长任务。尺寸变化、取消、失败或超预算应使旧准备失效并清理半成品；完成后只恢复一次待执行动作，不把加载耗时补成游戏帧，也不为菜单缓存暂停正在进行的战斗。
+
+导出 helper 的 JS `_matrix` 与 Canvas 原生 CTM 可能因累计浮点路径不同而微差。不能仅凭矩阵代数等价，把原 `setTransform→drawImage→applyTransforms` 顺序换成 `save/restore`；这可能改变随后图形的抗锯齿。缓存命中路径也需保持经核验的原变换顺序。
+
+对“mask alpha 选择并替换目标像素”的 helper，优先保持原画布尺寸、绘图原点、路径及渐变，只把读写范围缩至同一整数 ROI；移动整个绘图原点可能改变渐变、细线或抗锯齿。ROI 取变换后的原边界，含线宽和已核边缘余量，并夹入原画布；不要因空交集提前跳过函数后续路径或破坏 save/restore。按相同输入比较优化前后完整像素及按钮 regions，再用真实浏览器复测；少数帧零差不能证明所有状态或所有绘制后端一致。
+
 ## 多个时钟与事件生命周期
 
 分别登记 `onEnterFrame`、`setInterval`、主/子帧率、动画帧事件和声音事件。一个游戏可能同时使用 25fps 动画、45ms 运动和 1000ms 时间条；这些值是实例，不能套用到其他游戏。
 
 浏览器 `requestAnimationFrame` 只负责驱动调度和绘制。使用明确的原逻辑步长、累计时间和事件顺序；禁止靠显示器 60/120Hz 自然推进原玩法。后台暂停、积压回调和最大补帧属于环境差异，需要有记录的策略。
+
+源时钟应在开始实现时逐项映射并测试，不能等同速前台运行后才检查：独立 interval/timeout、`getTimer` 墙钟以及基于帧数的动作各自保留。尤其核对迟到回调扣实际经过时间还是固定步长、每次只扣一次还是补齐、重新锚定还是保留余数；不能用“半秒等于15帧”或“3秒等于90帧”替换独立计时器。离线手动时钟也要有迟回调与逻辑帧停顿的合同测试。
 
 注意构造函数或帧切换可能重复注册 timer；重玩可能留下重复回调。对照源码和原运行结果后再决定是否原样保留，不能出于代码整洁擅自改变可见行为。
 
@@ -54,15 +72,22 @@ Flash 几何遮罩不能一概用原填充 alpha 作为 Canvas `destination-in` 
 
 - SWF 坐标以 twip 表示，1 像素 = 20 twip。属性写入、变换、包围盒和 AS 运算并不必然采用同一种舍入路径。
 - 先确认 AS 版本和所用 API 的真实精度/强制类型转换；只在确证的边界量化。不要把所有数都统一四舍五入，或仅用 JS 双精度直译。
+- AVM1 数值强转还受 SWF 版本控制：已核 SWF6 及以下的 `undefined` 转为0，SWF7 起转为 NaN，见固定版本的 [value.rs](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/avm1/value.rs)。这会改变未初始化计数器与乘法分支；不能一概照搬现代 JS，也不能将一个游戏的版本规则套给另一个。具体 API、比较 opcode 和调用方仍需分别核对。
+- 数值运算与显示属性写入需分别核对。例如固定基准的 [stage_object.rs](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/avm1/object/stage_object.rs) 中，`_xscale` setter 拒绝 NaN 并保留旧属性；源码紧接着读回该属性可能正是恢复旧朝向。普通 JS 字段直接保存 NaN 会让精确对齐后的方向比较与几何绘制失效。AS oracle 的宿主属性也应有正确 setter，并用精确相等、零差、长时间停留及真实输入命中路径覆盖边界；持续偏移目标的等待 fixture 可能避开此错误。
 - 实际迁移中曾确认 `_x/_y` 写回向零截断、某些矩阵计算 float32 及边界舍入，累计后影响计时结束。名义秒数不能代替真实时间条计算；不要把某款实测时长写成通用规则。
 - 碰撞可能是局部/全局包围盒而非可见轮廓。考虑透明形状、mask、完整父矩阵、旋转/缩放和严格/包含边界，不能随意改成圆形或像素碰撞。
 - 对精确规则先做差分；使用有来源的容差。定位到可确证的量化语义后，关键边界应尽可能严格比对，不能无限放宽容差掩盖错误。
+- 反编译表达式不一定保持 JS 的强制转换/NaN 分支。例如可读的 `value <= 0` 可能来自 `Greater` 后取反，未定义值时与 JS `undefined <= 0` 结果不同。影响死亡、结算等分支时核对所选原件 p-code 和实际运行，按具体分支迁移；不要仅用反编译文本直译，也不要为一个差异引入通用字节码解释器。
 
 ## 子时间轴与状态
 
 同父帧 `gotoAndStop` 不一定重建已存在子实例；父帧不动时子动画也可能继续。每次 render 都新建对象或把子帧归零会改变动画、声音和碰撞。
 
 记录 Place/Remove 和实例存活区间、深度、当前帧、脚本执行点以及重复 goto 的结果。按源行为处理共享实例、遍历顺序、编号循环、帧内销毁和 undefined 值；不要转换成更常见但不同的游戏机制。
+
+回调顺序可能与创建顺序相关，不能仅按深度排序，或人为固定成“所有炸弹→所有角色”。同一tick新装 `onEnterFrame` 是否立即运行、被同深度新clip替换后的旧引用是否连内建属性都失效，都可能影响连续伤害、死亡后放弹及随机消费。对存在这些路径的游戏实测后保存小轨迹；区分仍有效的局部数值、失效clip属性和整个回调是否中止，不能统一保留或跳过本tick剩余逻辑。
+
+发生销毁的同一 tick，子动画可能先完成最后一帧并消费随机数，再移除父对象；提前清理整树与让已销毁子对象继续运行都会错。相同结果美术也不保证相同生命周期：普通受伤与超时可能分别经完整伤害函数和直接替换，只迁移各分支实际安装的回调、随机调用和后续加分，不因画面相似复用整套处理。
 
 父时间轴循环时，先前被 Remove 的子实例可能重新构造，重新运行帧脚本并消费随机数；只提取首帧随机会漏掉此行为。AS1/AS2（AVM1）中，`attachMovie` 的同名实例可能占不同深度，不能直接用名称唯一 Map 替代显示列表；`swapDepths` 还可能交换已占用深度。按实际编号回绕、重建及交换路径验证。删除 `onEnterFrame` 只取消该回调，子动画仍可能继续，并不等于删除实例。
 
@@ -80,7 +105,11 @@ Flash 几何遮罩不能一概用原填充 alpha 作为 Canvas `destination-in` 
 
 保留 MPEG payload 与相关样本/seek 信息，避免未经核验重编码。对应处理有限循环次数、in/out point、envelope、noMultiple、stop 标志、`stopAllSounds`，以及离开帧时声音是否继续。没有流式音轨就不要凭空设计流式同步；有流式音轨则不能将其简化为任意一次播放。
 
-空 SoundStreamBlock 或零样本 header 不足以证明没有流音轨，要扫描全部块及其 seek/帧位置，验证时间轴暂停时音轨也按原规则暂停。SOUNDINFO 的 in/out/envelope 位置以 1/44100 秒为时间单位，不能套用 DefineSound 原采样率或 MP3 seek 的单位。AS 调用了某声音名称但 ExportAssets 无对应 linkage 时，先核对原运行；缺绑定的静默不能擅自补声。
+空 SoundStreamBlock 或零样本 header 不足以证明没有流音轨，要扫描全部块及其 seek/帧位置，核对时间轴暂停/切换时音轨是否暂停、延续或重启。SOUNDINFO 的 in/out/envelope 位置以 1/44100 秒为时间单位，不能套用 DefineSound 原采样率或 MP3 seek 的单位。AS 调用了某声音名称但 ExportAssets 无对应 linkage 时，先核对原运行；缺绑定的静默不能擅自补声。
+
+仅统计根 `DefineSound` 或根声音导出会漏掉嵌套 sprite 的 MP3Stream。递归遍历每个时间轴的 SoundStreamHead/Head2、SoundStreamBlock 与帧位置；按标签格式分离 MP3 block 的 sampleCount/seek 头（共4字节）和原 MPEG payload，保留每块样本数、seek、采样率、header latencySeek 及所属时间轴。恢复相位应依据原块/stream 的样本时钟，不能直接用采样率除以影片 FPS 代替；暂停、蓄力停帧、循环和恢复各自验证。保留原数据并无损提取，实际浏览器解码与试听另验。
+
+`new Sound(target)` 的 owner 会影响层级音量与 stop 作用域，不能按变量名含“背景”就推断它只影响背景音乐。核对目标 clip、祖先音量合成及 stop 是否递归；例如固定 Ruffle 基准的 [音频实现](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/backend/audio.rs) 区分 owner 停止与后代音量合成。相同音频字节、原事件与正确的 gain/stop 接线是不同检查项。
 
 浏览器可能丢弃 MP3 起始延迟或附加 padding，解码后的裁切需要结合原参数和实际结果验证。原菜单与游戏音乐可能叠加，不能擅自换成独占播放。自动播放限制由用户手势恢复 AudioContext，不改变之后的原触发关系。
 
