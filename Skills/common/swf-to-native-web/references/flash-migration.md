@@ -44,6 +44,8 @@ Flash 几何遮罩不能一概用原填充 alpha 作为 Canvas `destination-in` 
 
 字体嵌入不全、HTML 文本和动态变量绑定可能令实际对齐不同于静态标签。先检查原件和实际显示；现代后备字体与历史 Flash 字体的差异要明确记录。
 
+EditText 绑定需要区分预建的 JS accessor 和原脚本中真实存在的变量。核对构造时已有属性、非空初始文字写回、空初始文字不建变量，以及按钮父级与实际 owner；不能仅用 `field in object` 判定原属性存在。长小数溢出时同时检查原数值转字符串和字段 clip/gutter，不通过舍入游戏变量隐藏绘制错误。
+
 声明了字体名称不代表嵌入了字形；同时检查 glyph/codeTable/advance 与设备字体路径。若目标是匹配固定 Ruffle 基准，可追溯该版本实际 fallback，而不是把字段统一画成系统 Arial。例如 [Ruffle v0.5.0](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/player.rs) 使用内置 Noto Sans subset；这是该现代基准的选择，不证明历史 Flash 也使用 Noto。保存原压缩字库、解压/子集派生关系、哈希、实际字符范围及许可证；subset 不能声称支持完整 Noto 字库，缺字不能通过删除原文字掩盖。
 
 文字校准分别核对 unitsPerEm、ascent/descent、字号、字段边界与 gutter、基线、对齐和逐字 advance 的量化。固定版本的 [font.rs](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/font.rs) 与 [edit_text.rs](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/display_object/edit_text.rs) 可解释设备字形的 twip/整像素舍入；仅有 Canvas `measureText` 相近不能证明原布局一致。用相同 CSS 舞台尺寸与 DPR 的字段截图复核宽度和基线，分开记录来源推算、实际视觉结果及尚未校准的中文/多行路径。必要时离线抽取已许可字库的静态 glyph/advance，不引入 Ruffle 运行依赖。
@@ -72,6 +74,7 @@ Flash 几何遮罩不能一概用原填充 alpha 作为 Canvas `destination-in` 
 
 - SWF 坐标以 twip 表示，1 像素 = 20 twip。属性写入、变换、包围盒和 AS 运算并不必然采用同一种舍入路径。
 - 先确认 AS 版本和所用 API 的真实精度/强制类型转换；只在确证的边界量化。不要把所有数都统一四舍五入，或仅用 JS 双精度直译。
+- 源普通字段可能撞上原生场景对象的 API，例如 AS 的 `x/y` 缓存与图形对象的 `x/y` getter。离线核对源字段和原生 own/prototype 字段交集，静态区分普通变量与 `_x/_y` 图形属性；用重复 tick 的实际位移检查，避免把缓存写入变成持续移动。不要为解决有限冲突引入通用 AS scope 解释器。
 - AVM1 数值强转还受 SWF 版本控制：已核 SWF6 及以下的 `undefined` 转为0，SWF7 起转为 NaN，见固定版本的 [value.rs](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/avm1/value.rs)。这会改变未初始化计数器与乘法分支；不能一概照搬现代 JS，也不能将一个游戏的版本规则套给另一个。具体 API、比较 opcode 和调用方仍需分别核对。
 - 数值运算与显示属性写入需分别核对。例如固定基准的 [stage_object.rs](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/avm1/object/stage_object.rs) 中，`_xscale` setter 拒绝 NaN 并保留旧属性；源码紧接着读回该属性可能正是恢复旧朝向。普通 JS 字段直接保存 NaN 会让精确对齐后的方向比较与几何绘制失效。AS oracle 的宿主属性也应有正确 setter，并用精确相等、零差、长时间停留及真实输入命中路径覆盖边界；持续偏移目标的等待 fixture 可能避开此错误。
 - 实际迁移中曾确认 `_x/_y` 写回向零截断、某些矩阵计算 float32 及边界舍入，累计后影响计时结束。名义秒数不能代替真实时间条计算；不要把某款实测时长写成通用规则。
@@ -84,6 +87,8 @@ Flash 几何遮罩不能一概用原填充 alpha 作为 Canvas `destination-in` 
 同父帧 `gotoAndStop` 不一定重建已存在子实例；父帧不动时子动画也可能继续。每次 render 都新建对象或把子帧归零会改变动画、声音和碰撞。
 
 记录 Place/Remove 和实例存活区间、深度、当前帧、脚本执行点以及重复 goto 的结果。按源行为处理共享实例、遍历顺序、编号循环、帧内销毁和 undefined 值；不要转换成更常见但不同的游戏机制。
+
+同一帧的 DoAction 与 PlaceObject 标签顺序可能改变子 Load/首帧读到的父变量，不能固定为所有子对象先初始化。显式 goto 的早生实例、目标帧新实例、已排队旧帧动作与相同帧 goto 需分别核实。可用固定基准的微型 SWF trace 验证关键语义，但先独立解析 fixture，确认 ActionLength、ClipEvent 位标志和 Stop 正确；无效 fixture 的输出不能作为运行时 oracle。记录静态回调来源帧与执行时实际 playhead，避免错误丢弃已排队动作。
 
 回调顺序可能与创建顺序相关，不能仅按深度排序，或人为固定成“所有炸弹→所有角色”。同一tick新装 `onEnterFrame` 是否立即运行、被同深度新clip替换后的旧引用是否连内建属性都失效，都可能影响连续伤害、死亡后放弹及随机消费。对存在这些路径的游戏实测后保存小轨迹；区分仍有效的局部数值、失效clip属性和整个回调是否中止，不能统一保留或跳过本tick剩余逻辑。
 
@@ -112,6 +117,8 @@ Flash 几何遮罩不能一概用原填充 alpha 作为 Canvas `destination-in` 
 `new Sound(target)` 的 owner 会影响层级音量与 stop 作用域，不能按变量名含“背景”就推断它只影响背景音乐。核对目标 clip、祖先音量合成及 stop 是否递归；例如固定 Ruffle 基准的 [音频实现](https://github.com/ruffle-rs/ruffle/blob/v0.5.0/core/src/backend/audio.rs) 区分 owner 停止与后代音量合成。相同音频字节、原事件与正确的 gain/stop 接线是不同检查项。
 
 浏览器可能丢弃 MP3 起始延迟或附加 padding，解码后的裁切需要结合原参数和实际结果验证。原菜单与游戏音乐可能叠加，不能擅自换成独占播放。自动播放限制由用户手势恢复 AudioContext，不改变之后的原触发关系。
+
+相同 MPEG 字节仍可能因解码器、整数/浮点量化及重采样不同产生听感差异。实际比较先固定输出采样率，再对齐 PCM 并核对起音、结束、循环边界、音量和包络；相关系数不能单独代替试听。若确有差异，可离线生成有来源的普通 PCM/WAV 再验证，保留原 payload 与派生关系、依赖许可，不因此引入游戏运行时播放器。Web Audio 采集应排除用于解码的 OfflineAudioContext，并把同一真实 context 的多个输出汇合后按一条时间轴采集，不能把各输出块串接成错误时长。
 
 区分“事件第一次实际派发”和“已在播放的循环恢复相位”。不要把渲染回调迟到的时间直接当成新短音效已经播放的时间，否则会切掉起音甚至漏播；同时检查实际播放区间内的 noMultiple，而不是只用理论事件时间计算抑制区间。
 
