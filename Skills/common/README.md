@@ -28,6 +28,10 @@
 
 - `cli-tree-contract/` — 设计或 review CLI 时要求真实注册命令树、leaf 目的、side effect 和输出边界。
 
+### Game migration
+
+- `swf-to-native-web/` — 从 SWF 提取原素材、ActionScript 和时间轴，迁移原生 HTML/Canvas/JavaScript，并验证原版画面、规则、逐对象音效、触摸与独立包。
+
 ### Workspace
 
 - `workspace-task-kickoff/` — 稍复杂的调研、报告、设计、实现和外部交付在实质工作前创建规范 Project。
