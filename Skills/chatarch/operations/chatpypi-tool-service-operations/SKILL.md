@@ -78,6 +78,12 @@ HTTP and MCP use the same implemented catalog with aliases deduplicated. Queries
 - Prove both an unrelated non-package task and the real release example through that same execution path. A native agent turn completing is not independent proof of a repository write, Publisher registration, OIDC upload or public installation; retain the provider receipts and actual readbacks.
 - Keep candidate state isolated from a deployed older schema. Preserve record IDs, artifact hashes and user ownership during any explicit migration, and verify unrelated production records remain unchanged.
 
+## Consumer contracts and uncertain completion
+
+- Advertise each HTTP tool's method, exact input fields, required values and additional-field policy, not just its route name. Probe the real mounted contract before dispatch so an agent does not guess broader request bodies after permission denials.
+- Require structured native output for machine clients. A successful HTTP envelope or empty plain-text rendering is not evidence of absent publishers. During actual management work, detect sensitive-action password confirmation independently of account identity, renew only the same approved profile through its native provider, and read back the exact project page. Established unchanged OIDC releases do not reopen management login merely for a routine version.
+- If publication exists but result finalization fails, preserve the failed receipt and independently reconcile that exact release read-only. Keep publication success separate from Task/UI acceptance; do not create another version for a green indicator, blindly replay writes or edit product state to manufacture completion. Re-finalization must use a product-owned read-only lifecycle.
+
 ## Embedding and safe operation
 
 - Enter a mounted tool application's lifespan from the parent ASGI lifespan so its limiter and transport resources are initialized. Test a real mounted operation, not only catalog discovery.
