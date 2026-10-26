@@ -1,14 +1,14 @@
 ---
 name: local-public-service-entry-pattern
 description: Shared workflow for exposing a machine-local service through local nginx plus an automatic public entry, without per-service DNS or certificate drift.
-version: 0.1.1
+version: 0.1.2
 ---
 
 # Local/Public Service Entry Pattern
 
 Use this skill when a service is already running on a machine and needs to be exposed through a domain name and public HTTPS access.
 
-This is the shareable service-exposure pattern. Keep machine names, concrete IPs, private keys, DNS provider tokens, and FRP tokens in the machine-local skill copy, not here.
+This is the shareable service-exposure pattern. Keep concrete hostnames, IPs, deployment and account policy in the workspace's privately versioned knowledge or local configuration; keep actual keys/tokens/passwords in their existing secret owner, never in a Skill or Git knowledge file. Resolve the current preferred service host and ingress from that private policy before opening a historical catalog. A former catalog location does not select the current application host.
 
 ## Skill Boundary
 
@@ -36,7 +36,7 @@ Only add or update the local nginx service config for normal service onboarding.
 
 ## Shared Service Identity
 
-For ChatArch services, use the ingress workspace's canonical `SITES.md` account/email/password policy regardless of which host runs the application, unless the user explicitly declares an exception. Provisioning that declared shared login for a new service is the default deployment behavior and needs no additional cross-host reuse question. Read and privately transport only those account fields into restricted service configuration; do not migrate unrelated token stores, account databases, or personal profiles. After service acceptance, register the public entry in the common service homepage using the same catalog. A missing copy of the catalog on an application host does not change this policy.
+Resolve site identity and registration ownership from the current workspace's approved private deployment policy. A catalog may reference that policy, but it is not a credential store and its historical ingress host is not the default application host. If that private policy requires a shared site identity, preserve it through the authorized on-target credential owner; observe any cross-host transfer restriction. Never copy unrelated token stores, account databases or personal profiles. After acceptance, register the entry in the current reviewed catalog or its replacement registry.
 
 ## Expected Preconditions
 

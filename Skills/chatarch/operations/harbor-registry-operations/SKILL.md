@@ -1,7 +1,7 @@
 ---
 name: harbor-registry-operations
 description: Use when operating Harbor registries and official CLI.
-version: 0.1.2
+version: 0.1.3
 ---
 
 # Harbor Registry Operations
@@ -10,7 +10,7 @@ version: 0.1.2
 
 Use the official Harbor service, official `goharbor/harbor-cli` for management, and Docker/other OCI clients for image transport. A REST API is not the same thing as a management CLI. Before proposing a custom wrapper, check the official CLI's registered help, maintained release, authentication, required operations and compatibility against the deployed service. Prefer the existing CLI when verified; document gaps before considering another package.
 
-For ChatArch onboarding, follow the ingress catalog's canonical `SITES.md` shared account/email/password on every application host unless the user declares an exception. Provision only those fields privately, without another cross-host reuse question. Keep unrelated account databases, tokens and personal profiles out of the transfer. Deploy the service and verify its real workflow before catalog/homepage registration or tool-development work.
+For onboarding, resolve the target, site identity and registration policy from current private workspace knowledge; a historical ingress catalog does not choose the application host or hold credentials. Preserve an explicitly approved shared identity through its existing authorized secret owner, respecting cross-host transfer restrictions and keeping unrelated databases, tokens and profiles untouched. Deploy the service and verify its real workflow before catalog/homepage registration or tool-development work.
 
 ## Quick start: use the right client
 
