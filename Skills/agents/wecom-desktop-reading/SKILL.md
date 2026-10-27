@@ -11,13 +11,12 @@ description: 通过 macOS 企业微信客户端的 CUA、可访问性树（AX）
 
 ## 配置与能力诊断
 
-- **桌面功能：** 会话必须实际暴露 `mcp__cua_repl`。支持 Computer Use 的桌面版本可按其引导安装或启用 Computer Use，并在设置中管理应用访问；已有工具且能正常读取时无需重复配置。入口名称和可用性取决于桌面版本及账号。
-- **macOS 权限：** Computer Use 需要“辅助功能”和“屏幕录制”权限。按桌面客户端提示，在系统设置的“隐私与安全性”中为实际请求权限的应用启用；系统若提示重启应用，按提示操作。企业微信本身还需正常登录。
-- **应用许可：** 允许本次任务访问企业微信。组织策略禁止访问时，不能通过用户单次确认绕过；说明限制并请求管理员处理。
-- **工具缺失：** 检查当前是否是支持桌面 Computer Use 的本地会话，以及该功能和目标应用是否启用。单纯加载 skill 或换提示词不会注册工具。不要猜测一个 `mcp_servers` 配置、安装同名第三方包或索取企业微信密码。
-- **比较模型：** 先比较两个会话的工具清单、执行环境、应用许可及窗口状态。前提一致后再评估模型的操作能力；不能仅由模型大小解释成功或失败。
+- 首次安装、换设备或工具缺失时，先读 [安装、权限、首次验证与转发概要](references/setup.md)。桌面端入口为 `Plugins → Computer Use`，同时启用其 MCP server 和内置 skill；本业务 skill 在此基础上提供读取流程。
+- macOS 的“辅助功能／屏幕录制”权限与桌面端的“允许访问企业微信”分别配置。企业微信沿用客户端登录态；现有授权有效时继续使用。
+- 分别核对工具入口、目标应用、AX 文字和截图能力。仅看到 `mcp__cua_repl` 名称不能证明全部能力已就绪；只有文档窗口外壳也不证明已取得正文。
+- 换模型或运行环境时，先比较工具清单、执行宿主、应用许可及窗口状态。复制 skill 不会自动注册工具；不编造 MCP 地址、启动命令或配置 JSON。
 
-功能设置参考 [官方 Computer Use 入门](https://developers.openai.com/training/walkthroughs/using-your-computer-and-browser)；受组织限制时参考 [官方应用访问策略说明](https://help.openai.com/en/articles/20001510-manage-browser-and-computer-use-in-your-enterprise-workspace)。这些资料说明桌面功能及权限，不保证每个环境都暴露同名 REPL 接口。
+设置依据为 [官方 Computer Use 文档](https://learn.chatgpt.com/docs/computer-use)。功能可用性受版本、账号和组织策略影响；系统权限和应用批准由用户按提示完成，组织限制不能通过单次批准绕过。
 
 ## 工具入口
 
