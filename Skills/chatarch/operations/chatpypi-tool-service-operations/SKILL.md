@@ -71,6 +71,25 @@ HTTP and MCP use the same implemented catalog with aliases deduplicated. Queries
 4. Validate real publishing only when separately authorized. Prefer synthetic/mocked upload evidence otherwise; report that distinction.
 5. Keep secrets, tokens, private paths and host identities out of output and public artifacts. Close temporary proof listeners through normal lifecycle and verify their ports close.
 
+## Generic task consumers and credential boundaries
+
+- Model the consumer as task instructions and inputs → Codex + an owned Sandbox → persisted results. Keep package bootstrap/release as an example task; its package names, versions, Publisher steps and repository policy do not belong in the generic executor.
+- Put runtime dependencies in an operator-provisioned image. Inject model and tool access separately into the running guest process, never into Dockerfile ARG/ENV, source archives or logs. Guest code can read its environment, so prefer short-lived, target-scoped service credentials while original provider secrets remain on the trusted backend.
+- Prove both an unrelated non-package task and the real release example through that same execution path. A native agent turn completing is not independent proof of a repository write, Publisher registration, OIDC upload or public installation; retain the provider receipts and actual readbacks.
+- Keep candidate state isolated from a deployed older schema. Preserve record IDs, artifact hashes and user ownership during any explicit migration, and verify unrelated production records remain unchanged.
+
+## Consumer contracts and uncertain completion
+
+- Advertise each HTTP tool's method, exact input fields, required values and additional-field policy, not just its route name. Probe the real mounted contract before dispatch so an agent does not guess broader request bodies after permission denials.
+- Require structured native output for machine clients. A successful HTTP envelope or empty plain-text rendering is not evidence of absent publishers. During actual management work, detect sensitive-action password confirmation independently of account identity, renew only the same approved profile through its native provider, and read back the exact project page. Established unchanged OIDC releases do not reopen management login merely for a routine version.
+- If publication exists but result finalization fails, preserve the failed receipt and independently reconcile that exact release read-only. Keep publication success separate from Task/UI acceptance; do not create another version for a green indicator, blindly replay writes or edit product state to manufacture completion. Re-finalization must use a product-owned read-only lifecycle.
+
+## Embedding and safe operation
+
+- Enter a mounted tool application's lifespan from the parent ASGI lifespan so its limiter and transport resources are initialized. Test a real mounted operation, not only catalog discovery.
+- Preserve inspected request bodies for downstream handlers. Bound the body, retain/replay the same bytes, and test a POST through the authorization/target middleware into the actual child API; consuming a stream without forwarding it produces false body-required failures.
+- Update secret-bearing configuration through the owner's API or a narrowly redacted in-process operation. Context-rich patch/diff output can expose adjacent credentials. If a credential is exposed, rotate that exact credential and verify rejection of the old value rather than treating log redaction as revocation.
+
 ChatPyPI does not issue ChatAuth tokens or implement automatic remote refresh. Use the existing authorization flow to renew runtime state; do not fabricate an issuer or pretend the resource package supplies `/oauth/token`. The service invokes one tool per request: no jobs/plans/queues, repo creation, Pages provisioning or composite registration workflow.
 
 User-facing guide: https://arch.gh.wzhecnu.cn/ChatPyPI/tool-service/

@@ -1,7 +1,7 @@
 ---
 name: chatarch-cli-package-conventions
 description: "ChatArch Python CLI package conventions: ChatEnv, ChatStyle tree/interactive UX, dependency bounds, and release gates."
-version: 0.1.3
+version: 0.1.4
 ---
 
 # ChatArch CLI Package Conventions
@@ -108,6 +108,10 @@ If a package offers `-e/--env-profile NAME`, define semantics clearly:
 - It should not accidentally fall back to a process/default session token when a named profile was explicitly selected.
 - For login/refresh flows, profile values should normally take precedence over process env values when `-e` is supplied, so credentials do not cross accounts.
 - Error messages should name the profile and key but never print values.
+
+### Scalable multi-profile consumers
+
+Separate credential-profile storage, explicit tracking selection and provider ACLs; multiple Env files do not prove a batch collector uses them independently. Give each tracked account a pinned profile/ID reference, preserve old policies and credentials, and default new automatic actions off. Reject orphan-policy label reuse and make empty tracking authoritative. Key write/collection ownership to the effective configuration home, including the first legacy migration and custom runtime locations. See `references/multi-profile-account-tracking.md` for the implementation, release and live-acceptance contract.
 
 ### Sensitive values
 
