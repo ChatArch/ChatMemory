@@ -40,4 +40,4 @@ let wecom = await cua.getApp("com.tencent.WeWorkMac");
 
 ## 可直接转发的配置与操作概要
 
-> 在支持 Computer Use 的 macOS 桌面端进入 Plugins → Computer Use，安装／启用并同时打开 MCP server 与内置 skill；在系统设置 → 隐私与安全性中为提示的组件开启辅助功能和屏幕录制，再按提示批准企业微信并正常登录。确认目标 Agent 有 `mcp__cua_repl`；首次只调用 `cua.getApp("com.tencent.WeWorkMac")` 并阅读返回文档。随后优先用 AX 读取文字和表格，必要时截图、点击、滚动及切换窗口；每次动作后核对目标和正文，确认分页、行对应与全文覆盖后逐份保存。按只读授权执行，共享材料去掉账号、客户和业务正文。可使用 `$wecom-desktop-reading`；仅复制 skill 不会安装工具，其他宿主需先接入相应桌面能力。
+> 在支持 Computer Use 的 macOS 桌面端进入 Plugins → Computer Use，安装／启用并同时打开 MCP server 与内置 skill；在系统设置 → 隐私与安全性中为提示的组件开启辅助功能和屏幕录制，再按提示批准企业微信并正常登录。确认目标 Agent 有 `mcp__cua_repl`；首次只调用 `cua.getApp("com.tencent.WeWorkMac")` 并阅读返回文档。随后优先用 AX 读取文字和表格，必要时截图、点击、滚动及切换窗口；每次动作后核对目标和正文，确认分页、行对应与全文覆盖后逐份保存。按本次授权选择只读或报告草稿模式；写日报、周报时继续阅读 report-workflow.md，保存后重新打开核对，共享材料去掉账号、客户和业务正文。可使用 `$wecom-desktop-reading`；仅复制 skill 不会安装工具，其他宿主需先接入相应桌面能力。
