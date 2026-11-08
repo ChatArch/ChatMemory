@@ -1,7 +1,7 @@
 ---
 name: workspace-structure-alignment
 description: Align an older human-AI collaboration workspace to the latest ChatUp workspace scaffold, shared ChatMemory skill layout, and Markdown conventions.
-version: 0.2.2
+version: 0.2.3
 reference:
   - workspace-maintenance: "outer workspace cleanup, discussion routing, archive review, and .trash safety-buffer rules"
 ---
@@ -275,6 +275,8 @@ This skill must be updated whenever the latest scaffold changes. During each ali
 5. Keep examples generic: use `<workspace-root>`, `<chatmemory-repo>`, `<source-repo>`, and placeholders. Do not write machine-private paths, tenant IDs, app IDs, tokens, chat IDs, or real private document links into shared skills.
 
 ## Boundaries and pitfalls
+
+For temporary-file collection, confirmed multi-workspace rosters and separate public/private knowledge distribution, follow `references/workspace-hygiene-review.md`. Nonstandard paths are review candidates, not an automatic deletion list; preserve each workspace's own governance and repository history.
 
 - Do not confuse target workspace alignment with source-code feature work in ChatUp. If ChatUp itself needs code/template changes, treat that as a separate source-repo task.
 - Do not overwrite dirty source checkouts. The ChatUp implementation skips dirty repos; the manual alignment should be at least as conservative.
