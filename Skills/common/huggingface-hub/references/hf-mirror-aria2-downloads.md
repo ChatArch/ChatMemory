@@ -15,6 +15,14 @@ chathfd download Qwen/Qwen3.8-Flash-Next --endpoint https://huggingface.co --inc
 
 ModelScope 使用独立仓库身份和 SDK；不要向 `HF_ENDPOINT` 填入其网站地址来伪装兼容。认证仓库也不应把 Token 静默送给第三方镜像。
 
+## 下载根目录与ChatEnv
+
+ChatHFD0.1.6起，`CHATHFD_DOWNLOAD_ROOT`默认`.`，每次调用按当前目录解析；模型和数据集均为`<root>/<repo_id>`，不再自动加models/datasets层。优先级为精确`--local-dir`/Python`local_dir` > 进程变量 > ChatEnv活动profile > 当前目录。显式最终目录不追加repo ID；空进程变量显式选当前目录，不读取低优先级profile。升级不迁移旧文件。
+
+同一个已安装ChatHFD的Python环境中，用`chatenv set CHATHFD_DOWNLOAD_ROOT=<root> -I`手动配置，`chatenv cat -t chathfd`确认默认/字段值，`chatenv list -t chathfd`列已有profiles，`chatenv test -t chathfd -I`做只读目录验证。空home的list只会报告没有profiles，并不列schema；不要把此输出误判为provider缺失。指定profile的test必须使用dispatcher已经加载的field.value，不重新读取active/process。下载普通调用则应按调用时环境重新解析，不能复用上一次命名profile测试留下的类值。
+
+共享根目录必须按执行机器的挂载视角选择；服务端实体目录与客户端NFS挂载目录不能直接互换。一个通用根变量不按仓库类型切换两个导出；模型/数据集分流用活动profile、单次进程变量或精确目录。未经授权不修改真实配置、挂载或共享目录。
+
 ## 可恢复下载
 
 1. 用 `--dry-run` 读取选中文件、字节数、端点、版本和目标目录。

@@ -20,10 +20,10 @@ tags: [huggingface, chathfd, models, datasets, downloads]
 
 ## 检查工具
 
-已验证接口基线为 ChatHFD 0.1.4。复用现有 ChatArch 管理环境；需要安装时使用独立虚拟环境，避免升级破坏无关工具。新于基线的版本也先回读命令面。
+目录配置接口基线为 ChatHFD 0.1.6。复用现有 ChatArch 管理环境；需要安装时使用独立虚拟环境，避免升级破坏无关工具。新于基线的版本也先回读命令面。
 
 ```bash
-python -m pip install 'ChatHFD>=0.1.4,<0.2.0'
+python -m pip install 'ChatHFD>=0.1.6,<0.2.0'
 chathfd --version
 chathfd --tree
 chathfd --tree-brief
@@ -31,6 +31,10 @@ chathfd setup
 ```
 
 `setup` 默认只检查；缺少 aria2 时给出安装建议。只有明确需要安装时才运行 `chathfd setup --install`，仍需确认。安装错误不授权修改系统代理、网络或其他服务。
+
+## 下载根目录
+
+默认根目录是调用时当前目录；`CHATHFD_DOWNLOAD_ROOT`支持进程变量和ChatEnv活动profile，隐式目标为`<root>/<repo_id>`（不再套models/datasets层）。精确`--local-dir`最高优先且不追加repo ID；其次进程变量、活动profile、当前目录。真实配置只按授权人工设置，服务端实体路径不能替代客户端挂载视角；详情及ChatEnv命令见[下载参考](references/hf-mirror-aria2-downloads.md)。
 
 ## 模型与数据集的最小实测
 
