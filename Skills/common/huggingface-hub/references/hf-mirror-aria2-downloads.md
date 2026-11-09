@@ -11,7 +11,9 @@ HF_ENDPOINT=https://hf-mirror.com chathfd download Qwen/Qwen3.8-Flash-Next --inc
 chathfd download Qwen/Qwen3.8-Flash-Next --endpoint https://huggingface.co --include config.json --dry-run
 ```
 
-兼容端点必须是无凭据、无路径/查询/片段的 HTTPS origin。默认镜像与原站的网络路径要分别验证，元数据成功不证明 CDN 重定向均可达。复用执行主机原有获授权代理，只在子进程中配置且不打印认证 URL。
+兼容端点必须是无凭据、无路径/查询/片段的 HTTPS origin。端点与出口分别验证：先做无代理镜像探测，校园网重定向时先查本机登录；不要因为工作区配置了代理就自动消耗付费流量。若用户允许使用已有认证转发器的DIRECT出口，镜像和实际CDN重定向都要有DIRECT规则与运行时连接链证明，仅在子进程中使用批准的凭据且不打印认证URL。元数据200不能代替权重Range传输和出口验证。
+
+小型普通Git文本文件的HTTP路径403，不代表同仓库LFS权重也不可取。若使用镜像支持的Git协议补取授权文件，固定相同commit、禁用checkout/LFS smudge并验证原metadata的Git blob ID与尺寸；保持原选择receipt，不伪造或删掉文件。先核Git客户端协议能力，必要时显式使用服务器支持的protocol.version=2；不要让未初始化partial-clone的filter配置错误阻塞其余权重续传。
 
 ModelScope 使用独立仓库身份和 SDK；不要向 `HF_ENDPOINT` 填入其网站地址来伪装兼容。认证仓库也不应把 Token 静默送给第三方镜像。
 
