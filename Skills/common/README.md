@@ -26,6 +26,8 @@
 
 ### CLI / tool interface
 
+- `huggingface-hub/` — 公开模型/数据集的 ChatHFD 镜像、aria2 并发、预检与续传；旧入口核对、认证工具边界及发布态验收。
+
 - `cli-tree-contract/` — 设计或 review CLI 时要求真实注册命令树、leaf 目的、side effect 和输出边界。
 
 ### Game migration

@@ -1,7 +1,7 @@
 ---
 name: chatarch-cli-package-conventions
 description: "ChatArch Python CLI package conventions: ChatEnv, ChatStyle tree/interactive UX, dependency bounds, and release gates."
-version: 0.1.4
+version: 0.1.5
 ---
 
 # ChatArch CLI Package Conventions
@@ -26,6 +26,12 @@ If a desired behavior is missing from ChatEnv or ChatStyle, stop and classify it
 1. Is it a package-local adapter around an existing public API? Implement in the leaf package.
 2. Is it a general ChatEnv/ChatStyle behavior? Open/update the substrate package instead.
 3. Is it a compatibility shim? Keep it small, documented, and tested, and plan deletion.
+
+## Existing-tool migration preflight
+
+Before replacing an existing command or script, recover the actual shell alias/function and its referenced implementation on the selected host. Inspect known rc/config paths and exact referenced files instead of guessing a source-repo location or scanning shared storage. Compare invocation, flags, backend choices, authentication, default destinations, dependency setup and resume behavior in a small contract matrix; show the original real CLI and runnable bounded examples before proposing the replacement. Preserve the useful workflow, not credential-logging bugs or stale host paths.
+
+When a feature expands an existing MkDocs package, complete the user-facing documentation surface rather than stopping at a minimal homepage plus tree: scenario/card hub, Quickstart, full runtime tree with option/default tables, configuration/examples, capability and interface boundaries, and accurate Python calls. Keep languages separate, verify responsive rendering, and preserve preview paths during production publication through the governing MkDocs workflow. A local wheel or two-page docs shell is not evidence that the whole established tool has been migrated.
 
 ## Template expectations
 
