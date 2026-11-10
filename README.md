@@ -148,7 +148,7 @@ ChatGH-based PR readiness, CI triage, repository inventory, protection readback,
 
 ### `chatarch/chatnet-ecnu-default-visitor`
 
-Set or refresh ECNU default visitor accounts through ChatNet safely, including login fallback and secret redaction.
+Use for ECNU campus login and default/visitor profiles. Verify direct egress and credentials safely.
 
 ### `chatarch/chattool-capability-extraction`
 
