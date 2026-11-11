@@ -18,12 +18,18 @@ tags: [huggingface, chathfd, models, datasets, downloads]
 3. 共享盘服务端路径与客户端挂载路径可能不同；在当前主机核对挂载并查 PrivateMemory，再选显式 `--local-dir`。这里不保存具体机器、网段或私有路径。
 4. 公开仓库优先使用以下已发布 ChatHFD 流程。gated/private 仓库改用官方工具的正规授权流程；ChatHFD 不接收/转发 Token，不能用旧认证参数或占位 API Key 绕过边界。
 
+## 网络与代理流量预算
+
+下载端点和网络出口分开确认。HF-Mirror请求不应因为工作区有代理变量就默认绕付费节点；先清除子进程代理做直连探测。校园网主机若出现登录页重定向，先通过本机校园网登录工具与直接公网请求区分内网可达、在线状态和目标可达，不用代理掩盖尚未核实的登录状态。
+
+用户限制代理流量时，禁止付费节点回退。若用户明确允许借现有认证LAN转发器的DIRECT出口，核对镜像及实际权重重定向CDN都命中DIRECT，并以运行时连接链和真实Range传输证明；经过本地代理服务不等于经过付费节点。凭据与各机联网方式查私有基础设施记录，公共Skill不保存具体账号/机器。
+
 ## 检查工具
 
-已验证接口基线为 ChatHFD 0.1.4。复用现有 ChatArch 管理环境；需要安装时使用独立虚拟环境，避免升级破坏无关工具。新于基线的版本也先回读命令面。
+目录配置接口基线为 ChatHFD 0.1.6。复用现有 ChatArch 管理环境；需要安装时使用独立虚拟环境，避免升级破坏无关工具。新于基线的版本也先回读命令面。
 
 ```bash
-python -m pip install 'ChatHFD>=0.1.4,<0.2.0'
+python -m pip install 'ChatHFD>=0.1.6,<0.2.0'
 chathfd --version
 chathfd --tree
 chathfd --tree-brief
@@ -31,6 +37,10 @@ chathfd setup
 ```
 
 `setup` 默认只检查；缺少 aria2 时给出安装建议。只有明确需要安装时才运行 `chathfd setup --install`，仍需确认。安装错误不授权修改系统代理、网络或其他服务。
+
+## 下载根目录
+
+默认根目录是调用时当前目录；`CHATHFD_DOWNLOAD_ROOT`支持进程变量和ChatEnv活动profile，隐式目标为`<root>/<repo_id>`（不再套models/datasets层）。精确`--local-dir`最高优先且不追加repo ID；其次进程变量、活动profile、当前目录。真实配置只按授权人工设置，服务端实体路径不能替代客户端挂载视角；详情及ChatEnv命令见[下载参考](references/hf-mirror-aria2-downloads.md)。
 
 ## 模型与数据集的最小实测
 

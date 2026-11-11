@@ -11,9 +11,25 @@ HF_ENDPOINT=https://hf-mirror.com chathfd download Qwen/Qwen3.8-Flash-Next --inc
 chathfd download Qwen/Qwen3.8-Flash-Next --endpoint https://huggingface.co --include config.json --dry-run
 ```
 
-兼容端点必须是无凭据、无路径/查询/片段的 HTTPS origin。默认镜像与原站的网络路径要分别验证，元数据成功不证明 CDN 重定向均可达。复用执行主机原有获授权代理，只在子进程中配置且不打印认证 URL。
+兼容端点必须是无凭据、无路径/查询/片段的 HTTPS origin。端点与出口分别验证：先做无代理镜像探测，校园网重定向时先查本机登录；不要因为工作区配置了代理就自动消耗付费流量。若用户允许使用已有认证转发器的DIRECT出口，镜像和实际CDN重定向都要有DIRECT规则与运行时连接链证明，仅在子进程中使用批准的凭据且不打印认证URL。元数据200不能代替权重Range传输和出口验证。
+
+小型普通Git文本文件的HTTP路径403，不代表同仓库LFS权重也不可取。若使用镜像支持的Git协议补取授权文件，固定相同commit、禁用checkout/LFS smudge并验证原metadata的Git blob ID与尺寸；保持原选择receipt，不伪造或删掉文件。先核Git客户端协议能力，必要时显式使用服务器支持的protocol.version=2；不要让未初始化partial-clone的filter配置错误阻塞其余权重续传。
 
 ModelScope 使用独立仓库身份和 SDK；不要向 `HF_ENDPOINT` 填入其网站地址来伪装兼容。认证仓库也不应把 Token 静默送给第三方镜像。
+
+## 下载根目录与ChatEnv
+
+ChatHFD0.1.6起，`CHATHFD_DOWNLOAD_ROOT`默认`.`，每次调用按当前目录解析；模型和数据集均为`<root>/<repo_id>`，不再自动加models/datasets层。优先级为精确`--local-dir`/Python`local_dir` > 进程变量 > ChatEnv活动profile > 当前目录。显式最终目录不追加repo ID；空进程变量显式选当前目录，不读取低优先级profile。升级不迁移旧文件。
+
+同一个已安装ChatHFD的Python环境中，用`chatenv set CHATHFD_DOWNLOAD_ROOT=<root> -I`手动配置，`chatenv cat -t chathfd`确认默认/字段值，`chatenv list -t chathfd`列已有profiles，`chatenv test -t chathfd -I`做只读目录验证。空home的list只会报告没有profiles，并不列schema；不要把此输出误判为provider缺失。指定profile的test必须使用dispatcher已经加载的field.value，不重新读取active/process。下载普通调用则应按调用时环境重新解析，不能复用上一次命名profile测试留下的类值。
+
+共享根目录必须按执行机器的挂载视角选择；服务端实体目录与客户端NFS挂载目录不能直接互换。一个通用根变量不按仓库类型切换两个导出；模型/数据集分流用活动profile、单次进程变量或精确目录。未经授权不修改真实配置、挂载或共享目录。
+
+## 大模型持续下载
+
+- 对明确授权的完整权重，先枚举GGUF量化档和目标版本，避免把仓库误当单一权重；按选择固定commit，模型进标准根目录加完整repo ID，日志/manifest留任务目录。
+- 长下载使用单一可续跑托管进程、受限仓库/文件/连接并发、逐项日志和原子状态清单。对话交接后保持任务，但running/queued不等于完成；收尾逐项核对请求ID、文件数量、大小与无侧车状态，不能用启动成功或一片增长代替全量完成。
+- 多连接写入的稀疏权重文件可能提前呈现很大逻辑长度，不要把st_size当传输量。分配块数只能标为近似，进度以下载器和完成文件为准；可轻量验证GGUF/safetensors头与index分片，不加载模型，也不把尺寸/头验证称为上游哈希验证。用户说以后对比，不等于当前授权启动推理。
 
 ## 可恢复下载
 

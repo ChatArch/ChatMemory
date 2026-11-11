@@ -14,6 +14,6 @@ ChatArch-series organization, package, review, operations, collaboration, and pr
 - `chatarch-lark-cli-permission-authorization/` — ChatArch-specific Lark CLI permission and authorization flow.
 - `chatboard-card-writing/` — ChatBoard card content and interaction design.
 - `chatboard-workspace-cards/` — ChatBoard workspace card operations.
-- `chatnet-ecnu-default-visitor/` — ChatNet ECNU default visitor account workflow.
+- `chatnet-ecnu-default-visitor/` — ECNU campus login, direct-egress diagnosis, and default/visitor profile workflow.
 - `module-archive-hardening/` — safely archive and harden deprecated ChatArch modules.
 - `server-chatarch-bot-setup/` — ChatArch bot setup on managed servers.
