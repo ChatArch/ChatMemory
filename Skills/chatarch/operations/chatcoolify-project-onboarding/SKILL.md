@@ -1,7 +1,7 @@
 ---
 name: chatcoolify-project-onboarding
 description: "Use for ChatCoolify client setup and app publishing."
-version: 0.2.0
+version: 0.3.0
 ---
 
 # ChatCoolify 项目接入
@@ -16,7 +16,7 @@ version: 0.2.0
 
 ## 新机器：接入一次，后续直接上架
 
-新机器是客户端和本地构建端；镜像构建、托管运行仍由已有平台完成。复用当前机器既有 ChatArch Python 环境，安装／升级 ChatCoolify 后先回读 `coolify --version`、`coolify --tree` 和 `coolify platform --help`。客户端不需要另外安装 Coolify、Docker、Nginx、服务端 typed profile 或部署 SSH key。
+新机器是客户端和本地构建端；镜像构建、托管运行仍由已有平台完成。复用当前机器既有 ChatArch Python 环境，安装／升级 ChatCoolify（此流程需要0.2.5或更新版本）和 ChatEnv（具名test命令需要0.2.15或更新版本），再回读 `coolify --version`、`coolify --tree`、`chatenv test --help` 和 `coolify platform --help`。客户端不需要另外安装 Coolify、Docker、Nginx、服务端 typed profile 或部署 SSH key。
 
 按用户当前目标选择终点，不把所有请求都收缩成只读配置：
 
@@ -27,7 +27,7 @@ version: 0.2.0
 | 上架／上线／更新正式站 | 预览验证后继续发布同一 release，核对正式运行状态并交付真实 URL，不追加例行二次确认 |
 | 已有项目换一台机器操作 | 本机独立登录后复用同一平台项目 ID、域名、访问方式和后端数据，不重复创建项目 |
 
-先查询同名 profile 的身份和项目；有效会话直接复用，无配置或 `401` 才重新登录。`403` 先核对项目授权，不反复重登或自行新增管理员。端点与会话由 CLI 使用 ChatEnv／TokenStore 保存于当前 ChatArch home；不要从其他机器复制 token、Cookie、密码文件或原生 Team token。浏览器和 CLI 会话独立，opaque session 会过期，不是永久 API key。
+先配置同名 ChatEnv profile 的平台地址、账号和敏感密码，再查询身份和项目。有效会话直接复用；缓存缺失或会话检查返回401时，SDK从该profile登录一次后再执行原操作，不重放结果未知的写请求。`403` 先核对项目授权，不反复重登或自行新增管理员。ChatEnv管理凭据，TokenStore仅缓存签发的会话；不要从其他机器复制token、Cookie、密码文件或原生Team token。浏览器和CLI会话独立，opaque session会过期，不是另一套账号或永久API key。
 
 ## 先定位现有平台
 
@@ -39,13 +39,17 @@ version: 0.2.0
 ## 登录与账号边界
 
 ```sh
-coolify platform --profile <profile> login \
-  --url '<platform-origin>' --username <account>
+chatenv new <profile> -t coolify-platform -i
+chatenv test <profile> -t coolify-platform
+coolify platform --profile <profile> login
 coolify platform --profile <profile> whoami
 coolify platform --profile <profile> projects list
+coolify platform --profile <profile> limits
 ```
 
-交互输入隐藏密码。非交互时用 `--password-env <environment-variable-name>`，该参数是变量名，不是密码值；通过现有私有凭据通道注入，不把秘密写进命令、skill、归档或报告。profile 保存 endpoint 与私有 opaque session，不向普通用户分发原生 Coolify Team token。
+ChatEnv字段为 `CHATCOOLIFY_PLATFORM_URL`、`CHATCOOLIFY_PLATFORM_USERNAME`、敏感的 `CHATCOOLIFY_PLATFORM_PASSWORD`，由同一 `coolify-platform` 具名profile管理；不用另设一套鉴权。交互输入隐藏密码，成功登录保留该profile的凭据，TokenStore只存会话。非交互仍可用 `--password-env <environment-variable-name>` 指定变量名，通过现有私有凭据通道注入，不把秘密写进命令、skill、归档或报告。不向普通用户分发原生Coolify Team token。
+
+缓存必须绑定签发平台origin，配置账号时核对实际会话身份；CLI覆盖到另一origin或账号时提供新密码，不自动复用旧profile的密码。保持原账号，不为接入客户端重置密码或bootstrap另一套owner。旧URL+token-only profile仍可使用，需自动续签时补齐ChatEnv账号字段。
 
 平台采用管理员人工开通可信账号，公开注册关闭。项目 owner 授予 viewer／deployer；账号 admin 不因此获得他人私有项目权限。新账号、协作授权和停用命令见 [账号与独立服务](references/accounts-and-services.md)。
 
@@ -55,7 +59,9 @@ coolify platform --profile <profile> projects list
 
 先读应用实际构建说明、依赖锁文件和现有脚本，在当前机器运行正确的构建命令；不要假定所有项目都用同一条 `npm run build`。先列出现有项目，只有新应用才 create；已登记应用复用原 ID。
 
-只上传已经构建完成、含根级 `index.html` 的目录，例如 `./dist`。源代码、`.env`、密钥、数据库和依赖目录不属于静态产物。当前归档上限为 2,000 文件、8 MiB ZIP、32 MiB 解包内容；拒绝软链接、越界与凭据文件，隐藏文件不会上传。上传自定义 Dockerfile 不是运行后端的入口。
+只上传已经构建完成、含根级 `index.html` 的目录，例如 `./dist`。源代码、`.env`、密钥、数据库和依赖目录不属于静态产物。新版ZIP默认上限1 GiB，解包大小与归档条目数默认不限；先用 `coolify platform limits` 读取服务端有效策略，不沿用旧版8 MiB/32 MiB/2000项常量。不额外添加业务体积、条目或发布审批门槛；保留软链接、越界、特殊文件与凭据文件等安全拒绝，隐藏文件不上传。上传自定义Dockerfile不是运行后端的入口。
+
+operator通过既有 `coolify-platform-server` ChatEnv配置 `CHATCOOLIFY_MAX_UPLOAD_BYTES`（默认1073741824）、`CHATCOOLIFY_MAX_EXPANDED_BYTES`（默认0）、`CHATCOOLIFY_MAX_ARTIFACT_FILES`（默认0），0表示不限；原生受管环境/服务重新加载后读回策略。增大尺寸时同时确认各层反代不会先拦截，不修改其他站点的共享限制。客户端只读已认证的 `/api/platform/v1/limits`，不读取server私有profile；仅旧服务器明确404时兼容旧策略，鉴权或网络错误不能当成旧版。
 
 ```sh
 # 已有项目时复用其 ID；仅新项目执行 create。
