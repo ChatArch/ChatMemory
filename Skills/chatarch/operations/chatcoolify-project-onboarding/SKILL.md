@@ -1,16 +1,38 @@
 ---
 name: chatcoolify-project-onboarding
-description: "Use an existing ChatCoolify self-hosted platform to log in, register frontend projects, upload local build artifacts, preview, publish, roll back, and connect supported independent backend services with project permissions."
+description: "Use for ChatCoolify client setup and app publishing."
+version: 0.2.0
 ---
 
 # ChatCoolify 项目接入
 
 将新项目接入已有的自建托管平台，并交付可复用的访问入口与发布方法。普通接入使用 `coolify platform`；**Coolify 是原生构建与运行引擎，ChatCoolify 是其上的 Python API／CLI、项目与授权控制面**。不要给其他工具站追加一套临时静态托管器。
 
+## 何时使用
+
+- 用户要给新机器配置 ChatCoolify 客户端，或让这台机器以后能上架／更新应用。
+- 用户要上传本地构建目录、开预览、上线网站、回退版本或处理项目访问权限。
+- 用户要“给新机器一段提示词”时，使用 [新机器应用上架提示词](templates/new-machine-publish-prompt.md)，填入本次私有上下文，不把实际入口和账号写回共享文件。
+
+## 新机器：接入一次，后续直接上架
+
+新机器是客户端和本地构建端；镜像构建、托管运行仍由已有平台完成。复用当前机器既有 ChatArch Python 环境，安装／升级 ChatCoolify 后先回读 `coolify --version`、`coolify --tree` 和 `coolify platform --help`。客户端不需要另外安装 Coolify、Docker、Nginx、服务端 typed profile 或部署 SSH key。
+
+按用户当前目标选择终点，不把所有请求都收缩成只读配置：
+
+| 当前目标 | 实际完成标准 |
+| --- | --- |
+| 配置客户端，尚未给应用 | 登录、`whoami`、项目列表均真实通过，留下可复制上架方法；不随意发布演示站 |
+| 只做预览 | 复用／登记项目、本地构建、上传、预览验证，停止在预览 |
+| 上架／上线／更新正式站 | 预览验证后继续发布同一 release，核对正式运行状态并交付真实 URL，不追加例行二次确认 |
+| 已有项目换一台机器操作 | 本机独立登录后复用同一平台项目 ID、域名、访问方式和后端数据，不重复创建项目 |
+
+先查询同名 profile 的身份和项目；有效会话直接复用，无配置或 `401` 才重新登录。`403` 先核对项目授权，不反复重登或自行新增管理员。端点与会话由 CLI 使用 ChatEnv／TokenStore 保存于当前 ChatArch home；不要从其他机器复制 token、Cookie、密码文件或原生 Team token。浏览器和 CLI 会话独立，opaque session 会过期，不是永久 API key。
+
 ## 先定位现有平台
 
 - 从当前 workspace 的本地 skill、MEMORY 或目标 project 交付记录取得 `<platform-origin>`、`<profile>`、账号开通方式及现有项目 ID。`<platform-origin>` 是包含 `https://` 的完整 origin，不含业务路径、query 或 fragment。共享文件只使用占位符，不填写真实域名、账号、机器路径或凭据。
-- 检查 `coolify --version`、`coolify platform --help`。需要安装时使用该环境既有包管理方式，确认来源和 `platform` 子命令；不要把源码／候选版本号当成 PyPI 已发行版本。
+- 检查 `coolify --version`、`coolify --tree`、`coolify platform --help`。需要安装时使用该环境既有包管理方式，确认来源和 `platform` 子命令；不要把源码／候选版本号当成 PyPI 已发行版本。
 - 在当前项目记录稳定需求：构建目录、是否私人、是否已有平台项目、是否需要独立后端及持久数据。优先复用已登记项目；CI 可调用同一接口，但本地 CLI 不要求先建设 CI。
 - 此接入流程不负责重建 Coolify、修改共享 DNS／证书／tunnel，或替换平台的账号系统。平台缺失时先报告缺少的部署前置，不能把上线一个样例页面当成平台已经建成。
 
@@ -31,16 +53,20 @@ coolify platform --profile <profile> projects list
 
 ## 前端：本地构建到预览
 
+先读应用实际构建说明、依赖锁文件和现有脚本，在当前机器运行正确的构建命令；不要假定所有项目都用同一条 `npm run build`。先列出现有项目，只有新应用才 create；已登记应用复用原 ID。
+
 只上传已经构建完成、含根级 `index.html` 的目录，例如 `./dist`。源代码、`.env`、密钥、数据库和依赖目录不属于静态产物。当前归档上限为 2,000 文件、8 MiB ZIP、32 MiB 解包内容；拒绝软链接、越界与凭据文件，隐藏文件不会上传。上传自定义 Dockerfile 不是运行后端的入口。
 
 ```sh
 # 已有项目时复用其 ID；仅新项目执行 create。
-coolify platform --profile <profile> projects create <site-slug> --visibility private
+coolify platform --profile <profile> projects create <site-slug> --visibility <visibility>
 coolify platform --profile <profile> upload PROJECT_ID ./dist
-coolify platform --profile <profile> preview PROJECT_ID RELEASE_ID
+coolify platform --profile <profile> preview PROJECT_ID RELEASE_ID --request-key <preview-request-key>
 coolify platform --profile <profile> status PROJECT_ID
 coolify platform --profile <profile> logs PROJECT_ID DEPLOYMENT_ID
 ```
+
+`<visibility>` 必须替换为 `public` 或 `private`。平台新项目默认 public；未指定时明确说明默认行为，要求私有时显式设置，不静默改变已有私有项目。preview 与 publish 分别记录各自 request key；同次请求重试复用原 key，更换 release／环境／动作时生成新 key。
 
 `PROJECT_ID` 是 create／list 返回的平台项目 `id`，`RELEASE_ID` 是 upload 返回的 `id`，`DEPLOYMENT_ID` 是 preview／publish 返回的 `id`；不要替换成原生 UUID。命令返回 JSON，默认上传只创建不可变 release；preview 和 production 是两个原生应用，不把“已上传”说成“已发布”。
 
@@ -51,7 +77,7 @@ coolify platform --profile <profile> logs PROJECT_ID DEPLOYMENT_ID
 本次请求包含上线授权且预览符合要求时继续发布，不另加每次部署都要询问的审批步骤。只要求预览时停在预览。
 
 ```sh
-coolify platform --profile <profile> publish PROJECT_ID RELEASE_ID
+coolify platform --profile <profile> publish PROJECT_ID RELEASE_ID --request-key <publish-request-key>
 coolify platform --profile <profile> status PROJECT_ID
 coolify platform --profile <profile> logs PROJECT_ID DEPLOYMENT_ID
 coolify platform --profile <profile> releases PROJECT_ID
@@ -83,3 +109,5 @@ preview = client.deploy(project["id"], release["id"], environment="preview")
 需要 Python／Go／Node 等后端时保留原生 Coolify Application／Service 的部署能力，按项目部署独立进程、环境变量和持久卷。当前前端 upload 不是通用后端打包命令；已交付的关联 adapter 为 ChatComment。其原生资源准备、登记、JS 嵌入与认证边界见 [账号与独立服务](references/accounts-and-services.md)。其他服务先定义并实现 adapter，不能把任意 URL 填成已支持的网关。
 
 交付当前阅读 URL、预览 URL、控制台入口、profile／项目／release／deployment ID、已验证范围和最短更新命令。运行状态、真实域名与具体版本保存在私有 project 记录；共享 skill 保留稳定流程。静态回退不恢复独立服务数据库；需要迁移时先做一致备份和新写入对账，再停旧入口。
+
+明确标注当前阶段是“客户端就绪／已上传／已预览／已上线／被阻塞”。完整的新机器执行交接见 [可复制提示词](templates/new-machine-publish-prompt.md)，账号开通和原生后端关联仅在需要时读取 [账号与独立服务](references/accounts-and-services.md)。
