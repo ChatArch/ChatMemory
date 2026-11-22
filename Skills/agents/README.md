@@ -12,6 +12,7 @@ Use `common/` for stable non-ChatArch shared skills, `chatarch/` for stable Chat
 
 ## Skills
 
+- [`api-capability-guide/`](api-capability-guide/SKILL.md) — explain OpenAI and Claude model, endpoint, tool and application capabilities with sources, version relationships and project verification coverage.
 - [`claude-code-worker-orchestration/`](claude-code-worker-orchestration/SKILL.md) — run an agentic, resumable subagent on an API key or subscription API credits: a Messages-API agent loop behind MCP tools inside Claude Code (the common case), or `claude -p --bare` with pre-assigned session ids elsewhere.
 - [`openai-api-worker-orchestration/`](openai-api-worker-orchestration/SKILL.md) — run GPT Agent sessions with an OpenAI API key, local functions or a hosted sandbox, durable session IDs, resume, and verified turn outcomes.
 - `indonesia-product-classification-workbook/` — audited image-backed Excel classification for Indonesia-bound cargo, including confirmed business rules, structured review, WPS `DISPIMG` preservation, and final workbook acceptance checks.
