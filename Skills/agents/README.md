@@ -13,6 +13,7 @@ Use `common/` for stable non-ChatArch shared skills, `chatarch/` for stable Chat
 ## Skills
 
 - [`claude-code-worker-orchestration/`](claude-code-worker-orchestration/SKILL.md) — run an agentic, resumable subagent on an API key or subscription API credits: a Messages-API agent loop behind MCP tools inside Claude Code (the common case), or `claude -p --bare` with pre-assigned session ids elsewhere.
+- [`openai-api-worker-orchestration/`](openai-api-worker-orchestration/SKILL.md) — run GPT Agent sessions with an OpenAI API key, local functions or a hosted sandbox, durable session IDs, resume, and verified turn outcomes.
 - `indonesia-product-classification-workbook/` — audited image-backed Excel classification for Indonesia-bound cargo, including confirmed business rules, structured review, WPS `DISPIMG` preservation, and final workbook acceptance checks.
 - [`math-research-site/`](math-research-site/SKILL.md) — build a mathematical research guide with a chapter sequence, concept dependencies, and traceable links to paper pages, Lean declarations, and computed examples.
 - `wecom-desktop-reading/` — read reports and documents through the macOS WeCom client using CUA, accessibility text and screenshots, with window recovery, completeness checks and privacy-safe reuse.

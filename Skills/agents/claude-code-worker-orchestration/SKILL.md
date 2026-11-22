@@ -4,6 +4,7 @@ description: "Use when an agent needs a resumable agentic subagent billed to an 
 version: 0.2.0
 reference:
   - hermes-external-agent-cli-orchestration: "Hermes 调用外部 CLI 时的 terminal/process 托管、进度监督和验收规则"
+  - openai-api-worker-orchestration: "任务指定 OpenAI API key 时使用原生 Agent session 和 resume"
 ---
 
 # Claude Code Worker Orchestration
@@ -11,6 +12,8 @@ reference:
 这个 skill 讲的是：把 Claude Code 作为一个外部 worker（相当于 subagent）来调用，计费走 API key，并且能多轮续接（resume）。调用方负责派活和验收，worker 负责执行。
 
 共享 skill 必须与主机无关。key 文件路径、包装脚本路径、会话登记文件等本机信息，放在 workspace 本地 skill（`skills/local/`）或任务记录里。下文用 `<key-file>`、`<workdir>`、`<session-id>` 这类占位符。
+
+如果任务指定 OpenAI / ChatGPT 的 API key，使用 [OpenAI API Agent skill](../openai-api-worker-orchestration/SKILL.md)，它通过官方 Agents API 的 session ID 续接任务。
 
 ## 先判断调用方（最重要）
 
