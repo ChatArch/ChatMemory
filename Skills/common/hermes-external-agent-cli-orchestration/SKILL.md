@@ -1,7 +1,7 @@
 ---
 name: hermes-external-agent-cli-orchestration
 description: Use when Hermes needs to call Codex, Cursor Agent, Claude Code, OpenCode, or another local coding-agent CLI; choose terminal/process vs delegate_task/plugin/ACP.
-version: 0.1.5
+version: 0.1.8
 tags:
   - Hermes
   - coding-agent
@@ -107,6 +107,55 @@ When the user asks Hermes to delegate a substantial task to an external CLI agen
 5. **Verify external-agent claims.**
    - Treat external-agent output as a self-report.
    - Before reporting success, the parent Hermes agent must verify concrete handles: re-read changed files, inspect `git diff`, run targeted tests/checks, or fetch/read back external artifacts.
+
+## Codex configuration, API providers, and tools
+
+Codex can start without a user `config.toml` when it uses its native ChatGPT login and built-in defaults. A custom API-backed Agent lane is different: it needs an effective provider configuration, a credential source, and a model/endpoint that support the requested wire protocol. Do not describe “the API works” as “Codex tools work” until the Agent loop has been exercised.
+
+Resolve the effective Codex configuration in this order:
+
+1. Choose the state root with `CODEX_HOME` (auth, config, profiles and session state are rooted there).
+2. Load the default `$CODEX_HOME/config.toml` unless the invocation explicitly skips it.
+3. Layer `$CODEX_HOME/<name>.config.toml` with `--profile <name>` when an isolated profile is selected.
+4. Apply command-line settings such as `--model`, `--sandbox`, and `-c/--config key=value`; for reliable one-shot execution, put model/provider `-c` overrides on the parser after `exec`, and put continuation overrides on `exec resume`.
+
+`codex exec --ignore-user-config` skips `$CODEX_HOME/config.toml` but still uses authentication from `CODEX_HOME`; it also removes user-configured `model_providers`, `mcp_servers`, plugins, and related tool wiring unless those are supplied through another supported layer. It is a useful minimal-config diagnostic, not a normal API-Agent launch mode. `codex exec resume` has its own option parser, so do not assume that an option accepted by the root command or the initial `exec` invocation will survive a resume boundary.
+
+Keep these layers separate:
+
+- **Authentication identity:** native ChatGPT/OAuth state or an API-key credential source. Changing `model_provider` does not prove that the desktop account, subscription entitlement, dots, cloud workspace, or other native features changed.
+- **Model request provider:** `model_provider` selects the active provider; `[model_providers.<name>]` defines an OpenAI-compatible endpoint, `wire_api`, model discovery behavior, and an `env_key`/other supported credential source.
+- **Agent tools:** built-in shell/file/browser/computer-use features, MCP servers, plugins, skills and approval/sandbox policy. A provider must support the model/tool protocol, and the effective config must actually load the relevant tool server/plugin. A successful text-only API response proves neither.
+
+For an API-backed Agent, prefer the workspace's isolated-profile pattern:
+
+```text
+ChatEnv profile (secret value) -> child environment loader -> Codex profile
+  -> codex exec --profile <api-profile> ...
+```
+
+The profile should contain only non-secret routing metadata and an `env_key` such as `OPENAI_API_KEY`; the key remains in the approved environment/secret store. A typical provider shape is:
+
+```toml
+# $CODEX_HOME/<api-profile>.config.toml
+model = "<api-model>"
+model_provider = "<api-provider>"
+
+[model_providers.<api-provider>]
+name = "<provider-label>"
+base_url = "https://<openai-compatible-host>/v1"
+wire_api = "responses"
+env_key = "OPENAI_API_KEY"
+requires_openai_auth = false
+```
+
+Use an owner-only wrapper or ChatEnv launcher to load the secret and invoke the profile. Do not put the key in argv, a shared skill, a project report, or the main subscription config. For a minimal API smoke, use `--ephemeral`, `--skip-git-repo-check` only outside a Git repo, and a read-only sandbox; then run a separate harmless tool smoke if the acceptance criterion is Agent/tool execution.
+
+The recent Token Plan/Codex workspace pattern follows this design: a named ChatEnv API profile, a separate Codex config profile, a small wrapper that runs `codex --profile ...`, and a bounded `codex exec` smoke. That is a configuration-isolation pattern, not permission to replace the user's native subscription login. Never add `forced_login_method="api"` to the same `CODEX_HOME` that contains a ChatGPT login; an auth-mode conflict can trigger logout and delete the live native auth cache.
+
+Treat provider discovery and provider entitlement as separate gates. A successful `GET /models` only proves that the endpoint and credential can answer a catalogue request; it does not prove that the selected model is purchased/eligible for Responses or for the Agent loop. Run one exact-model `codex exec` smoke and classify `403 AccessDenied.Unpurchased` as a provider entitlement blocker, not as a Codex tool/config success. Also verify that the profile file exists in the active `CODEX_HOME`: a wrapper and a ChatEnv secret without its matching `<name>.config.toml` are an incomplete launch path. If the model smoke succeeds, run a separate harmless tool smoke; keep text-call, Agent-loop, and tool-use verdicts distinct.
+
+For OpenAI's subscription-granted API credits, distinguish a successful Codex API-key Agent run from the billing bucket. The current benefit terms exclude Codex usage made through an API key. A completed `codex exec` call with an OpenAI project key proves the technical route and tool loop only; it does not prove that gifted credits paid for it. Inspect the exact organization's billing/credit-grant ledger separately before claiming a deduction source, and never use `codex login`/logout or overwrite native auth to perform this test. For a bounded check, use an owner-only key file, a separate `CODEX_HOME` without `auth.json`, ephemeral exec, a read-only sandbox, and per-command provider overrides; compare native auth/config hashes before and after.
 
 ## One-shot command templates
 
